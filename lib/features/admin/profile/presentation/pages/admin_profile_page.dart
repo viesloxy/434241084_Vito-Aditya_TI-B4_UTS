@@ -7,13 +7,13 @@ class AdminProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const adminName = 'Sarah Admin';
-    const adminEmail = 'sarah@university.ac.id';
+    const adminName = 'Sarah Administrator';
+    const adminEmail = 'sarah.admin@university.ac.id';
     const adminRole = 'Administrator';
     const adminNip = '12345678';
 
     final menuItems = [
-      {'icon': Icons.people_outline, 'title': 'Manajemen User', 'onTap': () => _showComingSoon(context)},
+      {'icon': Icons.people_outline, 'title': 'Manajemen User (User, Helpdesk, Admin)', 'onTap': () => _showComingSoon(context)},
       {'icon': Icons.analytics_outlined, 'title': 'Laporan & Statistik', 'onTap': () => _showComingSoon(context)},
       {'icon': Icons.category_outlined, 'title': 'Kelola Kategori', 'onTap': () => _showComingSoon(context)},
       {'icon': Icons.lock_outlined, 'title': 'Ubah Password', 'onTap': () => _showComingSoon(context)},

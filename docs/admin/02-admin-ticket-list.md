@@ -2,7 +2,9 @@
 
 ## Overview
 
-Halaman Daftar Tiket untuk Admin/Helpdesk yang menampilkan semua tiket yang masuk dengan fitur filter, pencarian, dan bulk actions. Admin dapat melihat, mencari, dan mengelola semua tiket dari halaman ini.
+Halaman Daftar Tiket untuk **Admin** yang menampilkan **semua tiket** yang masuk dari semua user dengan fitur filter, pencarian, dan bulk actions. Admin dapat melihat, mencari, menugaskan, dan mengelola semua tiket dari halaman ini.
+
+> **Catatan Revisi**: Halaman ini khusus untuk Admin. Untuk Helpdesk yang hanya melihat tiket yang di-assign, lihat [../helpdesk/02-helpdesk-task-list.md](../helpdesk/02-helpdesk-task-list.md).
 
 ## Visual Design
 
@@ -17,15 +19,6 @@ Halaman Daftar Tiket untuk Admin/Helpdesk yang menampilkan semua tiket yang masu
 | Text Secondary | `#6B7280` | Labels, timestamps |
 | Border | `#E5E7EB` | Dividers, borders |
 
-### Typography
-
-| Element | Font | Size | Weight |
-|---------|------|------|--------|
-| Page Title | Inter | 20px | 600 |
-| Ticket Title | Inter | 14px | 500 |
-| Ticket ID | Inter | 12px | 400 |
-| Caption | Inter | 12px | 400 |
-
 ## Layout Structure
 
 ```
@@ -34,8 +27,8 @@ Halaman Daftar Tiket untuk Admin/Helpdesk yang menampilkan semua tiket yang masu
 │ [←] Daftar Tiket        [🔍] [⚙️] │
 ├─────────────────────────────────────┤
 │ Filter Chips (Horizontal)           │
-│ [Semua] [Baru] [Ditangani] [Proses] │
-│ [Selesai]                           │
+│ [Semua] [Submitted] [Signed]        │
+│ [InProgress] [Resolved] [Closed]    │
 ├─────────────────────────────────────┤
 │ Search Bar                          │
 │ [🔍  Cari tiket...]                  │
@@ -45,20 +38,25 @@ Halaman Daftar Tiket untuk Admin/Helpdesk yang menampilkan semua tiket yang masu
 │ Ticket List                          │
 │ ┌─────────────────────────────────┐ │
 │ │ #TK-001 - Reset Password         │ │
-│ │ Akademik | Baru | 10:00         │ │
+│ │ Teknologi | Submitted | 10:00    │ │
 │ │ John Doe (Mahasiswa)            │ │
-│ │ [⚡ Tinggi]                      │ │
-│ └─────────────────────────────────┘ │
-│ ┌─────────────────────────────────┐ │
-│ │ #TK-002 - AC Rusak              │ │
-│ │ Fasilitas | Diproses | 14:30     │ │
-│ │ Sarah (Admin)                   │ │
-│ │ [📅 Sedang]                     │ │
+│ │ [⚡ Tinggi] [Assign →]          │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Admin Bottom Navigation              │
 └─────────────────────────────────────┘
 ```
+
+## Status Tiket (Setelah Revisi 3 Role)
+
+| Status | Value | Color | Deskripsi |
+|--------|-------|-------|-----------|
+| Submitted | `submitted` | Warning (#F59E0B) | Tiket baru, perlu di-assign Admin |
+| Signed/Assigned | `signed_assigned` | Info (#3B82F6) | Sudah di-assign ke Helpdesk |
+| In Progress | `in_progress` | Primary (#4F46E5) | Helpdesk sedang kerjakan |
+| Resolved | `resolved` | Success (#10B981) | Helpdesk selesai, menunggu konfirmasi User |
+| Closed | `closed` | Gray (#6B7280) | Sudah ditutup Admin (final) |
+| Ditolak | `rejected` | Error (#EF4444) | Tiket ditolak |
 
 ## Features & Interactions
 
@@ -66,7 +64,7 @@ Halaman Daftar Tiket untuk Admin/Helpdesk yang menampilkan semua tiket yang masu
 
 | Element | Action |
 |---------|--------|
-| Back Button | Kembali ke halaman sebelumnya (jika dari external) |
+| Back Button | Kembali ke halaman sebelumnya |
 | Title | "Daftar Tiket" |
 | Search Button | Toggle search mode |
 | Filter Button | Toggle filter modal |
@@ -78,11 +76,12 @@ Horizontal scrollable chips untuk filter status:
 | Chip | Status Value | Color |
 |------|--------------|-------|
 | Semua | `all` | Neutral |
-| Baru | `baru` | Warning (#F59E0B) |
-| Ditangani | `ditangani` | Info (#3B82F6) |
-| Diproses | `diproses` | Primary (#4F46E5) |
-| Selesai | `selesai` | Success (#10B981) |
-| Ditolak | `ditolak` | Error (#EF4444) |
+| Submitted | `submitted` | Warning |
+| Signed/Assigned | `signed_assigned` | Info |
+| In Progress | `in_progress` | Primary |
+| Resolved | `resolved` | Success |
+| Closed | `closed` | Gray |
+| Ditolak | `rejected` | Error |
 
 **Interaction:**
 - Tap chip → Filter list berdasarkan status
@@ -90,17 +89,7 @@ Horizontal scrollable chips untuk filter status:
 
 ### 3. Search Bar
 
-**Default State:**
-- Collapsed, shows only search icon in header
-
-**Active State:**
-- Full-width text field
-- Auto-focus
-- "Cari tiket..." placeholder
-- Clear button (X) when text exists
-
-**Search Behavior:**
-- Search by: Ticket ID, Title, Description, Creator Name
+- Search by: Ticket ID, Title, Description, Creator Name, Assigned Helpdesk Name
 - Debounce: 300ms
 - Clear search: X button or cancel
 
@@ -112,20 +101,17 @@ Horizontal scrollable chips untuk filter status:
 | Order | Terbaru, Terlama |
 | View | List, Grid (future) |
 
-**Interaction:**
-- Tap sort dropdown → Show sort options
-- Tap view toggle → Toggle between list/grid
+### 5. Bulk Actions (Hanya Assign, Bukan Tandai Selesai)
 
-### 5. Bulk Actions
+> **Penting**: Setelah revisi, Admin **tidak bisa** "Tandai Selesai" tiket secara langsung. Itu adalah tugas Helpdesk. Bulk action Admin hanya untuk assignment.
 
 When user long-presses a ticket, enters selection mode:
 
 | Action | Icon | Description |
 |--------|------|-------------|
 | Select All | `✓` | Select all visible tickets |
-| Assign | `person` | Assign to staff |
-| Mark Done | `✓` | Mark as completed |
-| Delete | `🗑` | Delete selected |
+| Assign to Helpdesk | `person` | **Assign tiket ke Helpdesk** |
+| Delete | `🗑` | Delete selected (admin only, dengan konfirmasi) |
 
 ### 6. Ticket List Item
 
@@ -138,8 +124,9 @@ Each ticket card displays:
 | Category | Badge with icon |
 | Status | Status badge |
 | Time | "X waktu yang lalu" |
-| Assigned To | Staff name or "Belum ditugaskan" |
+| Assigned To | Helpdesk name or "Belum ditugaskan" |
 | Priority | High/Medium/Low badge |
+| Created By | User name |
 
 **Ticket Card States:**
 - Default: White background
@@ -147,9 +134,9 @@ Each ticket card displays:
 - Swiped: Reveal quick actions
 
 **Interactions:**
-- Tap → Navigate to `/admin/ticket/:id`
+- Tap → Navigate to `/admin/ticket-detail/:id`
 - Long press → Enter selection mode
-- Swipe left → Quick respond/assign
+- Swipe left → Quick action (assign)
 
 ### 7. Empty State
 
@@ -167,15 +154,23 @@ Each ticket card displays:
 ```
 
 ### 8. Pull to Refresh
-
 - Visual: CircularProgressIndicator at top
 - Behavior: Fetch latest data from API
 
 ### 9. Pagination
-
 - Infinite scroll
 - Load more when 80% scrolled
 - Loading indicator at bottom
+
+## Perbedaan dengan Task List Helpdesk
+
+| Aspek | Admin Ticket List | Helpdesk Task List |
+|-------|-------------------|---------------------|
+| Scope | Semua tiket dari semua user | Hanya tiket yang di-assign ke Helpdesk |
+| Filter | Semua status (5 status + ditolak) | Hanya `signed_assigned`, `in_progress`, `resolved` |
+| Quick Action | "Assign ke Helpdesk" | "Mulai Kerjakan" / "Selesaikan" |
+| Bulk Action | Assign to Helpdesk, Delete | (Tidak ada, masing-masing tiket punya aksi sendiri) |
+| Default Filter | "Submitted" (perlu di-assign) | "Signed/Assigned" (perlu dikerjakan) |
 
 ## Technical Requirements
 
@@ -185,7 +180,7 @@ Each ticket card displays:
 
 ### Query Parameters
 ```
-/admin/tickets?status=baru&category=teknologi&search=password
+/admin/tickets?status=submitted&category=teknologi&search=password
 ```
 
 ### Data Model
@@ -196,53 +191,35 @@ class Ticket {
   String title;
   String description;
   String category;        // akademik, teknologi, fasilitas, keuangan, lainnya
-  String status;          // baru, ditangani, diproses, selesai, ditolak
+  String status;          // submitted, signed_assigned, in_progress, resolved, closed, rejected
   String priority;        // tinggi, sedang, rendah
-  String createdBy;       // User ID
-  String createdByName;
-  String? assignedTo;      // Staff ID
-  String? assignedToName;
+  String? assignedTo;     // Helpdesk name (null jika belum di-assign)
+  String createdBy;       // User name
   DateTime createdAt;
   DateTime? updatedAt;
-  DateTime? completedAt;
-  List<String> attachments;
-}
-```
-
-### Filter Options
-```dart
-{
-  status: ['all', 'baru', 'ditangani', 'diproses', 'selesai', 'ditolak'],
-  category: ['all', 'akademik', 'teknologi', 'fasilitas', 'keuangan', 'lainnya'],
-  priority: ['all', 'tinggi', 'sedang', 'rendah'],
-  assignee: ['all', 'me', 'unassigned'],
-  dateRange: { start: DateTime, end: DateTime }
+  DateTime? resolvedAt;
+  DateTime? closedAt;
 }
 ```
 
 ### API Endpoints (Mock)
-- `GET /tickets` - Get all tickets with filters
-- `GET /tickets/:id` - Get single ticket
-- `POST /tickets/:id/assign` - Assign ticket
-- `POST /tickets/:id/status` - Update ticket status
-- `DELETE /tickets/:id` - Delete ticket
-
-### State Management
-- Filter state: Managed locally with setState
-- Ticket list: Could use Provider/Riverpod (future)
-- Search: Debounced text field
+- `GET /admin/tickets?status=&category=&search=&page=&limit=` - Get all tickets with filters
+- `POST /admin/tickets/bulk-assign` - Bulk assign tickets
+- `DELETE /admin/tickets/bulk` - Bulk delete
 
 ## Dependencies
 
 ### Required Pages
-- TicketListPage
-- TicketDetailPage
-- AssignStaffPage (modal)
+- AdminTicketListPage
+- AdminTicketDetailPage
 
 ### Required Widgets
-- FilterChip
-- TicketCard
+- AdminTicketCard
+- FilterChips
 - SearchBar
 - SortDropdown
-- EmptyState
-- LoadingIndicator
+- BulkActionBar
+
+### Required Services
+- TicketService (admin scope)
+- HelpdeskService (get available helpdesks for assignment)

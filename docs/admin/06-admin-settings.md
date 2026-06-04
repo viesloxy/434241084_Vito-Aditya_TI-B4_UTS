@@ -2,7 +2,9 @@
 
 ## Overview
 
-Halaman Pengaturan untuk Admin yang memungkinkan mengelola pengaturan aplikasi, kategori tiket, dan informasi akun admin.
+Halaman Pengaturan untuk **Admin** yang memungkinkan mengelola pengaturan aplikasi, kategori tiket, dan informasi akun admin.
+
+> **Catatan**: Halaman ini khusus untuk role Admin. Untuk pengaturan Helpdesk, lihat [../helpdesk/05-helpdesk-profile.md](../helpdesk/05-helpdesk-profile.md).
 
 ## Visual Design
 

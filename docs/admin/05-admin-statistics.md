@@ -2,7 +2,9 @@
 
 ## Overview
 
-Halaman Statistik untuk Admin yang menampilkan laporan dan visualisasi data tiket berdasarkan periode tertentu. Fitur ini membantu admin dalam monitoring performa dan membuat keputusan berdasarkan data.
+Halaman Statistik untuk **Admin** yang menampilkan laporan dan visualisasi data tiket **global** (semua tiket dari semua user) berdasarkan periode tertentu. Fitur ini membantu admin dalam monitoring performa dan membuat keputusan berdasarkan data.
+
+> **Catatan**: Halaman ini menampilkan statistik **global**. Untuk statistik personal Helpdesk, lihat [../helpdesk/04-helpdesk-statistics.md](../helpdesk/04-helpdesk-statistics.md).
 
 ## Visual Design
 
@@ -180,16 +182,16 @@ Halaman Statistik untuk Admin yang menampilkan laporan dan visualisasi data tike
 | Sedang | Warning (#F59E0B) | X% |
 | Rendah | Success (#10B981) | X% |
 
-### 7. Staff Performance
+### 7. Helpdesk Performance
 
-**Performance Table:**
+**Performance Table (Semua Helpdesk):**
 
 | Column | Description |
 |--------|-------------|
-| Staff Name | Staff member name |
+| Helpdesk Name | Nama Helpdesk |
 | Progress Bar | Visual completion rate |
 | Completion % | Percentage completed on time |
-| Ticket Count | Total tickets handled |
+| Ticket Count | Total tickets assigned |
 | Avg Time | Average resolution time |
 
 **Sorting:**
@@ -288,9 +290,9 @@ class PriorityCount {
   double percentage;
 }
 
-class StaffPerformance {
-  String staffId;
-  String staffName;
+class HelpdeskPerformance {
+  String helpdeskId;
+  String helpdeskName;
   int totalAssigned;
   int completed;
   double completionRate;

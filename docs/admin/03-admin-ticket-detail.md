@@ -2,7 +2,14 @@
 
 ## Overview
 
-Halaman Detail Tiket untuk Admin/Helpdesk yang menampilkan informasi lengkap tiket beserta fitur untuk membalas, mengubah status, dan assigning tiket ke staff.
+Halaman Detail Tiket untuk **Admin** yang menampilkan informasi lengkap tiket beserta fitur untuk **assign tiket ke Helpdesk**, **balas komentar**, dan **close tiket** setelah User konfirmasi.
+
+> **Catatan Revisi (PENTING)**: 
+> - Setelah revisi 3 role, Admin **HANYA** bisa melakukan 2 perubahan status:
+>   1. `Submitted` → `Signed/Assigned` (assign ke Helpdesk)
+>   2. `Resolved` → `Closed` (setelah User konfirmasi)
+> - Admin **TIDAK BOLEH** mengubah status ke `In Progress` atau `Resolved` (tugas Helpdesk).
+> - Untuk detail tiket Helpdesk, lihat [../helpdesk/03-helpdesk-task-detail.md](../helpdesk/03-helpdesk-task-detail.md).
 
 ## Visual Design
 
@@ -17,16 +24,6 @@ Halaman Detail Tiket untuk Admin/Helpdesk yang menampilkan informasi lengkap tik
 | Text Secondary | `#6B7280` | Labels |
 | Border | `#E5E7EB` | Dividers |
 
-### Typography
-
-| Element | Font | Size | Weight |
-|---------|------|------|--------|
-| Ticket ID | Inter | 14px | 500 |
-| Title | Inter | 18px | 600 |
-| Section Title | Inter | 16px | 600 |
-| Body Text | Inter | 14px | 400 |
-| Caption | Inter | 12px | 400 |
-
 ## Layout Structure
 
 ```
@@ -37,17 +34,18 @@ Halaman Detail Tiket untuk Admin/Helpdesk yang menampilkan informasi lengkap tik
 │ Ticket Header Card                  │
 │ ┌─────────────────────────────────┐ │
 │ │ Permintaan Reset Password       │ │
-│ │ [Akademik] [Baru] [⚡ Tinggi]   │ │
+│ │ [Akademik] [Submitted] [⚡Tinggi]│ │
 │ │ Dibuat: 21 Jan 2024, 10:00     │ │
-│ │ Kategori: Teknologi             │ │
+│ │ Oleh: John Doe (Mahasiswa)      │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Status Timeline                     │
 │ ┌─────────────────────────────────┐ │
-│ │ ✓ Tiket Dibuat     10:00       │ │
-│ │ ● Ditangani         10:15       │ │
-│ │ ○ Diproses          -           │ │
-│ │ ○ Selesai           -           │ │
+│ │ ✓ Submitted         10:00       │ │
+│ │ ○ Signed/Assigned   -           │ │
+│ │ ○ In Progress       -           │ │
+│ │ ○ Resolved          -           │ │
+│ │ ○ Closed            -           │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Ticket Details                      │
@@ -55,37 +53,53 @@ Halaman Detail Tiket untuk Admin/Helpdesk yang menampilkan informasi lengkap tik
 │ │ Pembuat:    John Doe (Mahasiswa)│ │
 │ │ Email:      john@university.ac  │ │
 │ │ Prioritas:  Tinggi              │ │
-│ │ Ditugaskan: Sarah (Admin)       │ │
+│ │ Ditugaskan: [Sarah - Helpdesk]  │ │
+│ │ Tanggal Dibuat: 21 Jan 10:00    │ │
+│ │ Terakhir Update: 21 Jan 10:00   │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Description                          │
 │ ┌─────────────────────────────────┐ │
 │ │ Deskripsi lengkap tiket...     │ │
-│ │                                 │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Attachments                         │
-│ ┌─────────────────────────────────┐ │
-│ │ 📎 Screenshot_error.png (1.2MB)│ │
-│ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Conversation / Chat                  │
-│ ┌─────────────────────────────────┐ │
-│ │ [Staff] Sarah: Mohon tunggu... │ │
-│ │ [Anda]  : Terima kasih         │ │
-│ │ [Staff] Sarah: Password sudah  │ │
-│ │          direset...             │ │
-│ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
-│ Action Buttons                       │
+│ Action Buttons (Sesuai Status)      │
 │ ┌─────────────────────────────────┐ │
-│ │ [Ubah Status ▼] [Tugaskan ▼]   │ │
+│ │ IF status = Submitted:          │ │
+│ │   [Assign ke Helpdesk]          │ │
+│ │                                 │ │
+│ │ IF status = Signed/Assigned:    │ │
+│ │   [Batalkan Assignment]         │ │
+│ │                                 │ │
+│ │ IF status = Resolved:           │ │
+│ │   [Close Tiket]                 │ │
+│ │                                 │ │
+│ │ IF status = In Progress:        │ │
+│ │   (tidak ada action)            │ │
+│ │   (tunggu Helpdesk selesaikan)  │ │
+│ │                                 │ │
+│ │ IF status = Closed:             │ │
+│ │   (read-only)                   │ │
 │ └─────────────────────────────────┘ │
 ├─────────────────────────────────────┤
 │ Message Input                        │
 │ [ 📎 ] [ Ketik pesan...      ] [➤] │
 └─────────────────────────────────────┘
 ```
+
+## Status & Aksi yang Tersedia untuk Admin
+
+| Status | Aksi yang Tersedia | Tombol |
+|--------|---------------------|--------|
+| `Submitted` | Assign ke Helpdesk | "Assign ke Helpdesk" |
+| `Signed/Assigned` | Batalkan assignment (jika Helpdesk berhalangan) | "Batalkan Assignment" |
+| `In Progress` | **TIDAK ADA** (tunggu Helpdesk) | - |
+| `Resolved` | Close tiket (setelah User konfirmasi) | "Close Tiket" |
+| `Closed` | Read-only (status final) | - |
 
 ## Features & Interactions
 
@@ -106,89 +120,131 @@ Displays primary ticket information:
 - Status badge
 - Priority badge
 - Created timestamp
+- Created by (User)
 
 ### 3. Status Timeline
 
-Visual representation of ticket lifecycle:
+Visual representation of ticket lifecycle (5 stages):
 
 | Status | Icon | Color |
 |--------|------|-------|
-| Tiket Dibuat | ✓ (check) | Success (#10B981) |
-| Ditangani | ✓ (check) | Success (#10B981) |
-| Diproses | ○ (filled circle) | Primary (#4F46E5) |
-| Selesai | ○ (empty circle) | Border (#E5E7EB) |
+| Submitted | ✓ (check) | Success (jika lewat) |
+| Signed/Assigned | ✓ (check) | Success (jika lewat) |
+| In Progress | ✓ (check) | Success (jika lewat) |
+| Resolved | ✓ (check) | Success (jika lewat) |
+| Closed | ✓ (check) atau ○ (kosong) | Success / Border |
 
 **Visual:**
 - Filled icon + connecting line = Completed
 - Filled icon + no line = Current
 - Empty icon = Pending
 
-**Interaction:**
-- Admin can move status forward only (no backward movement)
-
 ### 4. Ticket Details Section
-
-Grid layout showing:
 
 | Field | Value | Editable |
 |-------|-------|----------|
 | Pembuat | User name + role | No |
 | Email | User email | No |
-| Prioritas | High/Medium/Low | Yes |
-| Ditugaskan | Staff name | Yes |
+| Prioritas | High/Medium/Low | **No** (read-only) |
+| Ditugaskan | Helpdesk name (jika assigned) | **Yes** (jika status Submitted) |
 | Tanggal Dibuat | DateTime | No |
-| Tanggal Update | DateTime | No |
+| Terakhir Update | DateTime | No |
 
-**Interaction:**
-- Tap priority → Dropdown to change
-- Tap "Ditugaskan" → Staff selection modal
+**Catatan**: Admin **tidak bisa** mengubah prioritas tiket (di-handle oleh sistem/saat User buat).
 
 ### 5. Description Section
-
 - Expandable text
 - Full description text
 - Copy button
 
 ### 6. Attachments Section
-
-| Element | Description |
-|---------|-------------|
-| File Icon | Based on file type |
-| File Name | Original filename |
-| File Size | Human readable |
-| Download Button | Save to device |
-
-**Supported Types:**
-- Images: .jpg, .png, .gif
-- Documents: .pdf, .doc, .docx
-- Max size: 5MB per file
+- File icon based on file type
+- File name + size
+- Download button
 
 ### 7. Conversation Section
 
-Chat-style interface for communication:
+Chat-style interface. Sender bisa:
+- **User** (Pembuat tiket)
+- **Helpdesk** (yang di-assign)
+- **Admin** (Admin bisa ikut komentar, tapi tidak wajib)
 
-**Message Bubble (Staff):**
-- Left aligned
-- White background
-- Staff name + timestamp
+### 8. Quick Actions Bar (Kontekstual Sesuai Status)
 
-**Message Bubble (User):**
-- Right aligned
-- Primary color background
-- White text
-- User name + timestamp
+#### 8a. Tombol "Assign ke Helpdesk" (status = Submitted)
 
-**Interaction:**
-- Scroll to load more messages
-- Pull to refresh
-- Load more on scroll
+```
+┌─────────────────────────────────────┐
+│ Tugaskan ke Helpdesk                │
+├─────────────────────────────────────┤
+│ 🔍 Cari helpdesk...                 │
+├─────────────────────────────────────┤
+│ ○ Sarah (Helpdesk) - Available      │
+│   📊 5 tiket aktif                  │
+│ ○ John (Helpdesk) - Available       │
+│   📊 3 tiket aktif                  │
+│ ○ Budi (Helpdesk) - On Leave        │
+│   📊 0 tiket aktif                  │
+├─────────────────────────────────────┤
+│        [Batal]  [Tugaskan]          │
+└─────────────────────────────────────┘
+```
 
-### 8. Quick Actions Bar
+**Behavior:**
+- Menampilkan Helpdesk yang statusnya `available`
+- Menampilkan jumlah tiket aktif per Helpdesk (info beban kerja)
+- Tap Helpdesk → Konfirmasi → Status berubah ke `Signed/Assigned`
+- Notifikasi dikirim ke Helpdesk yang di-assign
 
-| Button | Action |
-|--------|--------|
-| Ubah Status | Dropdown: Ditangani, Diproses, Selesai, Ditolak |
-| Tugaskan | Modal: Select staff from list |
+#### 8b. Tombol "Batalkan Assignment" (status = Signed/Assigned)
+
+```
+┌─────────────────────────────────────┐
+│ ⚠️  Batalkan Assignment?            │
+├─────────────────────────────────────┤
+│ Tiket akan dikembalikan ke status   │
+│ Submitted. Tiket Helpdesk saat ini  │
+│ tidak akan lagi melihat tiket ini.  │
+│                                     │
+│ Alasan pembatalan:                  │
+│ ┌─────────────────────────────────┐ │
+│ │                                 │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│   [Batal]  [Batalkan Assignment]   │
+└─────────────────────────────────────┘
+```
+
+**Behavior:**
+- Status kembali ke `Submitted`
+- Helpdesk yang di-assign menerima notifikasi pembatalan
+- Wajib mengisi alasan pembatalan
+
+#### 8c. Tombol "Close Tiket" (status = Resolved)
+
+```
+┌─────────────────────────────────────┐
+│ ✅  Close Tiket                      │
+├─────────────────────────────────────┤
+│ Checklist Quality Control:          │
+│ ☑ User sudah konfirmasi selesai     │
+│ ☑ Helpdesk sudah upload bukti       │
+│ ☑ Hasil kerja sesuai dengan laporan │
+│                                     │
+│ Catatan penutupan (opsional):        │
+│ ┌─────────────────────────────────┐ │
+│ │                                 │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│   [Batal]  [Close Tiket]           │
+└─────────────────────────────────────┘
+```
+
+**Behavior:**
+- Wajib semua checklist tercentang (kecuali catatan opsional)
+- Status berubah ke `Closed` (final)
+- Notifikasi dikirim ke User dan Helpdesk
+- Tiket masuk ke Riwayat Tiket
 
 ### 9. Message Input
 
@@ -202,46 +258,6 @@ Chat-style interface for communication:
 **Validation:**
 - Empty message: disabled send
 - Max 500 characters
-
-**Interaction:**
-- Tap send → Add message to conversation
-- Keyboard auto-adjust
-
-### 10. Action Modals
-
-#### Ubah Status Modal
-```
-┌─────────────────────────────────────┐
-│ Ubah Status                         │
-├─────────────────────────────────────┤
-│ ○ Ditangani                         │
-│ ● Diproses                          │
-│ ○ Selesai                           │
-│ ○ Ditolak                           │
-├─────────────────────────────────────┤
-│ Catatan (opsional):                 │
-│ ┌─────────────────────────────────┐ │
-│ │                                 │ │
-│ └─────────────────────────────────┘ │
-├─────────────────────────────────────┤
-│        [Batal]  [Simpan]            │
-└─────────────────────────────────────┘
-```
-
-#### Tugaskan Modal
-```
-┌─────────────────────────────────────┐
-│ Tugaskan ke Staff                   │
-├─────────────────────────────────────┤
-│ 🔍 Cari staff...                    │
-├─────────────────────────────────────┤
-│ ○ Sarah (Admin) - Available        │
-│ ○ Budi (Helpdesk) - Available      │
-│ ● John (Helpdesk) - On Leave      │
-├─────────────────────────────────────┤
-│        [Batal]  [Tugaskan]         │
-└─────────────────────────────────────┘
-```
 
 ## States
 
@@ -258,20 +274,21 @@ Chat-style interface for communication:
 - No attachment: "Tidak ada lampiran"
 - No conversation: "Belum ada percakapan"
 
-### Success States
-- Message sent: Brief checkmark animation
-- Status updated: Snackbar confirmation
-- Ticket assigned: Snackbar confirmation
+## Business Rules
+
+1. **QC Wajib**: Sebelum close tiket, Admin WAJIB memastikan User sudah konfirmasi (tombol "Konfirmasi Selesai" di sisi User).
+2. **Tidak bisa loncat status**: Admin hanya bisa assign (Submitted → Signed) atau close (Resolved → Closed). Tidak bisa langsung Submitted → In Progress.
+3. **Batalkan assignment hanya jika status Signed/Assigned**: Jika sudah In Progress, Admin harus menunggu Helpdesk menyelesaikan atau restart tiket.
+4. **Closed adalah final**: Tidak ada transisi dari Closed.
 
 ## Technical Requirements
 
 ### Navigation
-- `/admin/tickets` - Back route
-- `/admin/ticket/:id` - This page
+- `/admin/ticket/:id` - Ticket detail
 
 ### Data Model
 ```dart
-class TicketDetail {
+class AdminTicketDetail {
   String id;
   String ticketId;
   String title;
@@ -279,64 +296,44 @@ class TicketDetail {
   String category;
   String status;
   String priority;
-  User creator;
-  User? assignee;
-  List<Attachment> attachments;
-  List<Conversation> conversations;
-  List<TicketStatusHistory> statusHistory;
+  String? assignedToId;
+  String? assignedToName;
+  String createdById;
+  String createdByName;
   DateTime createdAt;
   DateTime? updatedAt;
-  DateTime? completedAt;
-}
-
-class Conversation {
-  String id;
-  String senderId;
-  String senderName;
-  String senderRole; // 'staff' or 'user'
-  String message;
-  DateTime timestamp;
-  Attachment? attachment;
-}
-
-class TicketStatusHistory {
-  String status;
-  DateTime timestamp;
-  String changedBy;
-  String? note;
+  DateTime? assignedAt;
+  DateTime? resolvedAt;
+  DateTime? closedAt;
+  List<Attachment> attachments;
+  List<Comment> comments;
+  bool userConfirmation;  // Penting untuk close
 }
 ```
 
 ### API Endpoints (Mock)
-- `GET /tickets/:id` - Get ticket detail
-- `POST /tickets/:id/conversation` - Send message
-- `PUT /tickets/:id/status` - Update status
-- `PUT /tickets/:id/assign` - Assign ticket
-
-### Actions
-1. **Update Status**
-   - Validate new status is forward progression
-   - Add to status history
-   - Send notification to user
-
-2. **Send Message**
-   - Add to conversation
-   - Send notification to user
-   - Update ticket updatedAt
-
-3. **Assign Ticket**
-   - Update assignee
-   - Send notification to assigned staff
-   - Update ticket updatedAt
+- `GET /admin/tickets/:id` - Get ticket detail
+- `POST /admin/tickets/:id/assign` - Assign to helpdesk
+- `POST /admin/tickets/:id/cancel-assignment` - Cancel assignment
+- `POST /admin/tickets/:id/close` - Close ticket (with QC checklist)
+- `POST /admin/tickets/:id/comments` - Add comment
 
 ## Dependencies
 
+### Required Pages
+- AdminTicketDetailPage
+- AssignHelpdeskModal
+- CloseTicketModal
+
 ### Required Widgets
-- TicketHeaderCard
-- StatusTimeline
-- DetailRow
-- ConversationBubble
-- MessageInput
-- ActionDropdown
-- StaffSelectorModal
-- StatusChangeModal
+- StatusBadge
+- PriorityBadge
+- CategoryBadge
+- ConversationList
+- CommentInput
+- QCChecklist
+
+### Required Services
+- TicketService
+- HelpdeskService
+- CommentService

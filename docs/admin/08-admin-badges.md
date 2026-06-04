@@ -2,19 +2,22 @@
 
 ## Overview
 
-Koleksi komponen badge yang digunakan di halaman Admin untuk menampilkan status, kategori, prioritas, dan role.
+Koleksi komponen badge yang digunakan di halaman **Admin** untuk menampilkan status, kategori, prioritas, dan role. Admin melihat **semua 6 status** (termasuk `submitted` dan `rejected` yang tidak dilihat Helpdesk).
+
+> **Catatan**: Halaman ini khusus untuk badge Admin. Untuk badge Helpdesk, lihat [../helpdesk/07-helpdesk-badges.md](../helpdesk/07-helpdesk-badges.md).
 
 ## Status Badge
 
-### Badge Variants
+### Badge Variants (6 Status - Admin Melihat Semua)
 
 | Status | Background Color | Text Color | Icon |
 |--------|-----------------|------------|------|
-| baru | Warning Light | Warning Dark | `fiber_new` |
-| ditangani | Info Light | Info Dark | `support_agent` |
-| diproses | Primary Light | Primary Dark | `pending` |
-| selesai | Success Light | Success Dark | `check_circle` |
-| ditolak | Error Light | Error Dark | `cancel` |
+| submitted (baru) | Warning Light | Warning Dark | `fiber_new` |
+| signed_assigned (ditangani) | Info Light | Info Dark | `support_agent` |
+| in_progress (diproses) | Primary Light | Primary Dark | `pending` |
+| resolved (selesai) | Success Light | Success Dark | `check_circle` |
+| closed | Gray Light | Gray Dark | `lock` |
+| rejected (ditolak) | Error Light | Error Dark | `cancel` |
 
 ### Visual Design
 
@@ -29,25 +32,29 @@ Koleksi komponen badge yang digunakan di halaman Admin untuk menampilkan status,
 ### Color Codes
 
 ```dart
-// Status Colors
+// Status Colors (Admin melihat 6 status)
 const statusColors = {
-  'baru': {
+  'submitted': {
     'background': Color(0xFFFEF3C7), // Amber 100
     'text': Color(0xFF92400E),       // Amber 800
   },
-  'ditangani': {
+  'signed_assigned': {
     'background': Color(0xFFDBEAFE), // Blue 100
     'text': Color(0xFF1E40AF),       // Blue 800
   },
-  'diproses': {
+  'in_progress': {
     'background': Color(0xFFEEF2FF), // Indigo 100
     'text': Color(0xFF4F46E5),        // Indigo 600
   },
-  'selesai': {
+  'resolved': {
     'background': Color(0xFFD1FAE5), // Green 100
     'text': Color(0xFF065F46),       // Green 800
   },
-  'ditolak': {
+  'closed': {
+    'background': Color(0xFFE5E7EB), // Gray 100
+    'text': Color(0xFF374151),       // Gray 700
+  },
+  'rejected': {
     'background': Color(0xFFFEE2E2), // Red 100
     'text': Color(0xFF991B1B),        // Red 800
   },
@@ -165,14 +172,13 @@ const categoryColors = {
 
 ## Role Badge
 
-### Badge Variants
+### Badge Variants (3 Role Setelah Revisi)
 
-| Role | Background Color | Text Color |
-|------|-----------------|------------|
-| admin | Primary Light | Primary Dark |
-| helpdesk | Info Light | Info Dark |
-| staff | Success Light | Success Dark |
-| mahasiswa | Gray Light | Gray Dark |
+| Role | Background Color | Text Color | Keterangan |
+|------|-----------------|------------|------------|
+| admin | Primary Light | Primary Dark | Pengelola sistem |
+| helpdesk | Info Light | Info Dark | Petugas support |
+| user | Gray Light | Gray Dark | Mahasiswa/Staff pelapor |
 
 ### Visual Design
 

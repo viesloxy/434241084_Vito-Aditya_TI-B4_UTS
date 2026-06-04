@@ -4,6 +4,10 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/custom_button.dart';
 
+/// Role login untuk testing. Setelah integrasi backend,
+/// role akan dideteksi dari response API berdasarkan kredensial user.
+enum LoginRole { user, admin, helpdesk }
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -19,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
-  bool _isAdminMode = false; // For testing Admin/Helpdesk mode
+  LoginRole _selectedRole = LoginRole.user;
 
   @override
   void dispose() {
@@ -53,14 +57,22 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
+      // Simulasi panggilan API
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
         setState(() => _isLoading = false);
-        if (_isAdminMode) {
-          Navigator.pushReplacementNamed(context, '/admin');
-        } else {
-          Navigator.pushReplacementNamed(context, '/home');
+        // Redirect sesuai role
+        switch (_selectedRole) {
+          case LoginRole.user:
+            Navigator.pushReplacementNamed(context, '/home');
+            break;
+          case LoginRole.admin:
+            Navigator.pushReplacementNamed(context, '/admin');
+            break;
+          case LoginRole.helpdesk:
+            Navigator.pushReplacementNamed(context, '/helpdesk');
+            break;
         }
       }
     }
@@ -177,7 +189,8 @@ class _LoginPageState extends State<LoginPage> {
                                 setState(() => _rememberMe = value ?? false);
                               },
                               activeColor: AppColors.primary,
-                              side: const BorderSide(color: AppColors.border, width: 1.5),
+                              side: const BorderSide(
+                                  color: AppColors.border, width: 1.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
                               ),
@@ -186,7 +199,8 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(width: AppConstants.spacingSm),
                           const Text(
                             'Ingat saya',
-                            style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                            style: TextStyle(
+                                fontSize: 14, color: AppColors.textPrimary),
                           ),
                         ],
                       ),
@@ -212,12 +226,13 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: AppConstants.spacing2xl),
 
-                // Role Switcher (for testing)
+                // Role Switcher (3 Mode untuk Testing)
                 Container(
                   padding: const EdgeInsets.all(AppConstants.spacingMd),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusMedium),
                     border: Border.all(color: AppColors.border),
                   ),
                   child: Column(
@@ -234,65 +249,26 @@ class _LoginPageState extends State<LoginPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _isAdminMode = false),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: !_isAdminMode ? AppColors.primary : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.person_outline,
-                                      size: 18,
-                                      color: !_isAdminMode ? Colors.white : AppColors.textSecondary,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Pengguna',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: !_isAdminMode ? Colors.white : AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            child: _buildRoleButton(
+                              role: LoginRole.user,
+                              icon: Icons.person_outline,
+                              label: 'Pengguna',
                             ),
                           ),
+                          const SizedBox(width: AppConstants.spacingXs),
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _isAdminMode = true),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: _isAdminMode ? AppColors.primary : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.admin_panel_settings_outlined,
-                                      size: 18,
-                                      color: _isAdminMode ? Colors.white : AppColors.textSecondary,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Admin',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: _isAdminMode ? Colors.white : AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            child: _buildRoleButton(
+                              role: LoginRole.admin,
+                              icon: Icons.admin_panel_settings_outlined,
+                              label: 'Admin',
+                            ),
+                          ),
+                          const SizedBox(width: AppConstants.spacingXs),
+                          Expanded(
+                            child: _buildRoleButton(
+                              role: LoginRole.helpdesk,
+                              icon: Icons.support_agent_outlined,
+                              label: 'Helpdesk',
                             ),
                           ),
                         ],
@@ -318,10 +294,12 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     const Expanded(child: Divider(color: AppColors.border)),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingLg),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppConstants.spacingLg),
                       child: const Text(
                         'atau',
-                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                        style: TextStyle(
+                            fontSize: 14, color: AppColors.textSecondary),
                       ),
                     ),
                     const Expanded(child: Divider(color: AppColors.border)),
@@ -330,35 +308,91 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: AppConstants.spacing2xl),
 
-                // Register Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Belum punya akun? ',
-                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/register'),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 0),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text(
-                        'Daftar',
+                // Register Link (Hanya untuk User)
+                if (_selectedRole == LoginRole.user)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Belum punya akun? ',
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                            fontSize: 14, color: AppColors.textSecondary),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/register'),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Daftar',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
+                    ],
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.spacingLg),
+                    child: Text(
+                      _selectedRole == LoginRole.admin
+                          ? 'Akun Admin & Helpdesk dibuat oleh sistem/superadmin (tidak bisa register sendiri).'
+                          : 'Akun Helpdesk dibuat oleh sistem/superadmin (tidak bisa register sendiri).',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleButton({
+    required LoginRole role,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedRole = role),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

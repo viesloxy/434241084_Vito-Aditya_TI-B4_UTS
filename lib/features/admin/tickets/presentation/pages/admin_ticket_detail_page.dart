@@ -21,17 +21,19 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   static const int _maxCharacters = 500;
 
   DetailPageState _state = DetailPageState.loading;
-  String _selectedStatus = 'diproses';
+  // Setelah revisi 3 role, Admin HANYA bisa assign & close.
+  // Tidak ada lagi _selectedStatus dropdown di sini.
   String _selectedPriority = 'sedang';
-  String? _selectedStaff;
 
   Map<String, dynamic> _ticketData = {};
 
+  // Timeline 5 status (sesuai workflow 3 role)
   final List<Map<String, dynamic>> _statusTimeline = [
-    {'status': 'Tiket Dibuat', 'date': '21 Jan 2024, 10:00', 'isCompleted': true, 'isActive': false},
-    {'status': 'Ditangani', 'date': '21 Jan 2024, 10:15', 'isCompleted': true, 'isActive': false},
-    {'status': 'Diproses', 'date': '21 Jan 2024, 11:00', 'isCompleted': true, 'isActive': true},
-    {'status': 'Selesai', 'date': '-', 'isCompleted': false, 'isActive': false},
+    {'status': 'Submitted', 'date': '21 Jan 2024, 10:00', 'isCompleted': true, 'isActive': false},
+    {'status': 'Signed/Assigned', 'date': '21 Jan 2024, 10:15', 'isCompleted': true, 'isActive': false},
+    {'status': 'In Progress', 'date': '-', 'isCompleted': false, 'isActive': false},
+    {'status': 'Resolved', 'date': '-', 'isCompleted': false, 'isActive': false},
+    {'status': 'Closed', 'date': '-', 'isCompleted': false, 'isActive': false},
   ];
 
   final List<Map<String, dynamic>> _conversations = [
@@ -45,10 +47,12 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     {'name': 'Dokumen_Pendukung.pdf', 'size': '256 KB', 'type': 'document'},
   ];
 
-  final List<Map<String, dynamic>> _staffOptions = [
-    {'name': 'John Staff', 'initial': 'JS', 'status': 'available'},
-    {'name': 'Sarah Admin', 'initial': 'SA', 'status': 'available'},
-    {'name': 'Budi Staff', 'initial': 'BS', 'status': 'on_leave'},
+  // Helpdesk options (untuk assign tiket)
+  // Setelah revisi 3 role, Admin assign ke Helpdesk (bukan "Staff")
+  final List<Map<String, dynamic>> _helpdeskOptions = [
+    {'name': 'John Helpdesk', 'initial': 'JH', 'workload': 5, 'status': 'available'},
+    {'name': 'Sarah Helpdesk', 'initial': 'SH', 'workload': 3, 'status': 'available'},
+    {'name': 'Budi Helpdesk', 'initial': 'BH', 'workload': 0, 'status': 'on_leave'},
   ];
 
   @override
@@ -513,80 +517,118 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   Widget _buildQuickActions(bool isWide) {
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildDropdownButton(
-              label: 'Ubah Status',
-              icon: Icons.swap_horiz,
-              value: _selectedStatus,
-              items: const [
-                {'label': 'Ditangani', 'value': 'ditangani'},
-                {'label': 'Diproses', 'value': 'diproses'},
-                {'label': 'Selesai', 'value': 'selesai'},
-                {'label': 'Ditolak', 'value': 'ditolak'},
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedStatus = value);
-                  _showSnackBar('Status diubah');
-                }
-              },
-              isWide: isWide,
-            ),
-          ),
-          const SizedBox(width: AppConstants.spacingSm),
-          Expanded(
-            child: _buildDropdownButton(
-              label: 'Tugaskan',
-              icon: Icons.person_add_outlined,
-              value: _selectedStaff ?? 'Belum',
-              items: [
-                {'label': 'Belum ditugaskan', 'value': 'Belum'},
-                ..._staffOptions.map((s) => {'label': s['name'] as String, 'value': s['name'] as String}),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedStaff = value == 'Belum' ? null : value);
-                  _showSnackBar(value == 'Belum' ? 'Tiket belum ditugaskan' : 'Ditugaskan ke $value');
-                }
-              },
-              isWide: isWide,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    final currentStatus = _getString('status', 'submitted');
+    // Tentukan tombol yang tersedia sesuai status
+    // Admin HANYA boleh:
+    //  - Submitted: "Assign ke Helpdesk"
+    //  - Signed/Assigned: "Batalkan Assignment"
+    //  - Resolved: "Close Tiket" (setelah User konfirmasi)
+    //  - In Progress / Closed: tidak ada tombol
+    final status = _helpdeskOptions.isNotEmpty ? currentStatus : 'submitted';
 
-  Widget _buildDropdownButton({
-    required String label,
-    required IconData icon,
-    required String value,
-    required List<Map<String, String>> items,
-    required ValueChanged<String?> onChanged,
-    required bool isWide,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
-          style: TextStyle(fontSize: isWide ? 14 : 12, color: AppColors.textPrimary),
-          items: items.map((item) => DropdownMenuItem(
-            value: item['value'],
-            child: Text(item['label']!),
-          )).toList(),
-          onChanged: onChanged,
+    if (status == 'submitted' || status == 'baru') {
+      return Container(
+        padding: EdgeInsets.all(
+            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+        decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showAssignModal(),
+            icon: const Icon(Icons.person_add_outlined, size: 18),
+            label: const Text('Assign ke Helpdesk'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.radiusMedium)),
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    } else if (status == 'signed_assigned' || status == 'ditangani') {
+      return Container(
+        padding: EdgeInsets.all(
+            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+        decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _showCancelAssignmentDialog(),
+                icon: const Icon(Icons.cancel_outlined, size: 18),
+                label: const Text('Batalkan Assignment'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusMedium)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (status == 'resolved' || status == 'selesai') {
+      return Container(
+        padding: EdgeInsets.all(
+            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+        decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showCloseTicketDialog(),
+            icon: const Icon(Icons.lock_outline, size: 18),
+            label: const Text('Close Tiket (QC)'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.radiusMedium)),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // in_progress, closed - tidak ada tombol
+      return Container(
+        padding: EdgeInsets.all(
+            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+        decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        child: Row(
+          children: [
+            Icon(
+                status == 'in_progress' || status == 'diproses'
+                    ? Icons.hourglass_top_outlined
+                    : Icons.lock_outline,
+                size: 16,
+                color: AppColors.textSecondary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                status == 'in_progress' || status == 'diproses'
+                    ? 'Helpdesk sedang mengerjakan tiket. Tidak ada aksi yang tersedia.'
+                    : 'Tiket sudah ditutup (final).',
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildCommentInput(bool isWide) {
@@ -686,34 +728,183 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tugaskan ke Staff', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const Row(
+              children: [
+                Icon(Icons.person_add_outlined, color: AppColors.primary),
+                SizedBox(width: 8),
+                Text('Tugaskan ke Helpdesk', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              ],
+            ),
             const SizedBox(height: AppConstants.spacingMd),
             TextField(
               decoration: InputDecoration(
-                hintText: 'Cari staff...',
+                hintText: 'Cari helpdesk...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
               ),
             ),
             const SizedBox(height: AppConstants.spacingMd),
-            ...List.generate(_staffOptions.length, (index) {
-              final staff = _staffOptions[index];
-              final isAvailable = staff['status'] == 'available';
-              final name = staff['name'] as String? ?? '';
-              final initial = staff['initial'] as String? ?? '';
+            ...List.generate(_helpdeskOptions.length, (index) {
+              final helpdesk = _helpdeskOptions[index];
+              final isAvailable = helpdesk['status'] == 'available';
+              final name = helpdesk['name'] as String? ?? '';
+              final initial = helpdesk['initial'] as String? ?? '';
+              final workload = helpdesk['workload'] as int? ?? 0;
 
               return ListTile(
-                leading: CircleAvatar(backgroundColor: AppColors.primary, child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 12))),
+                leading: CircleAvatar(backgroundColor: const Color(0xFF3B82F6), child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 12))),
                 title: Text(name),
-                subtitle: Text(isAvailable ? 'Tersedia' : 'Cuti', style: TextStyle(color: isAvailable ? AppColors.success : AppColors.textSecondary)),
+                subtitle: Text(
+                  isAvailable ? 'Tersedia • $workload tiket aktif' : 'Cuti',
+                  style: TextStyle(color: isAvailable ? AppColors.success : AppColors.textSecondary),
+                ),
                 trailing: !isAvailable ? const Icon(Icons.block, color: AppColors.textSecondary) : null,
                 onTap: isAvailable ? () {
                   Navigator.pop(ctx);
+                  setState(() {
+                    _ticketData['assignedTo'] = name;
+                    _ticketData['status'] = 'signed_assigned';
+                  });
                   _showSnackBar('Ditugaskan ke $name');
                 } : null,
               );
             }),
             SizedBox(height: MediaQuery.of(ctx).viewInsets.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCancelAssignmentDialog() {
+    final reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+            SizedBox(width: 8),
+            Text('Batalkan Assignment'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tiket akan dikembalikan ke status Submitted. Helpdesk saat ini tidak akan lagi melihat tiket ini.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            const Text('Alasan pembatalan:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Misal: Helpdesk berhalangan...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              if (reasonController.text.trim().length < 5) {
+                _showSnackBar('Alasan minimal 5 karakter');
+                return;
+              }
+              Navigator.pop(ctx);
+              setState(() {
+                _ticketData['assignedTo'] = null;
+                _ticketData['status'] = 'submitted';
+              });
+              _showSnackBar('Assignment dibatalkan');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+            child: const Text('Batalkan Assignment'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCloseTicketDialog() {
+    bool userConfirmed = false;
+    bool helpdeskProof = false;
+    bool qcSuitable = false;
+    final noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: AppColors.success),
+              SizedBox(width: 8),
+              Text('Close Tiket (QC)'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Checklist Quality Control:',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  value: userConfirmed,
+                  onChanged: (v) => setDialogState(() => userConfirmed = v ?? false),
+                  title: const Text('User sudah konfirmasi selesai', style: TextStyle(fontSize: 13)),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                ),
+                CheckboxListTile(
+                  value: helpdeskProof,
+                  onChanged: (v) => setDialogState(() => helpdeskProof = v ?? false),
+                  title: const Text('Helpdesk sudah upload bukti', style: TextStyle(fontSize: 13)),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                ),
+                CheckboxListTile(
+                  value: qcSuitable,
+                  onChanged: (v) => setDialogState(() => qcSuitable = v ?? false),
+                  title: const Text('Hasil kerja sesuai dengan laporan', style: TextStyle(fontSize: 13)),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: noteController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'Catatan penutupan (opsional)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            ElevatedButton(
+              onPressed: (userConfirmed && helpdeskProof && qcSuitable)
+                  ? () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _ticketData['status'] = 'closed';
+                      });
+                      _showSnackBar('Tiket ditutup (Closed)');
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              child: const Text('Close Tiket'),
+            ),
           ],
         ),
       ),

@@ -27,13 +27,15 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   SortOption _sortOption = SortOption.tanggalTerbaru;
   final Set<int> _selectedTickets = {};
 
+  // Filter sesuai workflow 3 role (5 status + ditolak)
   final List<Map<String, dynamic>> _filters = [
     {'name': 'Semua', 'value': 'semua'},
-    {'name': 'Baru', 'value': 'baru'},
-    {'name': 'Ditangani', 'value': 'ditangani'},
-    {'name': 'Diproses', 'value': 'diproses'},
-    {'name': 'Selesai', 'value': 'selesai'},
-    {'name': 'Ditolak', 'value': 'ditolak'},
+    {'name': 'Submitted', 'value': 'submitted'},
+    {'name': 'Ditugaskan', 'value': 'signed_assigned'},
+    {'name': 'In Progress', 'value': 'in_progress'},
+    {'name': 'Resolved', 'value': 'resolved'},
+    {'name': 'Closed', 'value': 'closed'},
+    {'name': 'Ditolak', 'value': 'rejected'},
   ];
 
   List<Map<String, dynamic>> _tickets = [];
@@ -90,17 +92,18 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   }
 
   List<Map<String, dynamic>> _getMockTickets({required int page, required int pageSize}) {
+    // Mock data dengan status sesuai workflow 3 role
     final allTickets = [
-      {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'description': 'Tidak bisa login ke email kampus', 'category': 'Teknologi', 'status': 'diproses', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': 'John Staff', 'createdBy': 'Ahmad Rizki'},
-      {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'description': 'Mohon info jadwal ujian', 'category': 'Akademik', 'status': 'ditangani', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'Sarah Admin', 'createdBy': 'Budi Santoso'},
-      {'ticketId': '#TK-2024-003', 'title': 'Kerusakan AC di ruang kelas L201', 'description': 'AC tidak dingin', 'category': 'Fasilitas', 'status': 'baru', 'priority': 'rendah', 'date': '30 menit yang lalu', 'assignedTo': null, 'createdBy': 'Dewi Lestari'},
-      {'ticketId': '#TK-2024-004', 'title': 'Pembayaran UKT semester baru', 'description': 'Konfirmasi pembayaran UKT', 'category': 'Keuangan', 'status': 'selesai', 'priority': 'sedang', 'date': '1 jam yang lalu', 'assignedTo': 'Budi Staff', 'createdBy': 'Eko Prasetyo'},
-      {'ticketId': '#TK-2024-005', 'title': 'Peminjaman ruangan lab komputer', 'description': 'Butuh lab untuk praktikum', 'category': 'Akademik', 'status': 'diproses', 'priority': 'tinggi', 'date': '2 jam yang lalu', 'assignedTo': 'John Staff', 'createdBy': 'Fajar Nugroho'},
-      {'ticketId': '#TK-2024-006', 'title': 'Masalah koneksi internet di asrama', 'description': 'Internet lambat sekali', 'category': 'Teknologi', 'status': 'ditangani', 'priority': 'sedang', 'date': '3 jam yang lalu', 'assignedTo': 'John Staff', 'createdBy': 'Gita Permata'},
-      {'ticketId': '#TK-2024-007', 'title': 'Permintaan ATK untuk mengajar', 'description': 'Butuh spidol dan kapur', 'category': 'Fasilitas', 'status': 'diproses', 'priority': 'rendah', 'date': '4 jam yang lalu', 'assignedTo': 'Sarah Admin', 'createdBy': 'Hendra Wijaya'},
-      {'ticketId': '#TK-2024-008', 'title': 'Konfirmasi biaya semester tambahan', 'description': 'Biaya tambahan semester 5', 'category': 'Keuangan', 'status': 'ditangani', 'priority': 'sedang', 'date': '5 jam yang lalu', 'assignedTo': 'Budi Staff', 'createdBy': 'Indah Sari'},
-      {'ticketId': '#TK-2024-009', 'title': 'Jadwal kuliah pengganti', 'description': 'Kuliah pengganti matkul Basis Data', 'category': 'Akademik', 'status': 'selesai', 'priority': 'rendah', 'date': '6 jam yang lalu', 'assignedTo': 'John Staff', 'createdBy': 'Joko Widodo'},
-      {'ticketId': '#TK-2024-010', 'title': 'Perbaikan proyektor ruang 301', 'description': 'Proyektor mati total', 'category': 'Teknologi', 'status': 'ditolak', 'priority': 'sedang', 'date': '7 jam yang lalu', 'assignedTo': null, 'createdBy': 'Karla Suci'},
+      {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'description': 'Tidak bisa login ke email kampus', 'category': 'Teknologi', 'status': 'submitted', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': null, 'createdBy': 'Ahmad Rizki'},
+      {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'description': 'Mohon info jadwal ujian', 'category': 'Akademik', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Budi Santoso'},
+      {'ticketId': '#TK-2024-003', 'title': 'Kerusakan AC di ruang kelas L201', 'description': 'AC tidak dingin', 'category': 'Fasilitas', 'status': 'in_progress', 'priority': 'rendah', 'date': '30 menit yang lalu', 'assignedTo': 'Sarah Helpdesk', 'createdBy': 'Dewi Lestari'},
+      {'ticketId': '#TK-2024-004', 'title': 'Pembayaran UKT semester baru', 'description': 'Konfirmasi pembayaran UKT', 'category': 'Keuangan', 'status': 'resolved', 'priority': 'sedang', 'date': '1 jam yang lalu', 'assignedTo': 'Budi Helpdesk', 'createdBy': 'Eko Prasetyo'},
+      {'ticketId': '#TK-2024-005', 'title': 'Peminjaman ruangan lab komputer', 'description': 'Butuh lab untuk praktikum', 'category': 'Akademik', 'status': 'in_progress', 'priority': 'tinggi', 'date': '2 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Fajar Nugroho'},
+      {'ticketId': '#TK-2024-006', 'title': 'Masalah koneksi internet di asrama', 'description': 'Internet lambat sekali', 'category': 'Teknologi', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '3 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Gita Permata'},
+      {'ticketId': '#TK-2024-007', 'title': 'Permintaan ATK untuk mengajar', 'description': 'Butuh spidol dan kapur', 'category': 'Fasilitas', 'status': 'in_progress', 'priority': 'rendah', 'date': '4 jam yang lalu', 'assignedTo': 'Sarah Helpdesk', 'createdBy': 'Hendra Wijaya'},
+      {'ticketId': '#TK-2024-008', 'title': 'Konfirmasi biaya semester tambahan', 'description': 'Biaya tambahan semester 5', 'category': 'Keuangan', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '5 jam yang lalu', 'assignedTo': 'Budi Helpdesk', 'createdBy': 'Indah Sari'},
+      {'ticketId': '#TK-2024-009', 'title': 'Jadwal kuliah pengganti', 'description': 'Kuliah pengganti matkul Basis Data', 'category': 'Akademik', 'status': 'closed', 'priority': 'rendah', 'date': '6 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Joko Widodo'},
+      {'ticketId': '#TK-2024-010', 'title': 'Perbaikan proyektor ruang 301', 'description': 'Proyektor mati total', 'category': 'Teknologi', 'status': 'rejected', 'priority': 'sedang', 'date': '7 jam yang lalu', 'assignedTo': null, 'createdBy': 'Karla Suci'},
     ];
     final start = page * pageSize;
     final end = start + pageSize;
@@ -199,20 +202,15 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
             ),
             ListTile(
               leading: const Icon(Icons.person_add, color: AppColors.primary),
-              title: const Text('Tugaskan ke Staff'),
+              title: const Text('Assign ke Helpdesk'),
               onTap: () {
                 Navigator.pop(ctx);
                 _showAssignDialog();
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.check_circle, color: AppColors.success),
-              title: const Text('Tandai Selesai'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _markSelectedAsDone();
-              },
-            ),
+            // Catatan: Bulk action "Tandai Selesai" sudah dihapus karena
+            // setelah revisi 3 role, Admin TIDAK bisa langsung menandai
+            // tiket selesai. Itu adalah tugas Helpdesk.
             ListTile(
               leading: const Icon(Icons.delete, color: AppColors.error),
               title: const Text('Hapus Terpilih'),
@@ -232,31 +230,40 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tugaskan ke Staff'),
+        title: const Text('Assign ke Helpdesk'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('John Staff'),
+              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
+              title: const Text('John Helpdesk'),
+              subtitle: const Text('5 tiket aktif'),
               onTap: () {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tiket ditugaskan ke John Staff')),
+                  const SnackBar(content: Text('Tiket ditugaskan ke John Helpdesk')),
                 );
                 _toggleSelectionMode();
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Sarah Admin'),
+              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
+              title: const Text('Sarah Helpdesk'),
+              subtitle: const Text('3 tiket aktif'),
               onTap: () {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tiket ditugaskan ke Sarah Admin')),
+                  const SnackBar(content: Text('Tiket ditugaskan ke Sarah Helpdesk')),
                 );
                 _toggleSelectionMode();
               },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
+              title: const Text('Budi Helpdesk'),
+              subtitle: const Text('0 tiket aktif (Cuti)'),
+              enabled: false,
+              onTap: null,
             ),
           ],
         ),
@@ -264,12 +271,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     );
   }
 
-  void _markSelectedAsDone() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${_selectedTickets.length} tiket ditandai selesai')),
-    );
-    _toggleSelectionMode();
-  }
+  // Method ini sudah tidak relevan karena Admin tidak bisa
+  // "Tandai Selesai" tiket secara langsung. Itu tugas Helpdesk.
+  // void _markSelectedAsDone() { ... }
 
   void _deleteSelected() {
     showDialog(
@@ -606,6 +610,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   }
 
   Widget _buildSelectionBar() {
+    // Tombol "Selesai" dihapus karena Admin tidak bisa tandai selesai
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.all(AppConstants.spacingMd),
@@ -614,8 +619,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildSelectionButton(Icons.select_all, 'Pilih Semua', _selectAll),
-            _buildSelectionButton(Icons.person_add, 'Tugaskan', _showAssignDialog),
-            _buildSelectionButton(Icons.check_circle, 'Selesai', _markSelectedAsDone),
+            _buildSelectionButton(Icons.person_add, 'Assign Helpdesk', _showAssignDialog),
             _buildSelectionButton(Icons.delete, 'Hapus', _deleteSelected),
           ],
         ),

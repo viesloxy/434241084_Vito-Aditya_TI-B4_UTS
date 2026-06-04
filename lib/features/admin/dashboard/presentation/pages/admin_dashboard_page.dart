@@ -35,12 +35,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     {'category': 'Lainnya', 'count': 30, 'icon': Icons.more_horiz, 'bgColor': const Color(0xFFE5E7EB), 'textColor': const Color(0xFF374151)},
   ];
 
+  // Mock recent tickets - menggunakan status sesuai workflow 3 role
   final List<Map<String, dynamic>> _recentTickets = [
-    {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'category': 'Teknologi', 'status': 'diproses', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': 'John Staff'},
-    {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'category': 'Akademik', 'status': 'ditangani', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'Sarah Admin'},
-    {'ticketId': '#TK-2024-003', 'title': 'Kerusakan AC di ruang kelas L201', 'category': 'Fasilitas', 'status': ' baru', 'priority': 'rendah', 'date': '30 menit yang lalu', 'assignedTo': null},
-    {'ticketId': '#TK-2024-004', 'title': 'Tagihan UKT semester genap', 'category': 'Keuangan', 'status': 'selesai', 'priority': 'sedang', 'date': '1 jam yang lalu', 'assignedTo': 'Sarah Admin'},
-    {'ticketId': '#TK-2024-005', 'title': 'Permintaan akses perpustakaan digital', 'category': 'Akademik', 'status': 'diproses', 'priority': 'tinggi', 'date': '2 jam yang lalu', 'assignedTo': 'John Staff'},
+    {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'category': 'Teknologi', 'status': 'submitted', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': null, 'createdBy': 'Ahmad Rizki'},
+    {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'category': 'Akademik', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Budi Santoso'},
+    {'ticketId': '#TK-2024-003', 'title': 'Kerusakan AC di ruang kelas L201', 'category': 'Fasilitas', 'status': 'in_progress', 'priority': 'rendah', 'date': '30 menit yang lalu', 'assignedTo': 'Sarah Helpdesk', 'createdBy': 'Dewi Lestari'},
+    {'ticketId': '#TK-2024-004', 'title': 'Tagihan UKT semester genap', 'category': 'Keuangan', 'status': 'resolved', 'priority': 'sedang', 'date': '1 jam yang lalu', 'assignedTo': 'Budi Helpdesk', 'createdBy': 'Eko Prasetyo'},
+    {'ticketId': '#TK-2024-005', 'title': 'Permintaan akses perpustakaan digital', 'category': 'Akademik', 'status': 'in_progress', 'priority': 'tinggi', 'date': '2 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Fajar Nugroho'},
   ];
 
   @override

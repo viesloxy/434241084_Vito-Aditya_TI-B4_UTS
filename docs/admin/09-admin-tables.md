@@ -2,7 +2,9 @@
 
 ## Overview
 
-Komponen tabel yang digunakan di halaman Admin untuk menampilkan data dalam format grid, seperti daftar user, statistik staff, dan data laporan.
+Komponen tabel yang digunakan di halaman **Admin** untuk menampilkan data dalam format grid, seperti daftar user, statistik helpdesk, dan data laporan.
+
+> **Catatan**: Halaman ini khusus untuk tabel Admin. Untuk tabel Helpdesk, lihat [../helpdesk/08-helpdesk-tables.md](../helpdesk/08-helpdesk-tables.md).
 
 ## Data Table Widget
 
@@ -60,27 +62,27 @@ Komponen tabel yang digunakan di halaman Admin untuk menampilkan data dalam form
 - Page navigation controls
 - Total count display
 
-## Staff Performance Table
+## Helpdesk Performance Table
 
 ### Visual Design
 
 ```
 ┌─────────────────────────────────────┐
-│ Performa Staff                      │
+│ Performa Helpdesk                   │
 ├─────────────────────────────────────┤
-│ Nama    │ Selesai │ Waktu │ Rate    │
-├─────────┼─────────┼───────┼─────────┤
-│ Sarah   │ 45      │ 2.1j  │ 92% ██ │
-│ Budi    │ 38      │ 2.8j  │ 85% █▓ │
-│ John    │ 32      │ 3.2j  │ 78% █░ │
-└─────────┴─────────┴───────┴─────────┘
+│ Nama       │ Selesai │ Waktu │ Rate │
+├────────────┼─────────┼───────┼──────┤
+│ Sarah (H)  │ 45      │ 2.1j  │ 92% ██ │
+│ Budi (H)   │ 38      │ 2.8j  │ 85% █▓ │
+│ John (H)   │ 32      │ 3.2j  │ 78% █░ │
+└────────────┴─────────┴───────┴──────┘
 ```
 
 ### Columns
 
 | Column | Width | Content |
 |--------|-------|---------|
-| Nama | 30% | Staff name with avatar |
+| Nama | 30% | Helpdesk name with avatar |
 | Selesai | 15% | Completed ticket count |
 | Waktu | 15% | Avg resolution time |
 | Rate | 40% | Completion rate + progress bar |
@@ -123,9 +125,9 @@ const rateColors = {
 ├─────────────────────────────────────┤
 │ ☐ │ Nama       │ Role    │ Status  │
 ├───┼────────────┼─────────┼─────────┤
-│ ☐ │ John Doe   │ Mahasis │ Aktif  │
-│ ☐ │ Sarah Adm  │ Admin   │ Aktif  │
-│ ☑ │ Budi Staff │ Staff   │ Aktif  │
+│ ☐ │ John Doe   │ User    │ Aktif  │
+│ ☐ │ Sarah H.   │ Helpdesk│ Aktif  │
+│ ☑ │ Ahmad A.   │ Admin   │ Aktif  │
 └───┴────────────┴─────────┴─────────┘
 │ [Select All] [Assign] [Delete]      │
 └─────────────────────────────────────┘

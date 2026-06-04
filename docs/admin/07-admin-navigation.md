@@ -2,7 +2,9 @@
 
 ## Overview
 
-Komponen navigasi khusus untuk role Admin/Helpdesk yang mencakup bottom navigation bar dan header navigation.
+Komponen navigasi khusus untuk role **Admin** yang mencakup bottom navigation bar dan header navigation.
+
+> **Catatan**: Halaman ini khusus untuk navigasi Admin. Untuk navigasi Helpdesk, lihat [../helpdesk/06-helpdesk-navigation.md](../helpdesk/06-helpdesk-navigation.md).
 
 ## Bottom Navigation Bar
 

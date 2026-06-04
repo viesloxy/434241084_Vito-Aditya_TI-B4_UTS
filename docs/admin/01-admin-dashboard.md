@@ -2,7 +2,9 @@
 
 ## Overview
 
-Halaman Dashboard adalah halaman utama untuk Admin/Helpdesk yang menampilkan overview statistik, data tiket terbaru, dan quick actions. Halaman ini berfungsi sebagai central hub untuk monitoring aktivitas helpdesk.
+Halaman Dashboard adalah halaman utama untuk role **Admin** yang menampilkan overview statistik global sistem, data tiket terbaru dari semua user, dan quick actions. Halaman ini berfungsi sebagai central hub untuk monitoring keseluruhan aktivitas helpdesk.
+
+> **Catatan Revisi**: Halaman dashboard Admin hanya menampilkan data **global** (semua tiket dari semua user). Dashboard Helpdesk (lihat [../helpdesk/01-helpdesk-dashboard.md](../helpdesk/01-helpdesk-dashboard.md)) menampilkan data **personal** (tiket yang di-assign ke Helpdesk tersebut).
 
 ## Visual Design
 
@@ -30,49 +32,37 @@ Halaman Dashboard adalah halaman utama untuk Admin/Helpdesk yang menampilkan ove
 | Body Text | Inter | 14px | 400 |
 | Caption | Inter | 12px | 400 |
 
-### Spacing System
-
-- Page padding: 16px
-- Card padding: 16px
-- Section spacing: 24px
-- Element spacing: 12px
-
 ## Layout Structure
 
 ```
 ┌─────────────────────────────────────┐
 │ Header                              │
-│ - Admin name & role                 │
+│ - Admin name & role badge          │
 │ - Search icon                       │
 │ - Profile avatar                    │
 ├─────────────────────────────────────┤
 │ Quick Stats Cards (2x2 Grid)        │
 │ ┌─────────┐ ┌─────────┐             │
-│ │ Total   │ │ Pending │             │
-│ │ Tiket   │ │ Tiket   │             │
+│ │ Total   │ │ Tiket   │             │
+│ │ Tiket   │ │ Baru    │             │
 │ └─────────┘ └─────────┘             │
 │ ┌─────────┐ ┌─────────┐             │
-│ │ Diproses│ │ Selesai │             │
+│ │ Sedang  │ │ Selesai │             │
+│ │ Proses  │ │ (Closed)│             │
 │ └─────────┘ └─────────┘             │
 ├─────────────────────────────────────┤
-│ Quick Actions                       │
-│ [ + Buat Tiket ] [ 📊 Laporan ]      │
+│ Tiket Masuk (Submitted)             │
+│ [Daftar tiket Submitted yang       │
+│  perlu di-assign]                   │
 ├─────────────────────────────────────┤
-│ Kategori Tiket (Horizontal Scroll)  │
-│ [Akademik] [Teknologi] [Fasilitas]   │
+│ Performa Helpdesk                   │
+│ [Tabel performa masing-masing      │
+│  Helpdesk]                          │
 ├─────────────────────────────────────┤
-│ Tiket Terbaru                        │
-│ ┌─────────────────────────────┐     │
-│ │ #TK-001 | Reset Password    │     │
-│ │ Akademik | Pending | 2 jam  │     │
-│ └─────────────────────────────┘     │
-│ ┌─────────────────────────────┐     │
-│ │ #TK-002 | AC Rusak          │     │
-│ │ Fasilitas | Diproses | 5 jam│     │
-│ └─────────────────────────────┘     │
+│ Tiket Terbaru (Semua Status)        │
+│ [5 tiket terbaru]                  │
 ├─────────────────────────────────────┤
-│ Admin Bottom Navigation              │
-│ [Dashboard][Tiket][Notif][Profil]   │
+│ Admin Bottom Navigation             │
 └─────────────────────────────────────┘
 ```
 
@@ -83,57 +73,65 @@ Halaman Dashboard adalah halaman utama untuk Admin/Helpdesk yang menampilkan ove
 | Element | Description |
 |---------|-------------|
 | Greeting Text | "Selamat datang, [Nama Admin]" |
-| Role Badge | Menampilkan "Admin" atau "Helpdesk" |
+| Role Badge | "Administrator" (warna primary) |
 | Search Button | Icon search, navigasi ke halaman pencarian |
 | Profile Avatar | CircleAvatar dengan inisial, navigasi ke profil |
 
-### 2. Quick Stats Cards
+### 2. Quick Stats Cards (Statistik Global)
 
 | Stat Card | Data | Color |
 |-----------|------|-------|
-| Total Tiket | Counter semua tiket | Primary (#4F46E5) |
-| Pending | Tiket belum ditangani | Warning (#F59E0B) |
-| Diproses | Tiket sedang dikerjakan | Info (#3B82F6) |
-| Selesai | Tiket yang sudah resolved | Success (#10B981) |
+| Total Tiket | Counter semua tiket (semua status) | Primary (#4F46E5) |
+| Tiket Baru | Tiket berstatus `Submitted` (perlu di-assign) | Warning (#F59E0B) |
+| Sedang Diproses | Tiket berstatus `Signed/Assigned` atau `In Progress` | Info (#3B82F6) |
+| Selesai | Tiket berstatus `Resolved` (menunggu konfirmasi user) | Success (#10B981) |
 
 **Interaction:**
 - Tap on card → Navigasi ke filtered ticket list berdasarkan status
 - Pull to refresh → Update data statistik
 
-### 3. Quick Actions
+### 3. Tiket Masuk (Prioritas Utama)
 
-| Action | Icon | Navigation |
-|--------|------|------------|
-| Buat Tiket | `Icons.add_circle` | `/admin/create-ticket` |
-| Lihat Laporan | `Icons.analytics` | `/admin/statistics` |
+Menampilkan tiket dengan status `Submitted` yang **perlu di-assign ke Helpdesk**.
 
-### 4. Kategori Tiket
-
-Horizontal scrollable list dengan chip untuk setiap kategori.
-
-| Kategori | Icon | Color |
-|----------|------|-------|
-| Akademik | `Icons.menu_book` | Amber |
-| Teknologi | `Icons.computer` | Blue |
-| Fasilitas | `Icons.business` | Pink |
-| Keuangan | `Icons.account_balance_wallet` | Green |
-| Lainnya | `Icons.more_horiz` | Gray |
+| Element | Description |
+|---------|-------------|
+| Title | "Tiket Masuk" dengan badge count |
+| List | Daftar tiket `Submitted` terbaru |
+| Action | Quick action "Assign" langsung dari card |
+| Empty State | "Tidak ada tiket masuk baru" |
 
 **Interaction:**
-- Tap chip → Navigasi ke filtered ticket list berdasarkan kategori
+- Tap card → Navigasi ke `/admin/ticket-detail/:id`
+- Tap "Assign" → Langsung buka modal assign Helpdesk
+
+### 4. Performa Helpdesk
+
+Mini-table performa Helpdesk:
+
+| Column | Content |
+|--------|---------|
+| Nama | Nama Helpdesk dengan avatar |
+| Tiket Aktif | Jumlah tiket `Signed/Assigned` + `In Progress` |
+| Selesai | Jumlah tiket `Closed` |
+| Rata-rata Waktu | Avg resolution time |
+
+**Interaction:**
+- Tap row → Navigasi ke filtered ticket list per Helpdesk
 
 ### 5. Tiket Terbaru
 
-Menampilkan 5 tiket terbaru dengan info:
+Menampilkan 5 tiket terbaru dari semua user dengan info:
 - Ticket ID
 - Judul Tiket
 - Kategori (badge)
 - Status (badge)
+- Prioritas (badge)
+- Assigned Helpdesk (jika ada)
 - Waktu pembuatan
 
 **Interaction:**
 - Tap card → Navigasi ke `/admin/ticket-detail/:id`
-- Swipe left → Quick action (assign/respond)
 
 ### 6. Bottom Navigation
 
@@ -160,10 +158,21 @@ Menampilkan 5 tiket terbaru dengan info:
 - "Gagal memuat data"
 - Retry button
 
+## Perbedaan dengan Dashboard Helpdesk
+
+| Aspek | Admin Dashboard | Helpdesk Dashboard |
+|-------|-----------------|---------------------|
+| Scope data | Global (semua tiket) | Personal (tiket assigned ke Helpdesk) |
+| Stats | Total tiket semua user | Total tiket yang di-assign ke Helpdesk |
+| Tiket masuk | `Submitted` (perlu di-assign) | `Signed/Assigned` (siap dikerjakan) |
+| Aksi utama | Assign tiket ke Helpdesk | Mulai kerjakan tiket |
+| Performa | Performa semua Helpdesk | Tidak ada (atau performa personal) |
+| Statistik | Global + komprehensif | Personal |
+
 ## Technical Requirements
 
 ### Navigation Routes
-- `/admin` - Admin Dashboard (default route untuk role admin)
+- `/admin` - Admin Dashboard
 - `/admin/tickets` - Daftar Tiket
 - `/admin/ticket/:id` - Detail Tiket
 - `/admin/users` - Manajemen User
@@ -172,31 +181,35 @@ Menampilkan 5 tiket terbaru dengan info:
 
 ### Data Requirements
 ```dart
-// Stats Data
+// Stats Data (Global)
 {
   totalTickets: int,
-  pendingTickets: int,
-  inProgressTickets: int,
-  completedTickets: int,
+  submittedTickets: int,     // Perlu di-assign
+  activeTickets: int,         // Signed/Assigned + In Progress
+  resolvedTickets: int,       // Menunggu konfirmasi user
+  closedTickets: int,         // Final
 }
 
-// Recent Tickets
+// Recent Tickets (Semua status)
 {
   id: String,
   ticketId: String,
   title: String,
   category: String,
-  status: String,
+  status: String,             // submitted, signed_assigned, in_progress, resolved, closed
   createdAt: DateTime,
   priority: String,
+  assignedTo: String?,        // Helpdesk name (jika sudah di-assign)
+  createdBy: String,          // User name
 }
 
-// Categories
+// Helpdesk Performance
 {
-  name: String,
-  icon: IconData,
-  color: Color,
-  count: int,
+  helpdeskId: String,
+  helpdeskName: String,
+  activeTickets: int,
+  closedTickets: int,
+  avgResolutionHours: double,
 }
 ```
 
@@ -208,7 +221,7 @@ Menampilkan 5 tiket terbaru dengan info:
 ## Dependencies
 
 ### Required Pages
-- HomePage (Admin Dashboard)
+- AdminDashboardPage
 - TicketListPage
 - TicketDetailPage
 - NotificationsPage
@@ -220,8 +233,10 @@ Menampilkan 5 tiket terbaru dengan info:
 - TicketListItem
 - AdminBottomNavBar
 - SearchBar
+- HelpdeskPerformanceTable
 
 ### Required Services
-- TicketService (get stats, get recent tickets)
+- TicketService (get global stats, get all recent tickets)
 - AuthService (get admin profile)
 - NotificationService
+- HelpdeskService (get helpdesk performance)
