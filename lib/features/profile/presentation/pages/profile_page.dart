@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/auth_service.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -294,10 +295,15 @@ class ProfilePage extends StatelessWidget {
                 const SizedBox(width: AppConstants.spacingMd),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      // Navigate to login
-                      Navigator.pushReplacementNamed(context, '/login');
+                    onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      navigator.pop();
+                      try {
+                        await AuthService().signOut();
+                      } catch (_) {}
+                      navigator.pushNamedAndRemoveUntil(
+                        '/login', (route) => false,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,

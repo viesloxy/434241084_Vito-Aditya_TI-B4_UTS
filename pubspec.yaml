@@ -38,6 +38,24 @@ dependencies:
   # SVG support
   flutter_svg: ^2.0.10+1
 
+  # Supabase (database, auth, storage)
+  supabase_flutter: ^2.8.0
+
+  # State management
+  provider: ^6.1.2
+
+  # File picker (untuk upload lampiran)
+  file_picker: ^8.1.2
+
+  # HTTP (untuk download signed URL)
+  http: ^1.2.2
+
+  # Path utilities
+  path: ^1.9.0
+
+  # Image picker (alternatif file_picker untuk gambar)
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

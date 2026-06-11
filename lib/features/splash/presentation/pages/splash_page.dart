@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/auth_service.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -14,6 +16,7 @@ class _SplashPageState extends State<SplashPage>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -39,12 +42,37 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
-    _navigateToLogin();
+    _navigateBasedOnAuth();
   }
 
-  Future<void> _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
+  /// Cek session Supabase. Kalau ada session, langsung ke halaman role-nya.
+  /// Kalau tidak ada, ke login.
+  Future<void> _navigateBasedOnAuth() async {
+    // Tunggu animasi splash selesai
+    await Future.delayed(const Duration(milliseconds: 2500));
+
+    if (!mounted) return;
+
+    final session = Supabase.instance.client.auth.currentSession;
+
+    // Tidak ada session → ke login
+    if (session == null) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    // Ada session → ambil profile untuk dapat role
+    try {
+      final user = await _authService.getUserProfile(session.user.id);
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, user.role.defaultRoute);
+    } catch (e) {
+      // Error ambil profile (mungkin user di auth tapi tidak ada di public.users)
+      if (!mounted) return;
+      // Logout paksa supaya bersih
+      await _authService.signOut();
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     }
   }

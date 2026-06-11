@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/splash/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
@@ -25,7 +27,18 @@ import 'features/helpdesk/tasks/presentation/pages/helpdesk_task_detail_page.dar
 import 'features/helpdesk/notifications/presentation/pages/helpdesk_notifications_page.dart';
 import 'features/helpdesk/profile/presentation/pages/helpdesk_profile_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi Supabase
+  // PENTING: Ganti URL dan anonKey di lib/core/config/supabase_config.dart
+  // dengan credential project Supabase Anda, atau gunakan --dart-define.
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
+    debug: false,  // Set true untuk lihat log detail
+  );
+
   runApp(const MyApp());
 }
 

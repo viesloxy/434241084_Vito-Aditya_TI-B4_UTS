@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
 
+import '../../../../../core/services/auth_service.dart';
+
 class AdminProfilePage extends StatelessWidget {
   const AdminProfilePage({super.key});
 
@@ -174,9 +176,18 @@ class AdminProfilePage extends StatelessWidget {
                 const SizedBox(width: AppConstants.spacingMd),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushReplacementNamed(context, '/login');
+                    onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      navigator.pop();
+                      // Logout dari Supabase
+                      try {
+                        await AuthService().signOut();
+                      } catch (_) {
+                        // Best-effort logout, tetap navigate
+                      }
+                      navigator.pushNamedAndRemoveUntil(
+                        '/login', (route) => false,
+                      );
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium))),
                     child: const Text('Keluar'),

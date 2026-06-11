@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/custom_button.dart';
 
-/// Role login untuk testing. Setelah integrasi backend,
-/// role akan dideteksi dari response API berdasarkan kredensial user.
-enum LoginRole { user, admin, helpdesk }
-
+/// Login Page — Supabase-based authentication
+///
+/// Pada mode real (default), login menggunakan email & password ke Supabase Auth.
+/// Role user dideteksi dari tabel `public.users` (kolom `role`).
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -19,11 +21,11 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
 
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
-  LoginRole _selectedRole = LoginRole.user;
 
   @override
   void dispose() {
@@ -47,35 +49,82 @@ class _LoginPageState extends State<LoginPage> {
     if (value == null || value.isEmpty) {
       return 'Password tidak boleh kosong';
     }
-    if (value.length < 8) {
-      return 'Password minimal 8 karakter';
+    if (value.length < 6) {
+      return 'Password minimal 6 karakter';
     }
     return null;
   }
 
+  /// Konversi error Supabase/Exception ke pesan user-friendly
+  String _humanizeError(Object e) {
+    if (e is AuthException) {
+      // Error dari Supabase Auth
+      final msg = e.message.toLowerCase();
+      if (msg.contains('invalid login') || msg.contains('invalid credentials')) {
+        return 'Email atau password salah. Periksa kembali kredensial Anda.';
+      }
+      if (msg.contains('email not confirmed')) {
+        return 'Email belum diverifikasi. Cek inbox Anda untuk link konfirmasi.';
+      }
+      if (msg.contains('user not found')) {
+        return 'Akun dengan email ini tidak ditemukan.';
+      }
+      if (msg.contains('network') || msg.contains('socket')) {
+        return 'Gagal terhubung ke server. Cek koneksi internet Anda.';
+      }
+      return e.message;
+    }
+    // Generic error
+    final text = e.toString();
+    if (text.contains('profile') || text.contains('user_profiles')) {
+      return 'Akun ditemukan tapi profil tidak lengkap. Hubungi admin.';
+    }
+    return 'Login gagal: $text';
+  }
+
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
 
-      // Simulasi panggilan API
-      await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isLoading = true);
 
+    try {
+      final user = await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      // Tampilkan notifikasi sukses
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login berhasil! Selamat datang, ${user.fullName}.'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Redirect sesuai role
+      Navigator.pushReplacementNamed(context, user.role.defaultRoute);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_humanizeError(e)),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        // Redirect sesuai role
-        switch (_selectedRole) {
-          case LoginRole.user:
-            Navigator.pushReplacementNamed(context, '/home');
-            break;
-          case LoginRole.admin:
-            Navigator.pushReplacementNamed(context, '/admin');
-            break;
-          case LoginRole.helpdesk:
-            Navigator.pushReplacementNamed(context, '/helpdesk');
-            break;
-        }
       }
     }
+  }
+
+  void _fillDemoCredentials(String email) {
+    _emailController.text = email;
+    _passwordController.text = 'password123';
   }
 
   @override
@@ -122,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: AppConstants.spacingSm),
 
                 const Text(
-                  'Masuk untuk melanjutkan',
+                  'Masuk dengan akun Supabase Anda',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
@@ -206,7 +255,15 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // TODO: Forgot password flow
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Hubungi admin untuk reset password.'),
+                          ),
+                        );
+                      },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(0, 0),
@@ -226,52 +283,61 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: AppConstants.spacing2xl),
 
-                // Role Switcher (3 Mode untuk Testing)
+                // Demo Accounts Info
                 Container(
                   padding: const EdgeInsets.all(AppConstants.spacingMd),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Colors.blue.shade50,
                     borderRadius:
                         BorderRadius.circular(AppConstants.radiusMedium),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: Colors.blue.shade200),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Mode Login (Testing)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: AppConstants.spacingSm),
                       Row(
                         children: [
-                          Expanded(
-                            child: _buildRoleButton(
-                              role: LoginRole.user,
-                              icon: Icons.person_outline,
-                              label: 'Pengguna',
-                            ),
-                          ),
-                          const SizedBox(width: AppConstants.spacingXs),
-                          Expanded(
-                            child: _buildRoleButton(
-                              role: LoginRole.admin,
-                              icon: Icons.admin_panel_settings_outlined,
-                              label: 'Admin',
-                            ),
-                          ),
-                          const SizedBox(width: AppConstants.spacingXs),
-                          Expanded(
-                            child: _buildRoleButton(
-                              role: LoginRole.helpdesk,
-                              icon: Icons.support_agent_outlined,
-                              label: 'Helpdesk',
+                          Icon(Icons.info_outline,
+                              size: 16, color: Colors.blue.shade700),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Akun Demo (untuk testing)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue.shade900,
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: AppConstants.spacingSm),
+                      _buildDemoRow(
+                        icon: Icons.person_outline,
+                        role: 'User',
+                        email: 'user@demo.com',
+                        onTap: () => _fillDemoCredentials('user@demo.com'),
+                      ),
+                      _buildDemoRow(
+                        icon: Icons.admin_panel_settings_outlined,
+                        role: 'Admin',
+                        email: 'admin@demo.com',
+                        onTap: () => _fillDemoCredentials('admin@demo.com'),
+                      ),
+                      _buildDemoRow(
+                        icon: Icons.support_agent_outlined,
+                        role: 'Helpdesk',
+                        email: 'helpdesk@demo.com',
+                        onTap: () =>
+                            _fillDemoCredentials('helpdesk@demo.com'),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Password semua akun: password123',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.blue.shade800,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ],
                   ),
@@ -294,8 +360,8 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     const Expanded(child: Divider(color: AppColors.border)),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppConstants.spacingLg),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.spacingLg),
                       child: const Text(
                         'atau',
                         style: TextStyle(
@@ -308,51 +374,34 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: AppConstants.spacing2xl),
 
-                // Register Link (Hanya untuk User)
-                if (_selectedRole == LoginRole.user)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Belum punya akun? ',
+                // Register Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Belum punya akun? ',
+                      style: TextStyle(
+                          fontSize: 14, color: AppColors.textSecondary),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/register'),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Daftar',
                         style: TextStyle(
-                            fontSize: 14, color: AppColors.textSecondary),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/register'),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(0, 0),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
                         ),
-                        child: const Text(
-                          'Daftar',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.spacingLg),
-                    child: Text(
-                      _selectedRole == LoginRole.admin
-                          ? 'Akun Admin & Helpdesk dibuat oleh sistem/superadmin (tidak bisa register sendiri).'
-                          : 'Akun Helpdesk dibuat oleh sistem/superadmin (tidak bisa register sendiri).',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        fontStyle: FontStyle.italic,
                       ),
                     ),
-                  ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -361,37 +410,41 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildRoleButton({
-    required LoginRole role,
+  Widget _buildDemoRow({
     required IconData icon,
-    required String label,
+    required String role,
+    required String email,
+    required VoidCallback onTap,
   }) {
-    final isSelected = _selectedRole == role;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedRole = role),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Row(
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
-            ),
-            const SizedBox(height: 4),
+            Icon(icon, size: 14, color: Colors.blue.shade700),
+            const SizedBox(width: 8),
             Text(
-              label,
+              role,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade900,
               ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                email,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue.shade800,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ),
+            Icon(Icons.touch_app, size: 12, color: Colors.blue.shade600),
           ],
         ),
       ),
