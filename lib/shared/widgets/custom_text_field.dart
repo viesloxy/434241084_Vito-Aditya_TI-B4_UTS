@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_spacing.dart';
+import '../../core/constants/app_text_styles.dart';
 
+/// TextFormField ala FlutterShop Free Version.
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.2
+/// dan referensi `lib/screens/auth/views/components/login_form.dart`.
+///
+/// Karakteristik:
+/// - **Borderless** — border transparan, fokus primary 1 px
+/// - **Fill `lightGreyColor` (`#F8F8F9`)** — dari theme
+/// - **Radius 12** (`defaultBorderRadious`) — dari theme
+/// - **Prefix icon di-wrap `Padding(vertical: 12)`** — ala login_form.dart
+/// - **Tanpa custom contentPadding** — FlutterShop tidak set, default Material
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final String? labelText;
-  final IconData? prefixIcon;
+  final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
   final String? Function(String?)? validator;
@@ -16,6 +28,7 @@ class CustomTextField extends StatelessWidget {
   final void Function(String)? onSubmitted;
   final bool enabled;
   final int maxLines;
+  final FocusNode? focusNode;
 
   const CustomTextField({
     super.key,
@@ -32,6 +45,7 @@ class CustomTextField extends StatelessWidget {
     this.onSubmitted,
     this.enabled = true,
     this.maxLines = 1,
+    this.focusNode,
   });
 
   @override
@@ -40,15 +54,8 @@ class CustomTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (labelText != null) ...[
-          Text(
-            labelText!,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppConstants.spacingSm),
+          Text(labelText!, style: AppTextStyles.label),
+          const SizedBox(height: AppSpacing.sm),
         ],
         TextFormField(
           controller: controller,
@@ -60,23 +67,53 @@ class CustomTextField extends StatelessWidget {
           onFieldSubmitted: onSubmitted,
           enabled: enabled,
           maxLines: maxLines,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppColors.textPrimary,
-          ),
+          focusNode: focusNode,
           decoration: InputDecoration(
             hintText: hintText,
-            prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
-                : null,
+            prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.inputPadding,
-              vertical: AppConstants.spacingLg,
-            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Helper untuk wrap prefix icon ala FlutterShop:
+/// `Padding(EdgeInsets.symmetric(vertical: defaultPadding * 0.75))` = 12.
+class AppFieldPrefix extends StatelessWidget {
+  final IconData icon;
+  final Color? color;
+  const AppFieldPrefix({super.key, required this.icon, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md), // 12
+      child: Icon(
+        icon,
+        size: 24,
+        color: color ?? AppColors.textTertiary,
+      ),
+    );
+  }
+}
+
+/// Helper suffix icon untuk password visibility toggle (ala FlutterShop).
+class AppPasswordSuffix extends StatelessWidget {
+  final bool obscure;
+  final VoidCallback onPressed;
+  const AppPasswordSuffix({super.key, required this.obscure, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: Icon(
+        obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        color: AppColors.textSecondary,
+        size: 20,
+      ),
     );
   }
 }

@@ -83,6 +83,17 @@ flutter:
     - assets/
     - assets/icons/
 
+  # Plus Jakarta Display — disalin dari FlutterShop Free Version
+  # assets/fonts/plus_jakarta/
+  fonts:
+    - family: Plus Jakarta
+      fonts:
+        - asset: assets/fonts/plus_jakarta/PlusJakartaDisplay-Regular.otf
+        - asset: assets/fonts/plus_jakarta/PlusJakartaDisplay-Medium.otf
+          weight: 500
+        - asset: assets/fonts/plus_jakarta/PlusJakartaDisplay-Bold.otf
+          weight: 700
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_radius.dart';
+import '../../../../core/constants/app_shadow.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_text_styles.dart';
 
 class RoleSelector extends StatelessWidget {
   final String selectedRole;
@@ -17,15 +20,8 @@ class RoleSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Role',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppConstants.spacingSm),
+        Text('Role', style: AppTextStyles.label),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
             Expanded(
@@ -37,7 +33,7 @@ class RoleSelector extends StatelessWidget {
                 onTap: () => onRoleChanged('mahasiswa'),
               ),
             ),
-            const SizedBox(width: AppConstants.spacingMd),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: _RoleCard(
                 role: 'staff',
@@ -76,16 +72,17 @@ class _RoleCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.spacingLg,
-          vertical: AppConstants.spacingMd,
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
         ),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryLight : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1.5 : 1,
           ),
+          boxShadow: isSelected ? AppShadow.cardHover : AppShadow.none,
         ),
         child: Column(
           children: [
@@ -94,12 +91,11 @@ class _RoleCard extends StatelessWidget {
               size: 32,
               color: isSelected ? AppColors.primary : AppColors.textSecondary,
             ),
-            const SizedBox(height: AppConstants.spacingSm),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              style: AppTextStyles.body.copyWith(
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : AppColors.textPrimary,
               ),
             ),
