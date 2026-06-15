@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_max_width.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -126,11 +127,13 @@ class _RegisterPageState extends State<RegisterPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg), // defaultPadding
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: CenteredContent(
+            maxWidth: AppMaxWidth.form, // samakan dengan Login
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // "Let's get started!" ala FlutterShop (headlineSmall)
                 const Text('Buat Akun Baru', style: AppTextStyles.h1),
                 const SizedBox(height: AppSpacing.sm), // defaultPadding / 2
@@ -234,7 +237,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_max_width.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_shadow.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -14,12 +15,12 @@ import '../../../../shared/widgets/custom_text_field.dart';
 /// Referensi: `lib/screens/auth/views/login_screen.dart` &
 /// `lib/screens/auth/views/components/login_form.dart`.
 ///
-/// Spacing mengikuti konvensi FlutterShop:
-/// - Outer padding: `EdgeInsets.all(defaultPadding)` = 16
-/// - Title → subtitle: `SizedBox(height: defaultPadding / 2)` = 8
-/// - Subtitle → form: `SizedBox(height: defaultPadding)` = 16
-/// - Antar field: `SizedBox(height: defaultPadding)` = 16
-/// - Spacer sebelum button: `defaultPadding * 2` = 32
+/// Layout:
+/// - Scaffold white (ala FlutterShop `scaffoldBackgroundColor`)
+/// - Outer padding `EdgeInsets.all(defaultPadding)` = 16
+/// - **Form di-center dengan `maxWidth: 360` (CenteredContent)** — konten
+///   tidak mepet ke edge di layar lebar (tablet/landscape/web).
+/// - Spacing mengikuti konvensi FlutterShop (section 4 dokumentasi).
 ///
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.3.
 class LoginPage extends StatefulWidget {
@@ -157,157 +158,153 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        // Padding ala FlutterShop: EdgeInsets.all(defaultPadding) = 16
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: AppSpacing.huge), // top breathing space
+          child: CenteredContent(
+            maxWidth: AppMaxWidth.form,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: AppSpacing.huge),
 
-                // ===== Hero: gradient box (48×48 ala onbording) + white logo =====
-                Center(
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    padding: const EdgeInsets.all(AppSpacing.xl),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: AppColors.primaryGradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xxl), // 24
-                      boxShadow: AppShadow.fab,
-                    ),
-                    child: SvgPicture.asset(
-                      'assets/logowhite.svg',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xxl), // defaultPadding * 1.5
-
-                // ===== Title (headlineSmall ala FlutterShop) =====
-                const Text('Selamat Datang', style: AppTextStyles.h1),
-                const SizedBox(height: AppSpacing.sm), // defaultPadding / 2
-
-                // ===== Subtitle (bodyMedium ala FlutterShop) =====
-                const Text(
-                  'Masuk dengan akun Anda untuk membuat dan melacak tiket helpdesk.',
-                  style: AppTextStyles.body,
-                ),
-                const SizedBox(height: AppSpacing.lg), // defaultPadding
-
-                // ===== Form (ala login_form.dart) =====
-                CustomTextField(
-                  controller: _emailController,
-                  hintText: 'Alamat email',
-                  prefixIcon: const AppFieldPrefix(icon: Icons.email_outlined),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: _validateEmail,
-                ),
-                const SizedBox(height: AppSpacing.lg), // defaultPadding
-
-                CustomTextField(
-                  controller: _passwordController,
-                  hintText: 'Password',
-                  prefixIcon: const AppFieldPrefix(icon: Icons.lock_outline),
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _handleLogin(),
-                  validator: _validatePassword,
-                  suffixIcon: AppPasswordSuffix(
-                    obscure: _obscurePassword,
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
-
-                // "Forgot password" — TextButton standalone ala FlutterShop
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        _floatingSnackBar(
-                          message: 'Hubungi admin untuk reset password.',
-                          background: AppColors.info,
-                          icon: Icons.info_outline,
+                  // ===== Hero: gradient box (96×96) + white logo =====
+                  Center(
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: AppColors.primaryGradient,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      );
-                    },
-                    child: const Text('Lupa password?'),
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // ===== Demo Accounts Card =====
-                _DemoAccountsCard(
-                  onTapUser: () => _fillDemoCredentials('user@demo.com'),
-                  onTapAdmin: () => _fillDemoCredentials('admin@demo.com'),
-                  onTapHelpdesk: () => _fillDemoCredentials('helpdesk@demo.com'),
-                ),
-
-                const SizedBox(height: AppSpacing.lg), // defaultPadding
-
-                // ===== Remember Me =====
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: Checkbox(
-                        value: _rememberMe,
-                        onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        boxShadow: AppShadow.fab,
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/logowhite.svg',
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      'Ingat saya',
-                      style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  const Text('Selamat Datang', style: AppTextStyles.h1),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  const Text(
+                    'Masuk dengan akun Anda untuk membuat dan melacak tiket helpdesk.',
+                    style: AppTextStyles.body,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // ===== Form =====
+                  CustomTextField(
+                    controller: _emailController,
+                    hintText: 'Alamat email',
+                    prefixIcon: const AppFieldPrefix(icon: Icons.email_outlined),
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    validator: _validateEmail,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  CustomTextField(
+                    controller: _passwordController,
+                    hintText: 'Password',
+                    prefixIcon: const AppFieldPrefix(icon: Icons.lock_outline),
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _handleLogin(),
+                    validator: _validatePassword,
+                    suffixIcon: AppPasswordSuffix(
+                      obscure: _obscurePassword,
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: AppSpacing.xxl), // defaultPadding * 1.5
-
-                // ===== Login Button (ElevatedButton ala FlutterShop) =====
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          _floatingSnackBar(
+                            message: 'Hubungi admin untuk reset password.',
+                            background: AppColors.info,
+                            icon: Icons.info_outline,
                           ),
-                        )
-                      : const Text('Masuk'),
-                ),
-
-                const SizedBox(height: AppSpacing.lg), // defaultPadding
-
-                // "Don't have an account? Sign up" ala FlutterShop
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Belum punya akun?',
-                      style: AppTextStyles.body,
+                        );
+                      },
+                      child: const Text('Lupa password?'),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/register'),
-                      child: const Text('Daftar'),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  _DemoAccountsCard(
+                    onTapUser: () => _fillDemoCredentials('user@demo.com'),
+                    onTapAdmin: () => _fillDemoCredentials('admin@demo.com'),
+                    onTapHelpdesk: () => _fillDemoCredentials('helpdesk@demo.com'),
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // ===== Remember Me =====
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: Checkbox(
+                          value: _rememberMe,
+                          onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'Ingat saya',
+                        style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Masuk'),
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Belum punya akun?',
+                        style: AppTextStyles.body,
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pushNamed(context, '/register'),
+                        child: const Text('Daftar'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -330,13 +327,12 @@ class _DemoAccountsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Padding ala `buy_full_ui_kit.dart`: defaultPadding / 2 = 8
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.infoLight,
-        borderRadius: BorderRadius.circular(AppRadius.md), // 12 ala FlutterShop
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.info.withValues(alpha: 0.4)),
-        boxShadow: AppShadow.dialog, // shadow ala buy_full_ui_kit.dart
+        boxShadow: AppShadow.dialog,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +402,6 @@ class _DemoRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
-        // defaultPadding / 2 = 8 ala FlutterShop list tile vertical
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: AppSpacing.xs),
         child: Row(
           children: [
