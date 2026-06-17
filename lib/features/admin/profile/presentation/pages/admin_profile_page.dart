@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/constants/app_constants.dart';
-
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/services/auth_service.dart';
 
+/// Admin Profile ala FlutterShop — flat 2D, header + sectioned list,
+/// divider-only. Semua aksen pakai `AppColors.primary`.
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.9.
 class AdminProfilePage extends StatelessWidget {
   const AdminProfilePage({super.key});
 
@@ -25,56 +30,63 @@ class AdminProfilePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 600;
-          return SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHeader(context, adminName, adminEmail, adminRole, isWide),
-                  SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingLg),
-                  _buildAccountInfo(adminName, adminEmail, adminRole, adminNip, isWide),
-                  SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingLg),
-                  _buildMenuSection(menuItems, isWide),
-                  SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingLg),
-                  _buildLogoutSection(context, isWide),
-                  const SizedBox(height: AppConstants.spacing2xl),
-                ],
-              ),
-            ),
-          );
-        },
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(adminName, adminEmail, adminRole),
+              const SizedBox(height: AppSpacing.lg),
+              _buildAccountInfo(adminName, adminEmail, adminRole, adminNip),
+              const SizedBox(height: AppSpacing.lg),
+              _buildMenuSection(menuItems),
+              const SizedBox(height: AppSpacing.lg),
+              _buildLogoutSection(context),
+              const SizedBox(height: AppSpacing.xxl),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, String adminName, String adminEmail, String adminRole, bool isWide) {
+  Widget _buildHeader(String adminName, String adminEmail, String adminRole) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isWide ? AppConstants.spacing2xl : AppConstants.spacingLg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       color: AppColors.surface,
       child: Column(
         children: [
-          CircleAvatar(
-            radius: isWide ? 50 : 40,
-            backgroundColor: AppColors.primary,
-            child: Text(adminName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join(), style: TextStyle(fontSize: isWide ? 28 : 24, fontWeight: FontWeight.w600, color: Colors.white)),
-          ),
-          SizedBox(height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-          Text(adminName, style: TextStyle(fontSize: isWide ? 22 : 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          SizedBox(height: AppConstants.spacingXs),
-          Text(adminEmail, style: TextStyle(fontSize: isWide ? 16 : 14, color: AppColors.textSecondary)),
-          SizedBox(height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+          // Avatar dari profil.jpeg (dummy)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: isWide ? 16 : 12, vertical: isWide ? 8 : 6),
-            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border, width: 2),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/profil.jpeg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(adminName, style: AppTextStyles.h3),
+          const SizedBox(height: AppSpacing.xs),
+          Text(adminEmail, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.admin_panel_settings, size: isWide ? 18 : 16, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(adminRole, style: TextStyle(fontSize: isWide ? 14 : 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
+                const Icon(Icons.admin_panel_settings, size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Text(adminRole, style: AppTextStyles.overline.copyWith(color: AppColors.primary)),
               ],
             ),
           ),
@@ -83,27 +95,34 @@ class AdminProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountInfo(String adminName, String adminEmail, String adminRole, String adminNip, bool isWide) {
+  Widget _buildAccountInfo(String adminName, String adminEmail, String adminRole, String adminNip) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: isWide ? AppConstants.spacing2xl : 0),
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
       color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Informasi Akun', style: TextStyle(fontSize: isWide ? 18 : 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          SizedBox(height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-          _InfoRow(label: 'Nama Lengkap', value: adminName, isWide: isWide),
-          _InfoRow(label: 'Email', value: adminEmail, isWide: isWide),
-          _InfoRow(label: 'Role', value: adminRole, isWide: isWide),
-          _InfoRow(label: 'NIP', value: adminNip, isWide: isWide),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+            child: Text('Informasi Akun', style: AppTextStyles.h4),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+            child: Column(
+              children: [
+                _InfoRow(label: 'Nama Lengkap', value: adminName),
+                _InfoRow(label: 'Email', value: adminEmail),
+                _InfoRow(label: 'Role', value: adminRole),
+                _InfoRow(label: 'NIP', value: adminNip),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuSection(List<Map<String, dynamic>> menuItems, bool isWide) {
+  Widget _buildMenuSection(List<Map<String, dynamic>> menuItems) {
     return Container(
       color: AppColors.surface,
       child: Column(
@@ -112,13 +131,14 @@ class AdminProfilePage extends StatelessWidget {
           return Column(
             children: [
               ListTile(
-                leading: Icon(item['icon'] as IconData, color: AppColors.textSecondary, size: isWide ? 26 : 24),
-                title: Text(item['title'] as String, style: TextStyle(fontSize: isWide ? 17 : 16, color: AppColors.textPrimary)),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                leading: Icon(item['icon'] as IconData, color: AppColors.primary, size: 24),
+                title: Text(item['title'] as String,
+                  style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+                trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
                 onTap: item['onTap'] as VoidCallback,
               ),
               if (index < menuItems.length - 1)
-                Divider(height: 1, indent: isWide ? 72 : 56, color: AppColors.divider),
+                const Divider(height: 1, indent: 56, color: AppColors.divider),
             ],
           );
         }),
@@ -126,75 +146,82 @@ class AdminProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutSection(BuildContext context, bool isWide) {
+  Widget _buildLogoutSection(BuildContext context) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: isWide ? AppConstants.spacing2xl : 0),
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
       color: AppColors.surface,
       child: ListTile(
-        leading: Icon(Icons.logout, color: AppColors.error, size: isWide ? 26 : 24),
-        title: Text('Keluar', style: TextStyle(fontSize: isWide ? 17 : 16, color: AppColors.error)),
-        onTap: () => _showLogoutDialog(context, isWide),
+        leading: const Icon(Icons.logout, color: AppColors.error, size: 24),
+        title: Text('Keluar', style: AppTextStyles.body.copyWith(color: AppColors.error)),
+        onTap: () => _showLogoutDialog(context),
       ),
     );
   }
 
   void _showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: const Text('Fitur segera hadir'), behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium))),
+      SnackBar(
+        content: const Text('Fitur segera hadir'),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
+      ),
     );
   }
 
-  void _showLogoutDialog(BuildContext context, bool isWide) {
+  void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isWide ? 20 : AppConstants.radiusLarge)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: isWide ? 80 : 64, height: isWide ? 80 : 64, decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(Icons.logout, size: isWide ? 40 : 32, color: AppColors.error)),
-            SizedBox(height: isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
-            const Text('Keluar?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            SizedBox(height: AppConstants.spacingSm),
-            const Text('Apakah Anda yakin ingin keluar dari akun ini?', style: TextStyle(fontSize: 14, color: AppColors.textSecondary), textAlign: TextAlign.center),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.logout, size: 32, color: AppColors.error),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            const Text('Keluar?', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.sm),
+            const Text('Apakah Anda yakin ingin keluar dari akun ini?',
+              style: AppTextStyles.body, textAlign: TextAlign.center),
           ],
         ),
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium))),
-                    child: const Text('Batal'),
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal'),
                 ),
-                const SizedBox(width: AppConstants.spacingMd),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final navigator = Navigator.of(context);
-                      navigator.pop();
-                      // Logout dari Supabase
-                      try {
-                        await AuthService().signOut();
-                      } catch (_) {
-                        // Best-effort logout, tetap navigate
-                      }
-                      navigator.pushNamedAndRemoveUntil(
-                        '/login', (route) => false,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium))),
-                    child: const Text('Keluar'),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    navigator.pop();
+                    try {
+                      await AuthService().signOut();
+                    } catch (_) {}
+                    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                  child: const Text('Keluar'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -205,19 +232,22 @@ class AdminProfilePage extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool isWide;
 
-  const _InfoRow({required this.label, required this.value, required this.isWide});
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: isWide ? 15 : 14, color: AppColors.textSecondary)),
-          Text(value, style: TextStyle(fontSize: isWide ? 15 : 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+          Text(label, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+          Text(value,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            )),
         ],
       ),
     );

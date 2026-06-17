@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/constants/app_max_width.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../widgets/admin_stat_card.dart';
 import '../../../widgets/admin_category_chip.dart';
 import '../../../widgets/admin_ticket_card.dart';
@@ -10,6 +13,11 @@ import '../../../widgets/error_state.dart';
 
 enum DashboardState { loading, loaded, empty, error }
 
+/// Admin Dashboard ala FlutterShop — full-bleed (AppMaxWidth.infinite).
+/// Section pattern: header → stats grid → categories → recent tickets.
+/// Semua aksen pakai `AppColors.primary` (flat 2D, no decorative colors).
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
 
@@ -21,21 +29,20 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   DashboardState _state = DashboardState.loading;
 
   final List<Map<String, dynamic>> _stats = [
-    {'title': 'Total Tiket', 'count': 156, 'icon': Icons.description_outlined, 'color': AppColors.primary},
-    {'title': 'Tiket Baru', 'count': 23, 'icon': Icons.fiber_new, 'color': const Color(0xFFF59E0B)},
-    {'title': 'Sedang Diproses', 'count': 45, 'icon': Icons.pending, 'color': const Color(0xFF3B82F6)},
-    {'title': 'Selesai', 'count': 88, 'icon': Icons.check_circle_outline, 'color': AppColors.success},
+    {'title': 'Total Tiket', 'count': 156, 'icon': Icons.description_outlined},
+    {'title': 'Tiket Baru', 'count': 23, 'icon': Icons.fiber_new},
+    {'title': 'Sedang Diproses', 'count': 45, 'icon': Icons.pending_outlined},
+    {'title': 'Selesai', 'count': 88, 'icon': Icons.check_circle_outline},
   ];
 
   final List<Map<String, dynamic>> _categories = [
-    {'category': 'Akademik', 'count': 45, 'icon': Icons.menu_book_outlined, 'bgColor': const Color(0xFFFEF3C7), 'textColor': const Color(0xFF92400E)},
-    {'category': 'Teknologi', 'count': 38, 'icon': Icons.computer, 'bgColor': const Color(0xFFDBEAFE), 'textColor': const Color(0xFF1E40AF)},
-    {'category': 'Fasilitas', 'count': 28, 'icon': Icons.business_outlined, 'bgColor': const Color(0xFFFCE7F3), 'textColor': const Color(0xFF9D174D)},
-    {'category': 'Keuangan', 'count': 15, 'icon': Icons.account_balance_wallet_outlined, 'bgColor': const Color(0xFFD1FAE5), 'textColor': const Color(0xFF065F46)},
-    {'category': 'Lainnya', 'count': 30, 'icon': Icons.more_horiz, 'bgColor': const Color(0xFFE5E7EB), 'textColor': const Color(0xFF374151)},
+    {'category': 'Akademik', 'count': 45, 'icon': Icons.menu_book_outlined},
+    {'category': 'Teknologi', 'count': 38, 'icon': Icons.computer},
+    {'category': 'Fasilitas', 'count': 28, 'icon': Icons.business_outlined},
+    {'category': 'Keuangan', 'count': 15, 'icon': Icons.account_balance_wallet_outlined},
+    {'category': 'Lainnya', 'count': 30, 'icon': Icons.more_horiz},
   ];
 
-  // Mock recent tickets - menggunakan status sesuai workflow 3 role
   final List<Map<String, dynamic>> _recentTickets = [
     {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'category': 'Teknologi', 'status': 'submitted', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': null, 'createdBy': 'Ahmad Rizki'},
     {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'category': 'Akademik', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Budi Santoso'},
@@ -53,20 +60,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Future<void> _loadData() async {
     setState(() => _state = DashboardState.loading);
     await Future.delayed(const Duration(seconds: 1));
-    if (_recentTickets.isEmpty) {
-      setState(() => _state = DashboardState.empty);
-    } else {
-      setState(() => _state = DashboardState.loaded);
-    }
+    if (!mounted) return;
+    setState(() => _state = _recentTickets.isEmpty
+        ? DashboardState.empty
+        : DashboardState.loaded);
   }
 
   Future<void> _refreshData() async {
     await Future.delayed(const Duration(seconds: 1));
-    if (_recentTickets.isEmpty) {
-      setState(() => _state = DashboardState.empty);
-    } else {
-      setState(() => _state = DashboardState.loaded);
-    }
+    if (!mounted) return;
+    setState(() => _state = _recentTickets.isEmpty
+        ? DashboardState.empty
+        : DashboardState.loaded);
   }
 
   @override
@@ -79,35 +84,33 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshData,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 600;
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(context, adminName, adminRole, constraints.maxWidth),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildStatsSection(context, _stats, isWide),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildCategoriesSection(context, _categories),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildRecentTicketsSection(context),
-                    const SizedBox(height: AppConstants.spacingLg),
-                  ],
-                ),
-              );
-            },
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg), // defaultPadding = 16
+            child: CenteredContent(
+              maxWidth: AppMaxWidth.infinite, // full-bleed ala FlutterShop
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context, adminName, adminRole),
+                  const SizedBox(height: AppSpacing.xxl), // section break 24
+                  _buildStatsSection(context),
+                  const SizedBox(height: AppSpacing.xxl),
+                  _buildCategoriesSection(context),
+                  const SizedBox(height: AppSpacing.xxl),
+                  _buildRecentTicketsSection(context),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, String adminName, String adminRole, double maxWidth) {
-    final isWide = maxWidth > 400;
+  Widget _buildHeader(BuildContext context, String adminName, String adminRole) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -118,36 +121,34 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             children: [
               Text(
                 'Selamat datang,',
-                style: TextStyle(
-                  fontSize: maxWidth > 360 ? 14 : 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
                   Flexible(
                     child: Text(
                       adminName,
-                      style: TextStyle(
-                        fontSize: maxWidth > 360 ? 20 : 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: AppTextStyles.h2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       adminRole,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary),
+                      style: AppTextStyles.overline.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
                 ],
@@ -161,12 +162,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               icon: const Icon(Icons.search, color: AppColors.textPrimary),
               onPressed: () {},
             ),
-            GestureDetector(
-              onTap: () {},
-              child: CircleAvatar(
-                radius: isWide ? 18 : 16,
-                backgroundColor: AppColors.primary,
-                child: const Text('SA', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+            // Avatar dengan profil.jpeg (dummy)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAlt,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border, width: 2),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/profil.jpeg'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ],
@@ -175,75 +182,97 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context, List<Map<String, dynamic>> stats, bool isWide) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildStatsSection(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 600;
+        final crossAxisCount = isWide ? 4 : 2;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Statistik Tiket',
-              style: TextStyle(fontSize: isWide ? 18 : 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Statistik Tiket', style: AppTextStyles.h4),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
+                  child: Text(
+                    'Lihat Semua',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
-              child: Text('Lihat Semua', style: TextStyle(fontSize: isWide ? 15 : 14, fontWeight: FontWeight.w500, color: AppColors.primary)),
+            const SizedBox(height: AppSpacing.md),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: AppSpacing.md,
+                mainAxisSpacing: AppSpacing.md,
+                childAspectRatio: isWide ? 1.2 : 1.3,
+              ),
+              itemCount: _stats.length,
+              itemBuilder: (context, index) => AdminStatCard(
+                title: _stats[index]['title'] as String,
+                count: _stats[index]['count'] as int,
+                icon: _stats[index]['icon'] as IconData,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  '/admin/tickets',
+                  arguments: {'filter': _stats[index]['title']},
+                ),
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: AppConstants.spacingMd),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isWide ? 4 : 2,
-            crossAxisSpacing: AppConstants.spacingMd,
-            mainAxisSpacing: AppConstants.spacingMd,
-            childAspectRatio: isWide ? 1.2 : 1.3,
-          ),
-          itemCount: stats.length,
-          itemBuilder: (context, index) => AdminStatCard(
-            title: stats[index]['title'] as String,
-            count: stats[index]['count'] as int,
-            icon: stats[index]['icon'] as IconData,
-            color: stats[index]['color'] as Color,
-            onTap: () => Navigator.pushNamed(context, '/admin/tickets', arguments: {'filter': stats[index]['title']}),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildCategoriesSection(BuildContext context, List<Map<String, dynamic>> categories) {
+  Widget _buildCategoriesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Kategori Tiket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text('Kategori Tiket', style: AppTextStyles.h4),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
-              child: const Text('Kelola', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.primary)),
+              child: Text(
+                'Kelola',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
-        const SizedBox(height: AppConstants.spacingMd),
+        const SizedBox(height: AppSpacing.md),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: categories.map((cat) => Padding(
-              padding: const EdgeInsets.only(right: AppConstants.spacingSm),
-              child: AdminCategoryChip(
-                category: cat['category'] as String,
-                count: cat['count'] as int,
-                icon: cat['icon'] as IconData,
-                backgroundColor: cat['bgColor'] as Color,
-                textColor: cat['textColor'] as Color,
-                onTap: () => Navigator.pushNamed(context, '/admin/tickets', arguments: {'category': cat['category']}),
-              ),
-            )).toList(),
+            children: _categories
+                .map((cat) => Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: AdminCategoryChip(
+                        category: cat['category'] as String,
+                        count: cat['count'] as int,
+                        icon: cat['icon'] as IconData,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/admin/tickets',
+                          arguments: {'category': cat['category']},
+                        ),
+                      ),
+                    ))
+                .toList(),
           ),
         ),
       ],
@@ -257,14 +286,20 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tiket Terbaru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text('Tiket Terbaru', style: AppTextStyles.h4),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
-              child: const Text('Lihat Semua', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.primary)),
+              child: Text(
+                'Lihat Semua',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
-        const SizedBox(height: AppConstants.spacingMd),
+        const SizedBox(height: AppSpacing.md),
         _buildTicketsContent(),
       ],
     );
@@ -291,7 +326,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _recentTickets.length,
-          separatorBuilder: (context, index) => const SizedBox(height: AppConstants.spacingMd),
+          separatorBuilder: (context, index) =>
+              const SizedBox(height: AppSpacing.md),
           itemBuilder: (context, index) => AdminTicketCard(
             ticketId: _recentTickets[index]['ticketId'] as String,
             title: _recentTickets[index]['title'] as String,
@@ -299,8 +335,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             status: _recentTickets[index]['status'] as String,
             priority: _recentTickets[index]['priority'] as String,
             date: _recentTickets[index]['date'] as String,
-            assignedTo: _recentTickets[index]['assignedTo'] != null ? _recentTickets[index]['assignedTo'] as String : null,
-            onTap: () => Navigator.pushNamed(context, '/admin/ticket-detail', arguments: _recentTickets[index]),
+            assignedTo: _recentTickets[index]['assignedTo'] != null
+                ? _recentTickets[index]['assignedTo'] as String
+                : null,
+            onTap: () => Navigator.pushNamed(
+              context,
+              '/admin/ticket-detail',
+              arguments: _recentTickets[index],
+            ),
           ),
         );
     }

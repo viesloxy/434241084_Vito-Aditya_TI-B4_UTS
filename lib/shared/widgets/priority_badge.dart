@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
-/// Priority badge untuk tiket.
-/// Mendukung 3 level prioritas: tinggi, sedang, rendah.
+/// Priority badge untuk tiket. Mendukung 3 level: tinggi | sedang | rendah.
+///
+/// Semua warna berasal dari `AppColors.priorityXxxBg/Text` (token semantic).
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 2.4 & 7.6b.
 class PriorityBadge extends StatelessWidget {
   final String priority;
   final bool showIcon;
@@ -36,6 +39,7 @@ class PriorityBadge extends StatelessWidget {
           Text(
             _getPriorityLabel(priority),
             style: TextStyle(
+              fontFamily: 'Plus Jakarta',
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: config['text'] as Color,
@@ -50,26 +54,26 @@ class PriorityBadge extends StatelessWidget {
     switch (priority.toLowerCase()) {
       case 'tinggi':
         return {
-          'bg': const Color(0xFFFEE2E2),
-          'text': const Color(0xFF991B1B),
+          'bg': AppColors.priorityHighBg,
+          'text': AppColors.priorityHighText,
           'icon': Icons.keyboard_double_arrow_up,
         };
       case 'sedang':
         return {
-          'bg': const Color(0xFFFEF3C7),
-          'text': const Color(0xFF92400E),
+          'bg': AppColors.priorityMedBg,
+          'text': AppColors.priorityMedText,
           'icon': Icons.remove,
         };
       case 'rendah':
         return {
-          'bg': const Color(0xFFD1FAE5),
-          'text': const Color(0xFF065F46),
+          'bg': AppColors.priorityLowBg,
+          'text': AppColors.priorityLowText,
           'icon': Icons.keyboard_double_arrow_down,
         };
       default:
         return {
-          'bg': const Color(0xFFE5E7EB),
-          'text': const Color(0xFF374151),
+          'bg': AppColors.border,
+          'text': AppColors.textSecondary,
           'icon': Icons.help_outline,
         };
     }

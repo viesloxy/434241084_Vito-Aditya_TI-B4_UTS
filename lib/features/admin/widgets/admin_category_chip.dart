@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 
+/// Filter chip ala FlutterShop — pill rounded 12.
+///
+/// Pewarnaan:
+/// - **Default**: bg `surface`, border `border`, text & icon `textPrimary`.
+/// - **Active**  : bg `primary`, text & icon `textOnPrimary` (CTA pattern).
+/// - Counter badge: `primaryLight` + `primary` (default) / `primary` + `textOnPrimary` (active).
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.6c.
 class AdminCategoryChip extends StatelessWidget {
   final String category;
   final int count;
   final IconData icon;
-  final Color backgroundColor;
-  final Color textColor;
+  final bool isActive;
   final VoidCallback? onTap;
 
   const AdminCategoryChip({
@@ -14,54 +24,57 @@ class AdminCategoryChip extends StatelessWidget {
     required this.category,
     required this.count,
     required this.icon,
-    required this.backgroundColor,
-    required this.textColor,
+    this.isActive = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    // Token-driven warna — single source of truth (AppColors)
+    final bg = isActive ? AppColors.primary : AppColors.surface;
+    final fg = isActive ? AppColors.textOnPrimary : AppColors.textPrimary;
+    final iconColor = isActive ? AppColors.textOnPrimary : AppColors.textPrimary;
+    final badgeBg = isActive ? AppColors.textOnPrimary.withValues(alpha: 0.2) : AppColors.primaryLight;
+    final badgeFg = isActive ? AppColors.textOnPrimary : AppColors.primary;
+
+    return InkWell(
       onTap: onTap,
-      child: Container(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.spacingMd,
-          vertical: AppConstants.spacingSm,
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: isActive ? AppColors.primary : AppColors.border,
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: textColor,
-            ),
-            const SizedBox(width: 6),
+            Icon(icon, size: 16, color: iconColor),
+            const SizedBox(width: AppSpacing.xs + 2),
             Text(
               category,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: textColor,
-              ),
+              style: AppTextStyles.bodySm.copyWith(color: fg, fontWeight: FontWeight.w500),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.xs + 2),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: textColor.withValues(alpha: 0.2),
+                color: badgeBg,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 count.toString(),
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppTextStyles.overline.copyWith(
+                  color: badgeFg,
                   fontWeight: FontWeight.w600,
-                  color: textColor,
                 ),
               ),
             ),

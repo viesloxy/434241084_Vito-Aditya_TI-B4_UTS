@@ -1,11 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../widgets/admin_ticket_card.dart';
+import '../../../widgets/empty_state.dart';
 
 enum SortOption { tanggalTerbaru, tanggalTerlama, prioritasTinggi, prioritasRendah }
 
+/// Admin Ticket List ala FlutterShop — search + filter chips + sort bar + list.
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.
 class AdminTicketListPage extends StatefulWidget {
   const AdminTicketListPage({super.key});
 
@@ -27,7 +32,6 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   SortOption _sortOption = SortOption.tanggalTerbaru;
   final Set<int> _selectedTickets = {};
 
-  // Filter sesuai workflow 3 role (5 status + ditolak)
   final List<Map<String, dynamic>> _filters = [
     {'name': 'Semua', 'value': 'semua'},
     {'name': 'Submitted', 'value': 'submitted'},
@@ -86,13 +90,13 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMoreData();
     }
   }
 
   List<Map<String, dynamic>> _getMockTickets({required int page, required int pageSize}) {
-    // Mock data dengan status sesuai workflow 3 role
     final allTickets = [
       {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'description': 'Tidak bisa login ke email kampus', 'category': 'Teknologi', 'status': 'submitted', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': null, 'createdBy': 'Ahmad Rizki'},
       {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'description': 'Mohon info jadwal ujian', 'category': 'Akademik', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Budi Santoso'},
@@ -114,7 +118,6 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   List<Map<String, dynamic>> get _filteredTickets {
     var filtered = _tickets;
 
-    // Search filter (with debounce in UI, instant in logic)
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
       filtered = filtered.where((t) =>
@@ -125,16 +128,13 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
       ).toList();
     }
 
-    // Status filter
     if (_selectedFilter != 'semua') {
       filtered = filtered.where((t) => t['status'] == _selectedFilter).toList();
     }
 
-    // Sort
     filtered = List.from(filtered);
     switch (_sortOption) {
       case SortOption.tanggalTerbaru:
-        // Already in order
         break;
       case SortOption.tanggalTerlama:
         filtered = filtered.reversed.toList();
@@ -142,26 +142,25 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
       case SortOption.prioritasTinggi:
         filtered.sort((a, b) {
           final priorityOrder = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (priorityOrder[a['priority']] ?? 1).compareTo(priorityOrder[b['priority']] ?? 1);
+          return (priorityOrder[a['priority']] ?? 1)
+              .compareTo(priorityOrder[b['priority']] ?? 1);
         });
         break;
       case SortOption.prioritasRendah:
         filtered.sort((a, b) {
           final priorityOrder = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (priorityOrder[b['priority']] ?? 1).compareTo(priorityOrder[a['priority']] ?? 1);
+          return (priorityOrder[b['priority']] ?? 1)
+              .compareTo(priorityOrder[a['priority']] ?? 1);
         });
         break;
     }
-
     return filtered;
   }
 
   void _toggleSelectionMode() {
     setState(() {
       _isSelectionMode = !_isSelectionMode;
-      if (!_isSelectionMode) {
-        _selectedTickets.clear();
-      }
+      if (!_isSelectionMode) _selectedTickets.clear();
     });
   }
 
@@ -186,9 +185,11 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   void _showBulkActionSheet() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -208,9 +209,6 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                 _showAssignDialog();
               },
             ),
-            // Catatan: Bulk action "Tandai Selesai" sudah dihapus karena
-            // setelah revisi 3 role, Admin TIDAK bisa langsung menandai
-            // tiket selesai. Itu adalah tugas Helpdesk.
             ListTile(
               leading: const Icon(Icons.delete, color: AppColors.error),
               title: const Text('Hapus Terpilih'),
@@ -219,7 +217,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                 _deleteSelected();
               },
             ),
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -235,45 +233,36 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
+              leading: const Icon(Icons.person, color: AppColors.primary),
               title: const Text('John Helpdesk'),
               subtitle: const Text('5 tiket aktif'),
               onTap: () {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tiket ditugaskan ke John Helpdesk')),
-                );
+                _snack('Tiket ditugaskan ke John Helpdesk');
                 _toggleSelectionMode();
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
+              leading: const Icon(Icons.person, color: AppColors.primary),
               title: const Text('Sarah Helpdesk'),
               subtitle: const Text('3 tiket aktif'),
               onTap: () {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tiket ditugaskan ke Sarah Helpdesk')),
-                );
+                _snack('Tiket ditugaskan ke Sarah Helpdesk');
                 _toggleSelectionMode();
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
-              title: const Text('Budi Helpdesk'),
-              subtitle: const Text('0 tiket aktif (Cuti)'),
+            const ListTile(
+              leading: Icon(Icons.person, color: AppColors.textTertiary),
+              title: Text('Budi Helpdesk'),
+              subtitle: Text('0 tiket aktif (Cuti)'),
               enabled: false,
-              onTap: null,
             ),
           ],
         ),
       ),
     );
   }
-
-  // Method ini sudah tidak relevan karena Admin tidak bisa
-  // "Tandai Selesai" tiket secara langsung. Itu tugas Helpdesk.
-  // void _markSelectedAsDone() { ... }
 
   void _deleteSelected() {
     showDialog(
@@ -282,16 +271,11 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
         title: const Text('Hapus Tiket'),
         content: Text('Hapus ${_selectedTickets.length} tiket yang dipilih?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${_selectedTickets.length} tiket dihapus')),
-              );
+              _snack('${_selectedTickets.length} tiket dihapus');
               _toggleSelectionMode();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
@@ -305,55 +289,50 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   void _showSortDropdown() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Urutkan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppConstants.spacingLg),
-            RadioListTile<SortOption>(
-              title: const Text('Tanggal (Terbaru)'),
-              value: SortOption.tanggalTerbaru,
-              groupValue: _sortOption,
-              onChanged: (value) {
-                setState(() => _sortOption = value!);
-                Navigator.pop(ctx);
-              },
-            ),
-            RadioListTile<SortOption>(
-              title: const Text('Tanggal (Terlama)'),
-              value: SortOption.tanggalTerlama,
-              groupValue: _sortOption,
-              onChanged: (value) {
-                setState(() => _sortOption = value!);
-                Navigator.pop(ctx);
-              },
-            ),
-            RadioListTile<SortOption>(
-              title: const Text('Prioritas (Tertinggi)'),
-              value: SortOption.prioritasTinggi,
-              groupValue: _sortOption,
-              onChanged: (value) {
-                setState(() => _sortOption = value!);
-                Navigator.pop(ctx);
-              },
-            ),
-            RadioListTile<SortOption>(
-              title: const Text('Prioritas (Terendah)'),
-              value: SortOption.prioritasRendah,
-              groupValue: _sortOption,
-              onChanged: (value) {
-                setState(() => _sortOption = value!);
-                Navigator.pop(ctx);
-              },
-            ),
-            const SizedBox(height: AppConstants.spacingLg),
+            Text('Urutkan', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.lg),
+            for (final opt in SortOption.values)
+              RadioListTile<SortOption>(
+                title: Text(_sortLabel(opt)),
+                value: opt,
+                groupValue: _sortOption,
+                onChanged: (value) {
+                  setState(() => _sortOption = value!);
+                  Navigator.pop(ctx);
+                },
+              ),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
+    );
+  }
+
+  String _sortLabel(SortOption opt) {
+    switch (opt) {
+      case SortOption.tanggalTerbaru:
+        return 'Tanggal (Terbaru)';
+      case SortOption.tanggalTerlama:
+        return 'Tanggal (Terlama)';
+      case SortOption.prioritasTinggi:
+        return 'Prioritas (Tertinggi)';
+      case SortOption.prioritasRendah:
+        return 'Prioritas (Terendah)';
+    }
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -390,7 +369,10 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: _toggleSelectionMode,
         ),
-        title: Text('${_selectedTickets.length} dipilih', style: const TextStyle(color: Colors.white)),
+        title: Text(
+          '${_selectedTickets.length} dipilih',
+          style: const TextStyle(color: Colors.white, fontFamily: 'Plus Jakarta'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -410,23 +392,19 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               decoration: InputDecoration(
                 hintText: 'Cari tiket...',
                 border: InputBorder.none,
-                hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: isWide ? 18 : 16),
+                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
               ),
-              style: TextStyle(fontSize: isWide ? 18 : 16, color: AppColors.textPrimary),
-              onChanged: (_) {
-                _debouncer.run(() {
-                  setState(() {});
-                });
-              },
+              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+              onChanged: (_) => _debouncer.run(() => setState(() {})),
             )
-          : Text(
-              'Daftar Tiket',
-              style: TextStyle(fontSize: isWide ? 20 : 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-            ),
+          : Text('Daftar Tiket', style: AppTextStyles.h4),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(_isSearchVisible ? Icons.close : Icons.search, color: AppColors.textPrimary),
+          icon: Icon(
+            _isSearchVisible ? Icons.close : Icons.search,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () {
             setState(() {
               _isSearchVisible = !_isSearchVisible;
@@ -445,9 +423,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   Widget _buildFilterChips(bool isWide) {
     return Container(
       color: AppColors.surface,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
-        vertical: AppConstants.spacingMd,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -455,21 +433,26 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           children: _filters.map((filter) {
             final isSelected = _selectedFilter == filter['value'];
             return Padding(
-              padding: const EdgeInsets.only(right: AppConstants.spacingSm),
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: GestureDetector(
                 onTap: () => setState(() => _selectedFilter = filter['value'] as String),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(horizontal: isWide ? 20 : 16, vertical: isWide ? 10 : 8),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWide ? 20 : 16,
+                    vertical: isWide ? 10 : 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.background,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+                    color: isSelected ? AppColors.primary : AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                    ),
                   ),
                   child: Text(
                     filter['name'] as String,
-                    style: TextStyle(
-                      fontSize: isWide ? 14 : 13,
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                       color: isSelected ? Colors.white : AppColors.textPrimary,
                     ),
@@ -486,49 +469,28 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   Widget _buildSortBar(bool isWide) {
     return Container(
       color: AppColors.surface,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
-        vertical: AppConstants.spacingSm,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
       ),
       child: Row(
         children: [
           Text(
             '${_filteredTickets.length} tiket',
-            style: TextStyle(
-              fontSize: isWide ? 14 : 12,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
           ),
           const Spacer(),
           TextButton.icon(
             onPressed: _showSortDropdown,
-            icon: Icon(Icons.sort, size: isWide ? 20 : 18, color: AppColors.primary),
+            icon: const Icon(Icons.sort, size: 18, color: AppColors.primary),
             label: Text(
-              _getSortLabel(),
-              style: TextStyle(fontSize: isWide ? 14 : 12, color: AppColors.primary),
+              _sortLabel(_sortOption).split('(').first.trim(),
+              style: AppTextStyles.caption.copyWith(color: AppColors.primary),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.list, color: AppColors.textSecondary),
-            onPressed: () {},
-            tooltip: 'Tampilan daftar',
           ),
         ],
       ),
     );
-  }
-
-  String _getSortLabel() {
-    switch (_sortOption) {
-      case SortOption.tanggalTerbaru:
-        return 'Terbaru';
-      case SortOption.tanggalTerlama:
-        return 'Terlama';
-      case SortOption.prioritasTinggi:
-        return 'Prioritas Tinggi';
-      case SortOption.prioritasRendah:
-        return 'Prioritas Rendah';
-    }
   }
 
   Widget _buildTicketList(bool isWide) {
@@ -536,14 +498,16 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
       onRefresh: _loadInitialData,
       child: ListView.separated(
         controller: _scrollController,
-        padding: EdgeInsets.all(isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: _filteredTickets.length + (_hasMore ? 1 : 0),
-        separatorBuilder: (context, index) => SizedBox(height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           if (index >= _filteredTickets.length) {
             return Padding(
-              padding: const EdgeInsets.all(AppConstants.spacingLg),
-              child: Center(child: _isLoading ? const CircularProgressIndicator() : const SizedBox()),
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Center(
+                child: _isLoading ? const CircularProgressIndicator() : const SizedBox(),
+              ),
             );
           }
           final ticket = _filteredTickets[index];
@@ -576,44 +540,23 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.spacing2xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.description_outlined, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.5)),
-            const SizedBox(height: AppConstants.spacingLg),
-            const Text('Tidak Ada Tiket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            const SizedBox(height: AppConstants.spacingSm),
-            const Text('Tiket yang sesuai filter akan muncul di sini', style: TextStyle(fontSize: 14, color: AppColors.textSecondary), textAlign: TextAlign.center),
-            const SizedBox(height: AppConstants.spacing2xl),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _selectedFilter = 'semua';
-                  _searchController.clear();
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
-              ),
-              child: const Text('Reset Filter'),
-            ),
-          ],
-        ),
-      ),
+    return EmptyState(
+      title: 'Tidak Ada Tiket',
+      message: 'Tiket yang sesuai filter akan muncul di sini',
+      icon: Icons.description_outlined,
+      onRefresh: () {
+        setState(() {
+          _selectedFilter = 'semua';
+          _searchController.clear();
+        });
+      },
     );
   }
 
   Widget _buildSelectionBar() {
-    // Tombol "Selesai" dihapus karena Admin tidak bisa tandai selesai
     return Container(
       color: AppColors.surface,
-      padding: const EdgeInsets.all(AppConstants.spacingMd),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: SafeArea(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -635,7 +578,10 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
         children: [
           Icon(icon, color: AppColors.primary),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.primary)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+          ),
         ],
       ),
     );
@@ -644,20 +590,22 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   void _showFilterModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Filter Tiket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            const SizedBox(height: AppConstants.spacingLg),
-            const Text('Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
-            const SizedBox(height: AppConstants.spacingMd),
+            Text('Filter Tiket', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Status', style: AppTextStyles.label),
+            const SizedBox(height: AppSpacing.md),
             Wrap(
-              spacing: AppConstants.spacingSm,
-              runSpacing: AppConstants.spacingSm,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: _filters.map((filter) {
                 final isSelected = _selectedFilter == filter['value'];
                 return ChoiceChip(
@@ -668,11 +616,14 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                     Navigator.pop(ctx);
                   },
                   selectedColor: AppColors.primary,
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    fontFamily: 'Plus Jakarta',
+                  ),
                 );
               }).toList(),
             ),
-            const SizedBox(height: AppConstants.spacing2xl),
+            const SizedBox(height: AppSpacing.xxl),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -680,14 +631,10 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                   setState(() => _selectedFilter = 'semua');
                   Navigator.pop(ctx);
                 },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
-                ),
                 child: const Text('Reset Filter'),
               ),
             ),
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),

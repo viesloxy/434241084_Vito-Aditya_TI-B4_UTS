@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/services/auth_service.dart';
 
 /// Halaman profil untuk role Helpdesk.
@@ -58,26 +59,26 @@ class HelpdeskProfilePage extends StatelessWidget {
                       helpdeskRole, isWide),
                   SizedBox(
                       height: isWide
-                          ? AppConstants.spacing2xl
-                          : AppConstants.spacingLg),
+                          ? AppSpacing.xxl
+                          : AppSpacing.lg),
                   _buildMiniStats(isWide),
                   SizedBox(
                       height: isWide
-                          ? AppConstants.spacing2xl
-                          : AppConstants.spacingLg),
+                          ? AppSpacing.xxl
+                          : AppSpacing.lg),
                   _buildAccountInfo(helpdeskName, helpdeskEmail,
                       helpdeskRole, helpdeskNip, helpdeskDept, isWide),
                   SizedBox(
                       height: isWide
-                          ? AppConstants.spacing2xl
-                          : AppConstants.spacingLg),
+                          ? AppSpacing.xxl
+                          : AppSpacing.lg),
                   _buildMenuSection(menuItems, isWide),
                   SizedBox(
                       height: isWide
-                          ? AppConstants.spacing2xl
-                          : AppConstants.spacingLg),
+                          ? AppSpacing.xxl
+                          : AppSpacing.lg),
                   _buildLogoutSection(context, isWide),
-                  const SizedBox(height: AppConstants.spacing2xl),
+                  const SizedBox(height: AppSpacing.xxl),
                 ],
               ),
             ),
@@ -92,35 +93,28 @@ class HelpdeskProfilePage extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(
-          isWide ? AppConstants.spacing2xl : AppConstants.spacingLg),
+          isWide ? AppSpacing.xxl : AppSpacing.lg),
       color: AppColors.surface,
       child: Column(
         children: [
           CircleAvatar(
             radius: isWide ? 50 : 40,
-            backgroundColor: const Color(0xFF3B82F6),
-            child: Text(
-                name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join(),
-                style: TextStyle(
-                    fontSize: isWide ? 28 : 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white)),
+            backgroundColor: AppColors.surfaceAlt,
+            backgroundImage: const AssetImage('assets/images/profil.jpeg'),
           ),
           SizedBox(
-              height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+              height: isWide ? AppSpacing.lg : AppSpacing.md),
           Text(name,
-              style: TextStyle(
-                  fontSize: isWide ? 22 : 20,
+              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 22 : 20,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary)),
-          SizedBox(height: AppConstants.spacingXs),
+          SizedBox(height: AppSpacing.xs),
           Text(email,
-              style: TextStyle(
-                  fontSize: isWide ? 16 : 14,
+              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 16 : 14,
                   color: AppColors.textSecondary)),
           SizedBox(
               height:
-                  isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+                  isWide ? AppSpacing.lg : AppSpacing.md),
           Container(
             padding: EdgeInsets.symmetric(
                 horizontal: isWide ? 16 : 12,
@@ -135,8 +129,7 @@ class HelpdeskProfilePage extends StatelessWidget {
                     size: isWide ? 18 : 16, color: const Color(0xFF1E40AF)),
                 const SizedBox(width: 4),
                 Text(role,
-                    style: TextStyle(
-                        fontSize: isWide ? 14 : 12,
+                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 14 : 12,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF1E40AF))),
               ],
@@ -160,10 +153,10 @@ class HelpdeskProfilePage extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.symmetric(
-          horizontal: isWide ? AppConstants.spacing2xl : 0),
+          horizontal: isWide ? AppSpacing.xxl : 0),
       padding: EdgeInsets.symmetric(
-          horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
-          vertical: AppConstants.spacingLg),
+          horizontal: isWide ? AppSpacing.xl : AppSpacing.lg,
+          vertical: AppSpacing.lg),
       color: AppColors.surface,
       child: Row(
         children: stats.map((s) {
@@ -175,13 +168,11 @@ class HelpdeskProfilePage extends StatelessWidget {
                     size: isWide ? 24 : 20),
                 const SizedBox(height: 4),
                 Text(s['value'] as String,
-                    style: TextStyle(
-                        fontSize: isWide ? 18 : 16,
+                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 18 : 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary)),
                 Text(s['label'] as String,
-                    style: TextStyle(
-                        fontSize: isWide ? 12 : 11,
+                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 12 : 11,
                         color: AppColors.textSecondary)),
               ],
             ),
@@ -196,20 +187,19 @@ class HelpdeskProfilePage extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(
-          horizontal: isWide ? AppConstants.spacing2xl : 0),
+          horizontal: isWide ? AppSpacing.xxl : 0),
       padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
+          isWide ? AppSpacing.xl : AppSpacing.lg),
       color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Informasi Akun',
-              style: TextStyle(
-                  fontSize: isWide ? 18 : 16,
+              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 18 : 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary)),
           SizedBox(
-              height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+              height: isWide ? AppSpacing.lg : AppSpacing.md),
           _InfoRow(label: 'Nama Lengkap', value: name, isWide: isWide),
           _InfoRow(label: 'Email', value: email, isWide: isWide),
           _InfoRow(label: 'Role', value: role, isWide: isWide),
@@ -234,8 +224,7 @@ class HelpdeskProfilePage extends StatelessWidget {
                     color: AppColors.textSecondary,
                     size: isWide ? 26 : 24),
                 title: Text(item['title'] as String,
-                    style: TextStyle(
-                        fontSize: isWide ? 17 : 16,
+                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 17 : 16,
                         color: AppColors.textPrimary)),
                 trailing: const Icon(Icons.chevron_right,
                     color: AppColors.textSecondary),
@@ -257,16 +246,15 @@ class HelpdeskProfilePage extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(
-          horizontal: isWide ? AppConstants.spacing2xl : 0),
+          horizontal: isWide ? AppSpacing.xxl : 0),
       padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
+          isWide ? AppSpacing.xl : AppSpacing.lg),
       color: AppColors.surface,
       child: ListTile(
         leading: Icon(Icons.logout,
             color: AppColors.error, size: isWide ? 26 : 24),
         title: Text('Keluar',
-            style: TextStyle(
-                fontSize: isWide ? 17 : 16, color: AppColors.error)),
+            style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 17 : 16, color: AppColors.error)),
         onTap: () => _showLogoutDialog(context, isWide),
       ),
     );
@@ -286,7 +274,7 @@ class HelpdeskProfilePage extends StatelessWidget {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius:
-                BorderRadius.circular(isWide ? 20 : AppConstants.radiusLarge)),
+                BorderRadius.circular(isWide ? 20 : AppRadius.lg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -300,17 +288,15 @@ class HelpdeskProfilePage extends StatelessWidget {
                     size: isWide ? 40 : 32, color: AppColors.error)),
             SizedBox(
                 height: isWide
-                    ? AppConstants.spacingXl
-                    : AppConstants.spacingLg),
+                    ? AppSpacing.xl
+                    : AppSpacing.lg),
             const Text('Keluar?',
-                style: TextStyle(
-                    fontSize: 18,
+                style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary)),
-            SizedBox(height: AppConstants.spacingSm),
+            SizedBox(height: AppSpacing.sm),
             const Text('Apakah Anda yakin ingin keluar dari akun Helpdesk?',
-                style: TextStyle(
-                    fontSize: 14, color: AppColors.textSecondary),
+                style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: 14, color: AppColors.textSecondary),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -326,11 +312,11 @@ class HelpdeskProfilePage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                AppConstants.radiusMedium))),
+                                AppRadius.md))),
                     child: const Text('Batal'),
                   ),
                 ),
-                const SizedBox(width: AppConstants.spacingMd),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
@@ -348,7 +334,7 @@ class HelpdeskProfilePage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                AppConstants.radiusMedium))),
+                                AppRadius.md))),
                     child: const Text('Keluar'),
                   ),
                 ),
@@ -377,11 +363,9 @@ class _InfoRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: TextStyle(
-                  fontSize: isWide ? 15 : 14, color: AppColors.textSecondary)),
+              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 15 : 14, color: AppColors.textSecondary)),
           Text(value,
-              style: TextStyle(
-                  fontSize: isWide ? 15 : 14,
+              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 15 : 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary)),
         ],

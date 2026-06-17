@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/constants/app_max_width.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../shared/widgets/status_badge.dart';
 import '../../../../../shared/widgets/category_badge.dart';
 
 enum DetailPageState { loading, loaded, error }
 
+/// Admin Ticket Detail ala FlutterShop — flat 2D, no decorative color, all
+/// accents use `AppColors.primary`. Sectioned, full-bleed body.
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.4.
 class AdminTicketDetailPage extends StatefulWidget {
   final Map<String, dynamic>? ticketData;
 
@@ -17,29 +24,25 @@ class AdminTicketDetailPage extends StatefulWidget {
 
 class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   final _commentController = TextEditingController();
-  final _scrollController = ScrollController();
   static const int _maxCharacters = 500;
 
   DetailPageState _state = DetailPageState.loading;
-  // Setelah revisi 3 role, Admin HANYA bisa assign & close.
-  // Tidak ada lagi _selectedStatus dropdown di sini.
   String _selectedPriority = 'sedang';
 
   Map<String, dynamic> _ticketData = {};
 
-  // Timeline 5 status (sesuai workflow 3 role)
   final List<Map<String, dynamic>> _statusTimeline = [
-    {'status': 'Submitted', 'date': '21 Jan 2024, 10:00', 'isCompleted': true, 'isActive': false},
-    {'status': 'Signed/Assigned', 'date': '21 Jan 2024, 10:15', 'isCompleted': true, 'isActive': false},
-    {'status': 'In Progress', 'date': '-', 'isCompleted': false, 'isActive': false},
-    {'status': 'Resolved', 'date': '-', 'isCompleted': false, 'isActive': false},
-    {'status': 'Closed', 'date': '-', 'isCompleted': false, 'isActive': false},
+    {'status': 'Submitted', 'date': '21 Jan 2024, 10:00', 'isCompleted': true},
+    {'status': 'Signed/Assigned', 'date': '21 Jan 2024, 10:15', 'isCompleted': true},
+    {'status': 'In Progress', 'date': '-', 'isCompleted': false},
+    {'status': 'Resolved', 'date': '-', 'isCompleted': false},
+    {'status': 'Closed', 'date': '-', 'isCompleted': false},
   ];
 
   final List<Map<String, dynamic>> _conversations = [
-    {'sender': 'Sarah Admin', 'role': 'staff', 'message': 'Mohon tunggu, kami sedang memproses permintaan reset password Anda.', 'time': '21 Jan 2024, 10:30', 'isMe': false},
-    {'sender': 'Anda', 'role': 'staff', 'message': 'Baik terima kasih atas informasinya', 'time': '21 Jan 2024, 11:00', 'isMe': true},
-    {'sender': 'Sarah Admin', 'role': 'staff', 'message': 'Password sudah direset. Silakan login dengan password baru yang telah dikirim ke email Anda.', 'time': '21 Jan 2024, 14:00', 'isMe': false},
+    {'sender': 'Sarah Admin', 'message': 'Mohon tunggu, kami sedang memproses permintaan reset password Anda.', 'time': '21 Jan 2024, 10:30', 'isMe': false},
+    {'sender': 'Anda', 'message': 'Baik terima kasih atas informasinya', 'time': '21 Jan 2024, 11:00', 'isMe': true},
+    {'sender': 'Sarah Admin', 'message': 'Password sudah direset. Silakan login dengan password baru yang telah dikirim ke email Anda.', 'time': '21 Jan 2024, 14:00', 'isMe': false},
   ];
 
   final List<Map<String, dynamic>> _attachments = [
@@ -47,8 +50,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     {'name': 'Dokumen_Pendukung.pdf', 'size': '256 KB', 'type': 'document'},
   ];
 
-  // Helpdesk options (untuk assign tiket)
-  // Setelah revisi 3 role, Admin assign ke Helpdesk (bukan "Staff")
   final List<Map<String, dynamic>> _helpdeskOptions = [
     {'name': 'John Helpdesk', 'initial': 'JH', 'workload': 5, 'status': 'available'},
     {'name': 'Sarah Helpdesk', 'initial': 'SH', 'workload': 3, 'status': 'available'},
@@ -65,7 +66,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   @override
   void dispose() {
     _commentController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -79,7 +79,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
 
   int get _characterCount => _commentController.text.length;
 
-  // Helper methods to safely get data
   String _getString(String key, String defaultValue) {
     final value = _ticketData[key];
     if (value == null) return defaultValue;
@@ -88,31 +87,32 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 600;
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(isWide),
-          body: _buildBody(isWide),
-          bottomNavigationBar: _buildCommentInput(isWide),
-        );
-      },
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      bottomNavigationBar: _buildCommentInput(),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isWide) {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.surface,
       elevation: 0,
-      leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        onPressed: () => Navigator.pop(context),
+      ),
       title: Text(
         _getString('ticketId', '#TK-0000'),
-        style: TextStyle(fontSize: isWide ? 18 : 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        style: AppTextStyles.h4,
       ),
       centerTitle: true,
       actions: [
-        IconButton(icon: const Icon(Icons.share_outlined, color: AppColors.textPrimary), onPressed: () => _showSnackBar('Link berhasil disalin')),
+        IconButton(
+          icon: const Icon(Icons.share_outlined, color: AppColors.textPrimary),
+          onPressed: () => _showSnackBar('Link berhasil disalin'),
+        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
           onSelected: (value) {
@@ -128,108 +128,92 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                 break;
             }
           },
-          itemBuilder: (context) => [
-            const PopupMenuItem(value: 'edit', child: Text('Edit')),
-            const PopupMenuItem(value: 'delete', child: Text('Hapus')),
-            const PopupMenuItem(value: 'print', child: Text('Cetak')),
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'edit', child: Text('Edit')),
+            PopupMenuItem(value: 'delete', child: Text('Hapus')),
+            PopupMenuItem(value: 'print', child: Text('Cetak')),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildBody(bool isWide) {
+  Widget _buildBody() {
     switch (_state) {
       case DetailPageState.loading:
-        return const Center(child: CircularProgressIndicator());
+        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
       case DetailPageState.error:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-              const SizedBox(height: AppConstants.spacingLg),
-              const Text('Gagal memuat detail tiket'),
-              const SizedBox(height: AppConstants.spacingMd),
-              ElevatedButton(
-                onPressed: _loadData,
-                child: const Text('Coba Lagi'),
-              ),
+              const Icon(Icons.error_outline, size: 64, color: AppColors.textTertiary),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Gagal memuat detail tiket', style: AppTextStyles.body),
+              const SizedBox(height: AppSpacing.md),
+              ElevatedButton(onPressed: _loadData, child: const Text('Coba Lagi')),
             ],
           ),
         );
       case DetailPageState.loaded:
-        return Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: EdgeInsets.all(isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTicketHeader(isWide),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildStatusTimeline(isWide),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildTicketDetails(isWide),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildDescriptionSection(isWide),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildAttachmentsSection(isWide),
-                    SizedBox(height: isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-                    _buildConversationSection(isWide),
-                    const SizedBox(height: AppConstants.spacing2xl),
-                    _buildQuickActions(isWide),
-                    const SizedBox(height: AppConstants.spacingLg),
-                  ],
-                ),
-              ),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: CenteredContent(
+            maxWidth: AppMaxWidth.infinite,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTicketHeader(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildStatusTimeline(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildTicketDetails(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildDescriptionSection(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildAttachmentsSection(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildConversationSection(),
+                const SizedBox(height: AppSpacing.xl),
+                _buildQuickActions(),
+                const SizedBox(height: AppSpacing.lg),
+              ],
             ),
-          ],
+          ),
         );
     }
   }
 
-  Widget _buildTicketHeader(bool isWide) {
+  Widget _buildTicketHeader() {
     final title = _getString('title', 'Judul tidak tersedia');
     final category = _getString('category', 'Lainnya');
     final status = _getString('status', 'baru');
     final priority = _getString('priority', 'sedang');
     final date = _getString('date', '-');
 
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+    return _Section(
+      title: '',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(fontSize: isWide ? 20 : 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+          Text(title, style: AppTextStyles.h3),
+          const SizedBox(height: AppSpacing.sm),
           Wrap(
-            spacing: AppConstants.spacingSm,
-            runSpacing: AppConstants.spacingSm,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
               CategoryBadge(category: category),
               StatusBadge(status: status),
               _buildPriorityBadge(priority),
             ],
           ),
-          SizedBox(height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
               const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
               const SizedBox(width: 4),
-              Text('Dibuat: $date', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text('Dibuat: $date',
+                style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
             ],
           ),
         ],
@@ -238,181 +222,122 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   Widget _buildPriorityBadge(String priority) {
-    Color bgColor;
-    Color textColor;
-    String label;
     IconData icon;
-
+    String label;
+    Color bg;
+    Color fg;
     switch (priority.toLowerCase()) {
       case 'tinggi':
-        bgColor = AppColors.error.withValues(alpha: 0.1);
-        textColor = AppColors.error;
-        label = 'Tinggi';
         icon = Icons.keyboard_double_arrow_up;
-        break;
-      case 'sedang':
-        bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.1);
-        textColor = const Color(0xFFF59E0B);
-        label = 'Sedang';
-        icon = Icons.remove;
+        label = 'Tinggi';
+        bg = AppColors.priorityHighBg;
+        fg = AppColors.priorityHighText;
         break;
       case 'rendah':
-        bgColor = AppColors.success.withValues(alpha: 0.1);
-        textColor = AppColors.success;
-        label = 'Rendah';
         icon = Icons.keyboard_double_arrow_down;
+        label = 'Rendah';
+        bg = AppColors.priorityLowBg;
+        fg = AppColors.priorityLowText;
         break;
+      case 'sedang':
       default:
-        bgColor = AppColors.textSecondary.withValues(alpha: 0.1);
-        textColor = AppColors.textSecondary;
-        label = priority;
-        icon = Icons.help_outline;
+        icon = Icons.remove;
+        label = 'Sedang';
+        bg = AppColors.priorityMedBg;
+        fg = AppColors.priorityMedText;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(6)),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: textColor),
+          Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor)),
+          Text(label,
+            style: AppTextStyles.overline.copyWith(
+              color: fg,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            )),
         ],
       ),
     );
   }
 
-  Widget _buildStatusTimeline(bool isWide) {
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+  Widget _buildStatusTimeline() {
+    return _Section(
+      title: 'Timeline Status',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Timeline Status', style: TextStyle(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          SizedBox(height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-          ...List.generate(_statusTimeline.length, (index) {
-            final item = _statusTimeline[index];
-            final isLast = index == _statusTimeline.length - 1;
-            return _TimelineItem(
-              title: item['status'] as String,
-              date: item['date'] as String,
-              isCompleted: item['isCompleted'] as bool,
-              isActive: item['isActive'] as bool,
-              isLast: isLast,
-            );
-          }),
-        ],
+        children: List.generate(_statusTimeline.length, (index) {
+          final item = _statusTimeline[index];
+          final isLast = index == _statusTimeline.length - 1;
+          return _TimelineItem(
+            title: item['status'] as String,
+            date: item['date'] as String,
+            isCompleted: item['isCompleted'] as bool,
+            isLast: isLast,
+          );
+        }),
       ),
     );
   }
 
-  Widget _buildTicketDetails(bool isWide) {
+  Widget _buildTicketDetails() {
     final creator = _getString('createdBy', _getString('creator', 'Unknown'));
     final email = '${creator.toLowerCase().replaceAll(' ', '.')}@student.ac.id';
     final priority = _getString('priority', 'sedang');
     final assignedTo = _getString('assignedTo', '');
     final date = _getString('date', '-');
 
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+    return _Section(
+      title: 'Detail Tiket',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Detail Tiket', style: TextStyle(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          SizedBox(height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-          _buildDetailRow('Pembuat', creator, Icons.person_outline, false),
-          _buildDetailRow('Email', email, Icons.email_outlined, false),
-          _buildDetailRow('Prioritas', priority, Icons.flag_outlined, true, onTap: () => _showPriorityDropdown()),
-          _buildDetailRow('Ditugaskan', assignedTo.isEmpty ? 'Belum ditugaskan' : assignedTo, Icons.assignment_ind_outlined, true, onTap: () => _showAssignModal()),
-          _buildDetailRow('Tanggal Dibuat', date, Icons.calendar_today_outlined, false),
-          _buildDetailRow('Terakhir Update', date, Icons.update_outlined, false),
+          _DetailRow(label: 'Pembuat', value: creator, icon: Icons.person_outline, isEditable: false),
+          _DetailRow(label: 'Email', value: email, icon: Icons.email_outlined, isEditable: false),
+          _DetailRow(label: 'Prioritas', value: priority, icon: Icons.flag_outlined, isEditable: true, onTap: _showPriorityDropdown),
+          _DetailRow(label: 'Ditugaskan', value: assignedTo.isEmpty ? 'Belum ditugaskan' : assignedTo, icon: Icons.assignment_ind_outlined, isEditable: true, onTap: _showAssignModal),
+          _DetailRow(label: 'Tanggal Dibuat', value: date, icon: Icons.calendar_today_outlined, isEditable: false),
+          _DetailRow(label: 'Terakhir Update', value: date, icon: Icons.update_outlined, isEditable: false),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, IconData icon, bool isEditable, {VoidCallback? onTap}) {
-    return InkWell(
-      onTap: isEditable ? onTap : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: AppColors.textSecondary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                  Text(value, style: TextStyle(fontSize: 14, fontWeight: isEditable ? FontWeight.w500 : FontWeight.w400, color: isEditable ? AppColors.primary : AppColors.textPrimary)),
-                ],
-              ),
-            ),
-            if (isEditable) const Icon(Icons.chevron_right, size: 20, color: AppColors.primary),
-          ],
+  Widget _buildDescriptionSection() {
+    final description = _getString('description', '');
+
+    return _Section(
+      title: 'Deskripsi',
+      child: Text(
+        description.isEmpty ? 'Tidak ada deskripsi' : description,
+        style: AppTextStyles.body.copyWith(
+          color: description.isEmpty ? AppColors.textSecondary : AppColors.textPrimary,
+          fontStyle: description.isEmpty ? FontStyle.italic : FontStyle.normal,
+          height: 1.5,
         ),
       ),
     );
   }
 
-  Widget _buildDescriptionSection(bool isWide) {
-    final description = _getString('description', '');
-
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Deskripsi', style: TextStyle(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              if (description.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 18, color: AppColors.primary),
-                  onPressed: () => _showSnackBar('Deskripsi disalin'),
-                  tooltip: 'Salin deskripsi',
-                ),
-            ],
-          ),
-          SizedBox(height: isWide ? AppConstants.spacingSm : 4),
-          Text(
-            description.isEmpty ? 'Tidak ada deskripsi' : description,
-            style: TextStyle(
-              fontSize: 14,
-              color: description.isEmpty ? AppColors.textSecondary : AppColors.textPrimary,
-              fontStyle: description.isEmpty ? FontStyle.italic : FontStyle.normal,
-              height: 1.5,
+  Widget _buildAttachmentsSection() {
+    return _Section(
+      title: 'Lampiran',
+      child: _attachments.isEmpty
+          ? Text('Tidak ada lampiran', style: AppTextStyles.body.copyWith(color: AppColors.textSecondary))
+          : Column(
+              children: List.generate(_attachments.length, (index) {
+                final attachment = _attachments[index];
+                return _buildAttachmentItem(attachment);
+              }),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttachmentsSection(bool isWide) {
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Lampiran', style: TextStyle(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          SizedBox(height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-          if (_attachments.isEmpty)
-            const Text('Tidak ada lampiran', style: TextStyle(fontSize: 14, color: AppColors.textSecondary))
-          else
-            ...List.generate(_attachments.length, (index) {
-              final attachment = _attachments[index];
-              return _buildAttachmentItem(attachment);
-            }),
-        ],
-      ),
     );
   }
 
@@ -422,50 +347,62 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     final size = attachment['size'] as String? ?? '-';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppConstants.spacingSm),
-      padding: const EdgeInsets.all(AppConstants.spacingMd),
-      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-            child: Icon(isImage ? Icons.image : Icons.insert_drive_file, color: AppColors.primary),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(
+              isImage ? Icons.image : Icons.insert_drive_file,
+              color: AppColors.primary,
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(size, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(name, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w500)),
+                Text(size, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.download, color: AppColors.primary), onPressed: () => _showSnackBar('Mengunduh $name')),
+          IconButton(
+            icon: const Icon(Icons.download, color: AppColors.primary),
+            onPressed: () => _showSnackBar('Mengunduh $name'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildConversationSection(bool isWide) {
-    return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Percakapan', style: TextStyle(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          SizedBox(height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-          if (_conversations.isEmpty)
-            const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('Belum ada percakapan', style: TextStyle(color: AppColors.textSecondary))))
-          else
-            ...List.generate(_conversations.length, (index) {
-              final chat = _conversations[index];
-              return _buildChatBubble(chat);
-            }),
-        ],
-      ),
+  Widget _buildConversationSection() {
+    return _Section(
+      title: 'Percakapan',
+      child: _conversations.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Text('Belum ada percakapan', style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+              ),
+            )
+          : Column(
+              children: List.generate(_conversations.length, (index) {
+                final chat = _conversations[index];
+                return _buildChatBubble(chat);
+              }),
+            ),
     );
   }
 
@@ -478,207 +415,192 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppConstants.spacingMd),
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        padding: const EdgeInsets.all(AppConstants.spacingMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : AppColors.background,
+          color: isMe ? AppColors.primary : AppColors.surfaceAlt,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
             bottomLeft: Radius.circular(isMe ? 16 : 4),
             bottomRight: Radius.circular(isMe ? 4 : 16),
           ),
+          border: Border.all(
+            color: isMe ? AppColors.primary : AppColors.border,
+            width: 1,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!isMe) ...[
-              Row(
-                children: [
-                  Text(sender, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                    child: const Text('Staff', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.primary)),
-                  ),
-                ],
-              ),
+              Text(sender,
+                style: AppTextStyles.overline.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                )),
               const SizedBox(height: 4),
             ],
-            Text(message, style: TextStyle(fontSize: 14, color: isMe ? Colors.white : AppColors.textPrimary)),
+            Text(message,
+              style: AppTextStyles.body.copyWith(
+                color: isMe ? AppColors.textOnPrimary : AppColors.textPrimary,
+              )),
             const SizedBox(height: 4),
-            Text(time, style: TextStyle(fontSize: 10, color: isMe ? Colors.white70 : AppColors.textSecondary)),
+            Text(time,
+              style: AppTextStyles.overline.copyWith(
+                fontSize: 10,
+                color: isMe ? AppColors.textOnPrimary : AppColors.textSecondary,
+              )),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickActions(bool isWide) {
-    final currentStatus = _getString('status', 'submitted');
-    // Tentukan tombol yang tersedia sesuai status
-    // Admin HANYA boleh:
-    //  - Submitted: "Assign ke Helpdesk"
-    //  - Signed/Assigned: "Batalkan Assignment"
-    //  - Resolved: "Close Tiket" (setelah User konfirmasi)
-    //  - In Progress / Closed: tidak ada tombol
-    final status = _helpdeskOptions.isNotEmpty ? currentStatus : 'submitted';
+  Widget _buildQuickActions() {
+    final status = _getString('status', 'submitted');
 
     if (status == 'submitted' || status == 'baru') {
-      return Container(
-        padding: EdgeInsets.all(
-            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-        decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _showAssignModal(),
-            icon: const Icon(Icons.person_add_outlined, size: 18),
-            label: const Text('Assign ke Helpdesk'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.radiusMedium)),
-            ),
-          ),
-        ),
-      );
-    } else if (status == 'signed_assigned' || status == 'ditangani') {
-      return Container(
-        padding: EdgeInsets.all(
-            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-        decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _showCancelAssignmentDialog(),
-                icon: const Icon(Icons.cancel_outlined, size: 18),
-                label: const Text('Batalkan Assignment'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppConstants.radiusMedium)),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else if (status == 'resolved' || status == 'selesai') {
-      return Container(
-        padding: EdgeInsets.all(
-            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-        decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _showCloseTicketDialog(),
-            icon: const Icon(Icons.lock_outline, size: 18),
-            label: const Text('Close Tiket (QC)'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.radiusMedium)),
-            ),
-          ),
-        ),
-      );
-    } else {
-      // in_progress, closed - tidak ada tombol
-      return Container(
-        padding: EdgeInsets.all(
-            isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-        decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        child: Row(
-          children: [
-            Icon(
-                status == 'in_progress' || status == 'diproses'
-                    ? Icons.hourglass_top_outlined
-                    : Icons.lock_outline,
-                size: 16,
-                color: AppColors.textSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                status == 'in_progress' || status == 'diproses'
-                    ? 'Helpdesk sedang mengerjakan tiket. Tidak ada aksi yang tersedia.'
-                    : 'Tiket sudah ditutup (final).',
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary),
-              ),
-            ),
-          ],
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _showAssignModal,
+          icon: const Icon(Icons.person_add_outlined, size: 18),
+          label: const Text('Assign ke Helpdesk'),
         ),
       );
     }
+    if (status == 'signed_assigned' || status == 'ditangani') {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: _showCancelAssignmentDialog,
+          icon: const Icon(Icons.cancel_outlined, size: 18),
+          label: const Text('Batalkan Assignment'),
+        ),
+      );
+    }
+    if (status == 'resolved' || status == 'selesai') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _showCloseTicketDialog,
+          icon: const Icon(Icons.lock_outline, size: 18),
+          label: const Text('Close Tiket (QC)'),
+        ),
+      );
+    }
+    // in_progress / closed — info strip
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            status == 'in_progress' || status == 'diproses'
+                ? Icons.hourglass_top_outlined
+                : Icons.lock_outline,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              status == 'in_progress' || status == 'diproses'
+                  ? 'Helpdesk sedang mengerjakan tiket. Tidak ada aksi yang tersedia.'
+                  : 'Tiket sudah ditutup (final).',
+              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildCommentInput(bool isWide) {
+  Widget _buildCommentInput() {
     return Container(
-      padding: EdgeInsets.all(isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-      decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                IconButton(icon: const Icon(Icons.attach_file, color: AppColors.textSecondary), onPressed: () => _showSnackBar('Pilih lampiran')),
-                Expanded(
-                  child: TextField(
-                    controller: _commentController,
-                    maxLines: 3,
-                    minLines: 1,
-                    maxLength: _maxCharacters,
-                    decoration: InputDecoration(
-                      hintText: 'Ketik pesan...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusLarge), borderSide: BorderSide.none),
-                      filled: true,
-                      fillColor: AppColors.background,
-                      contentPadding: EdgeInsets.symmetric(horizontal: isWide ? 16 : 12, vertical: isWide ? 12 : 10),
-                      counterText: '',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                const SizedBox(width: AppConstants.spacingXs),
-                IconButton(
-                  icon: Icon(Icons.send, color: _commentController.text.isEmpty ? AppColors.textSecondary : AppColors.primary),
-                  onPressed: _commentController.text.isEmpty ? null : () {
-                    _showSnackBar('Pesan terkirim');
-                    _commentController.clear();
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('$_characterCount/$_maxCharacters', style: TextStyle(fontSize: 11, color: _characterCount > _maxCharacters ? AppColors.error : AppColors.textSecondary)),
+                  IconButton(
+                    icon: const Icon(Icons.attach_file, color: AppColors.textSecondary),
+                    onPressed: () => _showSnackBar('Pilih lampiran'),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _commentController,
+                      maxLines: 3,
+                      minLines: 1,
+                      maxLength: _maxCharacters,
+                      decoration: InputDecoration(
+                        hintText: 'Ketik pesan...',
+                        filled: true,
+                        fillColor: AppColors.inputFill,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm + 2,
+                        ),
+                        counterText: '',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: _commentController.text.isEmpty
+                          ? AppColors.textTertiary
+                          : AppColors.primary,
+                    ),
+                    onPressed: _commentController.text.isEmpty
+                        ? null
+                        : () {
+                            _showSnackBar('Pesan terkirim');
+                            _commentController.clear();
+                            setState(() {});
+                          },
+                  ),
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    '$_characterCount/$_maxCharacters',
+                    style: AppTextStyles.overline.copyWith(
+                      fontSize: 11,
+                      color: _characterCount > _maxCharacters
+                          ? AppColors.error
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ),
       ),
@@ -688,29 +610,38 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   void _showPriorityDropdown() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Ubah Prioritas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppConstants.spacingLg),
-            ...['tinggi', 'sedang', 'rendah'].map((p) => ListTile(
-              leading: Icon(
-                p == 'tinggi' ? Icons.keyboard_double_arrow_up : (p == 'sedang' ? Icons.remove : Icons.keyboard_double_arrow_down),
-                color: p == _selectedPriority ? AppColors.primary : AppColors.textSecondary,
+            Text('Ubah Prioritas', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.lg),
+            for (final p in const ['tinggi', 'sedang', 'rendah'])
+              ListTile(
+                leading: Icon(
+                  p == 'tinggi'
+                      ? Icons.keyboard_double_arrow_up
+                      : (p == 'sedang' ? Icons.remove : Icons.keyboard_double_arrow_down),
+                  color: p == _selectedPriority ? AppColors.primary : AppColors.textSecondary,
+                ),
+                title: Text(p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah'),
+                  style: AppTextStyles.body),
+                trailing: p == _selectedPriority
+                    ? const Icon(Icons.check, color: AppColors.primary)
+                    : null,
+                onTap: () {
+                  setState(() => _selectedPriority = p);
+                  Navigator.pop(ctx);
+                  _showSnackBar(
+                      'Prioritas diubah ke ${p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah')}');
+                },
               ),
-              title: Text(p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah')),
-              trailing: p == _selectedPriority ? const Icon(Icons.check, color: AppColors.primary) : null,
-              onTap: () {
-                setState(() => _selectedPriority = p);
-                Navigator.pop(ctx);
-                _showSnackBar('Prioritas diubah ke ${p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah')}');
-              },
-            )),
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -721,29 +652,36 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.person_add_outlined, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text('Tugaskan ke Helpdesk', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                const Icon(Icons.person_add_outlined, color: AppColors.primary),
+                const SizedBox(width: AppSpacing.sm),
+                Text('Tugaskan ke Helpdesk', style: AppTextStyles.h3),
               ],
             ),
-            const SizedBox(height: AppConstants.spacingMd),
+            const SizedBox(height: AppSpacing.md),
             TextField(
               decoration: InputDecoration(
                 hintText: 'Cari helpdesk...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                filled: true,
+                fillColor: AppColors.inputFill,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-            const SizedBox(height: AppConstants.spacingMd),
+            const SizedBox(height: AppSpacing.md),
             ...List.generate(_helpdeskOptions.length, (index) {
               final helpdesk = _helpdeskOptions[index];
               final isAvailable = helpdesk['status'] == 'available';
@@ -752,21 +690,32 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               final workload = helpdesk['workload'] as int? ?? 0;
 
               return ListTile(
-                leading: CircleAvatar(backgroundColor: const Color(0xFF3B82F6), child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 12))),
-                title: Text(name),
+                leading: CircleAvatar(
+                  backgroundColor: AppColors.primary,
+                  child: Text(initial,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textOnPrimary,
+                      fontWeight: FontWeight.w600,
+                    )),
+                ),
+                title: Text(name, style: AppTextStyles.body),
                 subtitle: Text(
                   isAvailable ? 'Tersedia • $workload tiket aktif' : 'Cuti',
-                  style: TextStyle(color: isAvailable ? AppColors.success : AppColors.textSecondary),
+                  style: AppTextStyles.caption.copyWith(
+                    color: isAvailable ? AppColors.primary : AppColors.textSecondary,
+                  ),
                 ),
-                trailing: !isAvailable ? const Icon(Icons.block, color: AppColors.textSecondary) : null,
-                onTap: isAvailable ? () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _ticketData['assignedTo'] = name;
-                    _ticketData['status'] = 'signed_assigned';
-                  });
-                  _showSnackBar('Ditugaskan ke $name');
-                } : null,
+                trailing: !isAvailable ? const Icon(Icons.block, color: AppColors.textTertiary) : null,
+                onTap: isAvailable
+                    ? () {
+                        Navigator.pop(ctx);
+                        setState(() {
+                          _ticketData['assignedTo'] = name;
+                          _ticketData['status'] = 'signed_assigned';
+                        });
+                        _showSnackBar('Ditugaskan ke $name');
+                      }
+                    : null,
               );
             }),
             SizedBox(height: MediaQuery.of(ctx).viewInsets.bottom),
@@ -781,30 +730,38 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-            SizedBox(width: 8),
-            Text('Batalkan Assignment'),
+            const Icon(Icons.warning_amber_rounded, color: AppColors.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Batalkan Assignment', style: AppTextStyles.h4),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Tiket akan dikembalikan ke status Submitted. Helpdesk saat ini tidak akan lagi melihat tiket ini.',
-              style: TextStyle(fontSize: 13),
+              style: AppTextStyles.caption,
             ),
-            const SizedBox(height: 12),
-            const Text('Alasan pembatalan:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.md),
+            Text('Alasan pembatalan:', style: AppTextStyles.bodySm.copyWith(fontWeight: FontWeight.w500)),
+            const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: reasonController,
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Misal: Helpdesk berhalangan...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+                filled: true,
+                fillColor: AppColors.inputFill,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ],
@@ -824,7 +781,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               });
               _showSnackBar('Assignment dibatalkan');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('Batalkan Assignment'),
           ),
         ],
@@ -842,11 +799,14 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Row(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+          ),
+          title: Row(
             children: [
-              Icon(Icons.check_circle, color: AppColors.success),
-              SizedBox(width: 8),
-              Text('Close Tiket (QC)'),
+              const Icon(Icons.check_circle, color: AppColors.primary),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Close Tiket (QC)', style: AppTextStyles.h4),
             ],
           ),
           content: SingleChildScrollView(
@@ -854,37 +814,42 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Checklist Quality Control:',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
+                Text('Checklist Quality Control:',
+                  style: AppTextStyles.bodySm.copyWith(fontWeight: FontWeight.w500)),
+                const SizedBox(height: AppSpacing.sm),
                 CheckboxListTile(
                   value: userConfirmed,
                   onChanged: (v) => setDialogState(() => userConfirmed = v ?? false),
-                  title: const Text('User sudah konfirmasi selesai', style: TextStyle(fontSize: 13)),
+                  title: Text('User sudah konfirmasi selesai', style: AppTextStyles.caption),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
                 CheckboxListTile(
                   value: helpdeskProof,
                   onChanged: (v) => setDialogState(() => helpdeskProof = v ?? false),
-                  title: const Text('Helpdesk sudah upload bukti', style: TextStyle(fontSize: 13)),
+                  title: Text('Helpdesk sudah upload bukti', style: AppTextStyles.caption),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
                 CheckboxListTile(
                   value: qcSuitable,
                   onChanged: (v) => setDialogState(() => qcSuitable = v ?? false),
-                  title: const Text('Hasil kerja sesuai dengan laporan', style: TextStyle(fontSize: 13)),
+                  title: Text('Hasil kerja sesuai dengan laporan', style: AppTextStyles.caption),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: noteController,
                   maxLines: 2,
                   decoration: InputDecoration(
                     labelText: 'Catatan penutupan (opsional)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+                    filled: true,
+                    fillColor: AppColors.inputFill,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ],
@@ -902,7 +867,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                       _showSnackBar('Tiket ditutup (Closed)');
                     }
                   : null,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text('Close Tiket'),
             ),
           ],
@@ -915,8 +880,12 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Tiket'),
-        content: const Text('Apakah Anda yakin ingin menghapus tiket ini?'),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
+        title: Text('Hapus Tiket', style: AppTextStyles.h4),
+        content: Text('Apakah Anda yakin ingin menghapus tiket ini?',
+          style: AppTextStyles.body),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           TextButton(
@@ -935,7 +904,92 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium))),
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
+      ),
+    );
+  }
+}
+
+/// Section container ala FlutterShop — flat white card with border 1 px,
+/// no shadow, no gradient.
+class _Section extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _Section({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title.isNotEmpty) ...[
+            Text(title, style: AppTextStyles.h4),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool isEditable;
+  final VoidCallback? onTap;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.isEditable,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: isEditable ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.textSecondary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                  Text(value,
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: isEditable ? FontWeight.w500 : FontWeight.w400,
+                      color: isEditable ? AppColors.primary : AppColors.textPrimary,
+                    )),
+                ],
+              ),
+            ),
+            if (isEditable) const Icon(Icons.chevron_right, size: 20, color: AppColors.primary),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -944,9 +998,14 @@ class _TimelineItem extends StatelessWidget {
   final String title;
   final String date;
   final bool isCompleted;
-  final bool isActive;
   final bool isLast;
-  const _TimelineItem({required this.title, required this.date, required this.isCompleted, required this.isActive, required this.isLast});
+
+  const _TimelineItem({
+    required this.title,
+    required this.date,
+    required this.isCompleted,
+    required this.isLast,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -959,25 +1018,39 @@ class _TimelineItem extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: isCompleted ? AppColors.success : (isActive ? AppColors.primary : AppColors.background),
+                color: isCompleted ? AppColors.primary : AppColors.surface,
                 shape: BoxShape.circle,
-                border: Border.all(color: isCompleted ? AppColors.success : (isActive ? AppColors.primary : AppColors.border), width: 2),
+                border: Border.all(
+                  color: isCompleted ? AppColors.primary : AppColors.border,
+                  width: 2,
+                ),
               ),
-              child: isCompleted ? const Icon(Icons.check, size: 14, color: Colors.white) : (isActive ? const Icon(Icons.circle, size: 8, color: Colors.white) : null),
+              child: isCompleted
+                  ? const Icon(Icons.check, size: 14, color: AppColors.textOnPrimary)
+                  : null,
             ),
-            if (!isLast) Container(width: 2, height: 40, color: isCompleted ? AppColors.success : AppColors.border),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 40,
+                color: isCompleted ? AppColors.primary : AppColors.border,
+              ),
           ],
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 14, fontWeight: isActive ? FontWeight.w600 : FontWeight.w400, color: AppColors.textPrimary)),
+                Text(title,
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isCompleted ? AppColors.textPrimary : AppColors.textSecondary,
+                  )),
                 const SizedBox(height: 2),
-                Text(date, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(date, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
               ],
             ),
           ),

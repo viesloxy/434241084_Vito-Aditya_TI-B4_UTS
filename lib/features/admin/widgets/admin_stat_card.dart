@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 
+/// StatCard ala FlutterShop — flat, border 1 px, radius 12.
+///
+/// Pewarnaan: angka & judul pakai `textPrimary` (netral), icon container
+/// pakai `primaryLight` dengan icon `textPrimary` (netral gelap), chevron
+/// pakai `textTertiary`. Primary TIDAK dipakai — sesuai style guide section 2
+/// ("Primary hanya untuk CTA utama, tab aktif, link, focus state").
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.3 (Cards).
 class AdminStatCard extends StatelessWidget {
   final String title;
   final int count;
   final IconData icon;
-  final Color color;
   final VoidCallback? onTap;
 
   const AdminStatCard({
@@ -14,26 +23,20 @@ class AdminStatCard extends StatelessWidget {
     required this.title,
     required this.count,
     required this.icon,
-    required this.color,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0F000000),
-              blurRadius: 3,
-              offset: Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,43 +44,39 @@ class AdminStatCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Icon di soft container, icon sendiri netral (bukan primary)
                 Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 20,
-                    color: color,
-                  ),
+                  child: Icon(icon, size: 20, color: AppColors.textPrimary),
                 ),
-                Icon(
+                // Chevron netral
+                const Icon(
                   Icons.arrow_forward_ios,
-                  size: 14,
-                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  size: 12,
+                  color: AppColors.textTertiary,
                 ),
               ],
             ),
-            const SizedBox(height: AppConstants.spacingMd),
+            const SizedBox(height: AppSpacing.md),
+            // Angka NETRAL (bukan primary)
             Text(
               count.toString(),
-              style: TextStyle(
+              style: AppTextStyles.h1.copyWith(
+                color: AppColors.textPrimary,
                 fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: color,
+                height: 1.1,
               ),
             ),
-            const SizedBox(height: AppConstants.spacingXs),
+            const SizedBox(height: AppSpacing.xs),
+            // Judul di-override ke secondary (label-style)
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 
+/// ErrorState ala FlutterShop — icon error 80×80, retry button.
 class ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
@@ -16,7 +18,7 @@ class ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.spacing2xl),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -27,44 +29,25 @@ class ErrorState extends StatelessWidget {
                 color: AppColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.error_outline,
-                size: 40,
-                color: AppColors.error,
-              ),
+              child: const Icon(Icons.error_outline, size: 40, color: AppColors.error),
             ),
-            const SizedBox(height: AppConstants.spacingLg),
-            const Text(
-              'Oops!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppConstants.spacingSm),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Oops!', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               message,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
-              const SizedBox(height: AppConstants.spacingLg),
+              const SizedBox(height: AppSpacing.lg),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Coba Lagi'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.spacingLg,
-                    vertical: AppConstants.spacingMd,
-                  ),
                 ),
               ),
             ],

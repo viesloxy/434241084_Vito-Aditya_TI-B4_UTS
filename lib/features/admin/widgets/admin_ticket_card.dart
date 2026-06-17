@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/category_badge.dart';
 
+/// TicketCard ala FlutterShop — flat, border 1 px, radius 12.
+///
+/// Pewarnaan (flat 2D):
+/// - Ticket ID → `textSecondary` (mono)
+/// - Title → `textPrimary`
+/// - Category/Status/Date → existing badges (semantic)
+/// - Priority badge: pakai token semantic priority (AppColors.priorityXxxBg/Text)
+/// - `assignedTo` icon → `textTertiary` (netral)
+/// - Selected state: border + bg `primaryLight`
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.3.
 class AdminTicketCard extends StatelessWidget {
   final String ticketId;
   final String title;
@@ -32,23 +45,20 @@ class AdminTicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
-          border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0F000000),
-              blurRadius: 3,
-              offset: Offset(0, 1),
-            ),
-          ],
+          color: isSelected ? AppColors.primaryLight : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 1.5 : 1,
+          ),
         ),
         child: Row(
           children: [
@@ -56,7 +66,7 @@ class AdminTicketCard extends StatelessWidget {
               Container(
                 width: 24,
                 height: 24,
-                margin: const EdgeInsets.only(right: AppConstants.spacingMd),
+                margin: const EdgeInsets.only(right: AppSpacing.md),
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
@@ -71,57 +81,54 @@ class AdminTicketCard extends StatelessWidget {
                     children: [
                       Text(
                         ticketId,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        style: AppTextStyles.caption.copyWith(
                           color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'monospace',
                         ),
                       ),
                       const Spacer(),
                       _buildPriorityBadge(),
                     ],
                   ),
-                  const SizedBox(height: AppConstants.spacingSm),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: AppTextStyles.bodyLg.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppConstants.spacingMd),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       CategoryBadge(category: category),
-                      const SizedBox(width: AppConstants.spacingSm),
+                      const SizedBox(width: AppSpacing.sm),
                       StatusBadge(status: status),
                       const Spacer(),
                       Text(
                         date,
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: AppTextStyles.caption.copyWith(
                           color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                   if (assignedTo != null) ...[
-                    const SizedBox(height: AppConstants.spacingSm),
+                    const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
                         const Icon(
                           Icons.person_outline,
                           size: 14,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textTertiary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           assignedTo!,
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: AppTextStyles.caption.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -137,28 +144,27 @@ class AdminTicketCard extends StatelessWidget {
     );
   }
 
+  /// Priority badge: token semantic dari AppColors (bukan primary semua).
   Widget _buildPriorityBadge() {
+    final (bg, fg, label, icon) = _getPriorityConfig(priority);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
-        color: _getPriorityColor(priority).withValues(alpha: 0.1),
+        color: bg,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _getPriorityIcon(priority),
-            size: 12,
-            color: _getPriorityColor(priority),
-          ),
+          Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
           Text(
-            _getPriorityLabel(priority),
-            style: TextStyle(
+            label,
+            style: AppTextStyles.overline.copyWith(
+              color: fg,
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: _getPriorityColor(priority),
             ),
           ),
         ],
@@ -166,42 +172,38 @@ class AdminTicketCard extends StatelessWidget {
     );
   }
 
-  Color _getPriorityColor(String priority) {
+  /// Map priority string → token warna semantic. Selaras dengan
+  /// `AppColors.priorityXxxBg/Text` (style guide section 2 & 7.6b).
+  (Color, Color, String, IconData) _getPriorityConfig(String priority) {
     switch (priority.toLowerCase()) {
       case 'tinggi':
-        return AppColors.error;
+        return (
+          AppColors.priorityHighBg,
+          AppColors.priorityHighText,
+          'Tinggi',
+          Icons.keyboard_double_arrow_up,
+        );
       case 'sedang':
-        return const Color(0xFFF59E0B);
+        return (
+          AppColors.priorityMedBg,
+          AppColors.priorityMedText,
+          'Sedang',
+          Icons.remove,
+        );
       case 'rendah':
-        return AppColors.success;
+        return (
+          AppColors.priorityLowBg,
+          AppColors.priorityLowText,
+          'Rendah',
+          Icons.keyboard_double_arrow_down,
+        );
       default:
-        return AppColors.textSecondary;
-    }
-  }
-
-  IconData _getPriorityIcon(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'tinggi':
-        return Icons.keyboard_double_arrow_up;
-      case 'sedang':
-        return Icons.remove;
-      case 'rendah':
-        return Icons.keyboard_double_arrow_down;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  String _getPriorityLabel(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'tinggi':
-        return 'Tinggi';
-      case 'sedang':
-        return 'Sedang';
-      case 'rendah':
-        return 'Rendah';
-      default:
-        return priority;
+        return (
+          AppColors.border,
+          AppColors.textSecondary,
+          priority,
+          Icons.help_outline,
+        );
     }
   }
 }

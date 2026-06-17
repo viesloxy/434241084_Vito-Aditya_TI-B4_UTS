@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
 
+/// LoadingSkeleton ala FlutterShop — flat card dengan shimmer boxes.
 class LoadingSkeleton extends StatefulWidget {
   final int itemCount;
 
@@ -43,7 +45,7 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.itemCount,
-          separatorBuilder: (context, index) => const SizedBox(height: AppConstants.spacingMd),
+          separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
           itemBuilder: (context, index) => _buildSkeletonCard(_animation.value),
         );
       },
@@ -52,24 +54,25 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
 
   Widget _buildSkeletonCard(double opacity) {
     return Container(
-      padding: const EdgeInsets.all(AppConstants.spacingLg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildShimmerBox(width: 80, opacity: opacity),
-          const SizedBox(height: AppConstants.spacingSm),
+          const SizedBox(height: AppSpacing.sm),
           _buildShimmerBox(width: double.infinity, height: 16, opacity: opacity),
           const SizedBox(height: 4),
           _buildShimmerBox(width: 200, height: 16, opacity: opacity),
-          const SizedBox(height: AppConstants.spacingMd),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               _buildShimmerBox(width: 70, height: 24, opacity: opacity),
-              const SizedBox(width: AppConstants.spacingSm),
+              const SizedBox(width: AppSpacing.sm),
               _buildShimmerBox(width: 60, height: 24, opacity: opacity),
               const Spacer(),
               _buildShimmerBox(width: 100, height: 14, opacity: opacity),
@@ -89,7 +92,7 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.textSecondary.withValues(alpha: opacity),
+        color: AppColors.textTertiary.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -102,10 +105,11 @@ class StatCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppConstants.spacingLg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,25 +118,25 @@ class StatCardSkeleton extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+              color: AppColors.textTertiary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
-          const SizedBox(height: AppConstants.spacingMd),
+          const SizedBox(height: AppSpacing.md),
           Container(
             width: 50,
             height: 28,
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withValues(alpha: 0.2),
+              color: AppColors.textTertiary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: AppConstants.spacingXs),
+          const SizedBox(height: AppSpacing.xs),
           Container(
             width: 80,
             height: 12,
             decoration: BoxDecoration(
-              color: AppColors.textSecondary.withValues(alpha: 0.2),
+              color: AppColors.textTertiary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(4),
             ),
           ),

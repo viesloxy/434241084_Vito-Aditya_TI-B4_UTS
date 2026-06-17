@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 /// Status badge untuk tiket. Mendukung 6 status sesuai workflow 3 role:
 /// - submitted: Tiket baru, perlu di-assign Admin
@@ -8,8 +9,8 @@ import 'package:flutter/material.dart';
 /// - closed: Sudah ditutup Admin (final)
 /// - rejected: Ditolak
 ///
-/// Badge ini support baik format value baru (English) maupun legacy (Indonesian)
-/// untuk backward compatibility dengan kode yang sudah ada.
+/// Semua warna berasal dari `AppColors` (token semantic, bukan raw Color).
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 2.4 & 7.6a.
 class StatusBadge extends StatelessWidget {
   final String status;
 
@@ -37,6 +38,7 @@ class StatusBadge extends StatelessWidget {
           Text(
             _getStatusLabel(status),
             style: TextStyle(
+              fontFamily: 'Plus Jakarta',
               fontSize: 11,
               fontWeight: FontWeight.w500,
               color: config['text'] as Color,
@@ -47,55 +49,54 @@ class StatusBadge extends StatelessWidget {
     );
   }
 
+  /// Status workflow 3-role + legacy mapping. Semua token via `AppColors`.
   Map<String, dynamic> _getStatusConfig(String status) {
-    // Support baik format baru (submitted, signed_assigned, dll) maupun legacy
     switch (status.toLowerCase()) {
-      // Status workflow 3 role (BARU)
       case 'submitted':
       case 'baru':
         return {
-          'bg': const Color(0xFFFEF3C7), // Warning Light
-          'text': const Color(0xFF92400E), // Warning Dark
+          'bg': AppColors.statusBaruBg,
+          'text': AppColors.statusBaruText,
           'icon': Icons.access_time,
         };
       case 'signed_assigned':
       case 'ditangani':
         return {
-          'bg': const Color(0xFFDBEAFE), // Info Light
-          'text': const Color(0xFF1E40AF), // Info Dark
+          'bg': AppColors.statusProsesBg,
+          'text': AppColors.statusProsesText,
           'icon': Icons.assignment_ind,
         };
       case 'in_progress':
       case 'diproses':
         return {
-          'bg': const Color(0xFFE0E7FF), // Indigo Light
-          'text': const Color(0xFF3730A3), // Indigo Dark
+          'bg': AppColors.infoLight,
+          'text': AppColors.statusProsesText,
           'icon': Icons.refresh,
         };
       case 'resolved':
       case 'selesai':
         return {
-          'bg': const Color(0xFFD1FAE5), // Success Light
-          'text': const Color(0xFF065F46), // Success Dark
+          'bg': AppColors.statusSelesaiBg,
+          'text': AppColors.statusSelesaiText,
           'icon': Icons.check_circle,
         };
       case 'closed':
         return {
-          'bg': const Color(0xFFE5E7EB), // Gray Light
-          'text': const Color(0xFF374151), // Gray Dark
+          'bg': AppColors.border,
+          'text': AppColors.textPrimary,
           'icon': Icons.lock,
         };
       case 'rejected':
       case 'ditolak':
         return {
-          'bg': const Color(0xFFFEE2E2), // Error Light
-          'text': const Color(0xFF991B1B), // Error Dark
+          'bg': AppColors.statusTolakBg,
+          'text': AppColors.statusTolakText,
           'icon': Icons.cancel,
         };
       default:
         return {
-          'bg': const Color(0xFFE5E7EB),
-          'text': const Color(0xFF374151),
+          'bg': AppColors.border,
+          'text': AppColors.textSecondary,
           'icon': Icons.circle,
         };
     }
@@ -115,13 +116,10 @@ class StatusBadge extends StatelessWidget {
         return 'Closed';
       case 'rejected':
         return 'Ditolak';
-      // Legacy mapping (untuk backward compatibility)
       case 'baru':
         return 'Baru';
       case 'ditangani':
         return 'Ditangani';
-      case 'diproses':
-        return 'Diproses';
       case 'selesai':
         return 'Selesai';
       case 'ditolak':

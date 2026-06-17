@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_radius.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/auth_service.dart';
 
+/// Profile Page ala FlutterShop — header card (avatar + name + role badge)
+/// + section info (key-value) + section menu (ListTile) + logout.
+/// Avatar pakai dummy `assets/images/profil.jpeg`.
+///
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.9 (List Items).
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -29,10 +36,7 @@ class ProfilePage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        title: const Text(
-          'Profil',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        ),
+        title: const Text('Profil', style: AppTextStyles.h4),
         centerTitle: true,
         actions: [
           IconButton(
@@ -44,27 +48,28 @@ class ProfilePage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Profile Card
+            // ===== Header: Avatar + Name + Role =====
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(AppConstants.spacing2xl),
+              padding: const EdgeInsets.all(AppSpacing.xxl),
               color: AppColors.surface,
               child: Column(
                 children: [
-                  // Avatar
+                  // Avatar dari profil.jpeg (dummy)
                   GestureDetector(
                     onTap: () => _showComingSoon(context),
                     child: Stack(
                       children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundColor: AppColors.primary,
-                          child: Text(
-                            userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join(),
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                        Container(
+                          width: 88,
+                          height: 88,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceAlt,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.border, width: 2),
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/profil.jpeg'),
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
@@ -90,70 +95,47 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: AppConstants.spacingMd),
+                  const SizedBox(height: AppSpacing.md),
 
-                  // Name
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  Text(userName, style: AppTextStyles.h3),
 
-                  const SizedBox(height: AppConstants.spacingXs),
+                  const SizedBox(height: AppSpacing.xs),
 
-                  // Email
-                  Text(
-                    userEmail,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text(userEmail, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
 
-                  const SizedBox(height: AppConstants.spacingMd),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Role Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       userRole,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
-                      ),
+                      style: AppTextStyles.overline.copyWith(color: AppColors.primary),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
 
-            // Info Section
+            // ===== Info Section =====
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(AppConstants.spacingLg),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               color: AppColors.surface,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Informasi Akun',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spacingMd),
+                  Text('Informasi Akun', style: AppTextStyles.h4),
+                  const SizedBox(height: AppSpacing.md),
                   _InfoRow(label: 'Nama Lengkap', value: userName),
                   _InfoRow(label: 'Email', value: userEmail),
                   _InfoRow(label: 'Role', value: userRole),
@@ -163,9 +145,9 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
 
-            // Menu Section
+            // ===== Menu Section (List ala FlutterShop divider_list_tile) =====
             Container(
               color: AppColors.surface,
               child: Column(
@@ -174,15 +156,20 @@ class ProfilePage extends StatelessWidget {
                   return Column(
                     children: [
                       ListTile(
-                        leading: Icon(item['icon'] as IconData, color: AppColors.textSecondary),
+                        leading: Icon(
+                          item['icon'] as IconData,
+                          color: AppColors.textSecondary,
+                          size: 24,
+                        ),
                         title: Text(
                           item['title'] as String,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
-                          ),
+                          style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
                         ),
-                        trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textTertiary,
+                          size: 20,
+                        ),
                         onTap: item['onTap'] as VoidCallback,
                       ),
                       if (index < menuItems.length - 1)
@@ -193,27 +180,23 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
 
-            // Logout Button
+            // ===== Logout =====
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(AppConstants.spacingLg),
               color: AppColors.surface,
               child: ListTile(
-                leading: const Icon(Icons.logout, color: AppColors.error),
-                title: const Text(
+                leading: const Icon(Icons.logout, color: AppColors.error, size: 24),
+                title: Text(
                   'Keluar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.error,
-                  ),
+                  style: AppTextStyles.body.copyWith(color: AppColors.error),
                 ),
                 onTap: () => _showLogoutDialog(context),
               ),
             ),
 
-            const SizedBox(height: AppConstants.spacing2xl),
+            const SizedBox(height: AppSpacing.xxl),
           ],
         ),
       ),
@@ -225,9 +208,10 @@ class ProfilePage extends StatelessWidget {
       SnackBar(
         content: const Text('Fitur segera hadir'),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
         ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
       ),
     );
   }
@@ -236,8 +220,8 @@ class ProfilePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -249,74 +233,43 @@ class ProfilePage extends StatelessWidget {
                 color: AppColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.logout,
-                size: 32,
-                color: AppColors.error,
-              ),
+              child: const Icon(Icons.logout, size: 32, color: AppColors.error),
             ),
-            const SizedBox(height: AppConstants.spacingLg),
-            const Text(
-              'Keluar?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppConstants.spacingSm),
-            const Text(
+            const SizedBox(height: AppSpacing.lg),
+            Text('Keluar?', style: AppTextStyles.h3),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
               'Apakah Anda yakin ingin keluar dari akun ini?',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
         ),
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-                      ),
-                    ),
-                    child: const Text('Batal'),
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal'),
                 ),
-                const SizedBox(width: AppConstants.spacingMd),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final navigator = Navigator.of(context);
-                      navigator.pop();
-                      try {
-                        await AuthService().signOut();
-                      } catch (_) {}
-                      navigator.pushNamedAndRemoveUntil(
-                        '/login', (route) => false,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-                      ),
-                    ),
-                    child: const Text('Keluar'),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    navigator.pop();
+                    try {
+                      await AuthService().signOut();
+                    } catch (_) {}
+                    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                  child: const Text('Keluar'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -333,23 +286,16 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-          ),
+          Text(label, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+            style: AppTextStyles.body.copyWith(
               color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

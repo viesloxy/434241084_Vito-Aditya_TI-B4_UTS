@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// BottomNavBar ala FlutterShop — flat white, top divider, icon 24 + label 11.
+/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.5.
 class AdminBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -18,18 +20,11 @@ class AdminBottomNavBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 3,
-            offset: Offset(0, -1),
-          ),
-        ],
+        border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
       ),
       child: SafeArea(
-        child: Container(
+        child: SizedBox(
           height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -89,9 +84,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 64,
         child: Column(
@@ -119,6 +113,7 @@ class _NavItem extends StatelessWidget {
                       child: Text(
                         badgeCount > 9 ? '9+' : badgeCount.toString(),
                         style: const TextStyle(
+                          fontFamily: 'Plus Jakarta',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -133,6 +128,7 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
+                fontFamily: 'Plus Jakarta',
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? AppColors.primary : AppColors.textSecondary,
