@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -67,20 +67,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
-  Color _getIconColor(String type) {
+  Color _getIconColor(BuildContext context, String type) {
+
+    final c = context.palette;
     switch (type) {
       case 'status_update':
         return const Color(0xFF3B82F6);
       case 'new_comment':
-        return AppColors.success;
+        return c.success;
       case 'ticket_created':
-        return AppColors.primary;
+        return c.primary;
       case 'announcement':
         return const Color(0xFFF59E0B);
       case 'reminder':
         return const Color(0xFF8B5CF6);
       default:
-        return AppColors.textSecondary;
+        return c.textSecondary;
     }
   }
 
@@ -121,7 +123,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         break;
       case 'announcement':
         // Show announcement details
-        _showAnnouncementDialog(notif);
+        _showAnnouncementDialog(context, notif);
         break;
       case 'reminder':
         // Show reminder details
@@ -148,7 +150,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
-  void _showAnnouncementDialog(Map<String, dynamic> notif) {
+  void _showAnnouncementDialog(BuildContext context, Map<String, dynamic> notif) {
+
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -157,7 +161,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
         title: Row(
           children: [
-            Icon(Icons.campaign_outlined, color: AppColors.primary),
+            Icon(Icons.campaign_outlined, color: c.primary),
             const SizedBox(width: 8),
             Expanded(child: Text(notif['title'], style: const TextStyle(fontSize: 16))),
           ],
@@ -173,7 +177,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             const SizedBox(height: AppConstants.spacingMd),
             Text(
               notif['time'],
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: c.textSecondary),
             ),
           ],
         ),
@@ -189,56 +193,57 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Notifikasi',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
         ),
         centerTitle: true,
         actions: [
           if (_unreadCount > 0)
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text(
+              child: Text(
                 'Tandai semua dibaca',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.primary),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.primary),
               ),
             ),
         ],
       ),
       body: _notifications.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(context)
           : RefreshIndicator(
               onRefresh: () async => await Future.delayed(const Duration(seconds: 1)),
               child: ListView.separated(
                 itemCount: _notifications.length,
-                separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.divider),
+                separatorBuilder: (context, index) => Divider(height: 1, color: c.divider),
                 itemBuilder: (context, index) {
                   final notif = _notifications[index];
                   return Dismissible(
                     key: Key('notif_$index'),
                     background: Container(
-                      color: AppColors.success.withValues(alpha: 0.2),
+                      color: c.success.withValues(alpha: 0.2),
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(left: 20),
-                      child: const Icon(Icons.check, color: AppColors.success),
+                      child: Icon(Icons.check, color: c.success),
                     ),
                     secondaryBackground: Container(
-                      color: AppColors.error.withValues(alpha: 0.2),
+                      color: c.error.withValues(alpha: 0.2),
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 20),
-                      child: const Icon(Icons.delete, color: AppColors.error),
+                      child: Icon(Icons.delete, color: c.error),
                     ),
                     confirmDismiss: (direction) async {
                       if (direction == DismissDirection.startToEnd) {
                         _markAsRead(index);
                         return false;
                       } else {
-                        return await _showDeleteConfirmation();
+                        return await _showDeleteConfirmation(context);
                       }
                     },
                     onDismissed: (direction) {
@@ -248,7 +253,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     },
                     child: _NotificationItem(
                       icon: _getIcon(notif['type']),
-                      iconColor: _getIconColor(notif['type']),
+                      iconColor: _getIconColor(context, notif['type']),
                       title: notif['title'],
                       message: notif['message'],
                       time: notif['time'],
@@ -265,7 +270,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+
+    final c = context.palette;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spacing2xl),
@@ -275,17 +282,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Icon(
               Icons.notifications_off_outlined,
               size: 64,
-              color: AppColors.textSecondary.withValues(alpha: 0.5),
+              color: c.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppConstants.spacingLg),
-            const Text(
+            Text(
               'Tidak Ada Notifikasi',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
             ),
             const SizedBox(height: AppConstants.spacingSm),
-            const Text(
+            Text(
               'Notifikasi akan muncul di sini',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: c.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -294,7 +301,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Future<bool> _showDeleteConfirmation() async {
+  Future<bool> _showDeleteConfirmation(BuildContext context) async {
+    final c = context.palette;
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -308,7 +316,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: c.error),
             child: const Text('Hapus'),
           ),
         ],
@@ -338,10 +346,11 @@ class _NotificationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        color: isRead ? AppColors.surface : const Color(0xFFF0F7FF),
+        color: isRead ? c.surface : const Color(0xFFF0F7FF),
         padding: const EdgeInsets.all(AppConstants.spacingLg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,8 +361,8 @@ class _NotificationItem extends StatelessWidget {
                 margin: const EdgeInsets.only(right: 12, top: 4),
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
+                decoration: BoxDecoration(
+                  color: c.primary,
                   shape: BoxShape.circle,
                 ),
               )
@@ -383,27 +392,27 @@ class _NotificationItem extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 13, color: c.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     time,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: c.textSecondary),
                   ),
                 ],
               ),
             ),
 
             // Arrow
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+            Icon(Icons.chevron_right, color: c.textSecondary, size: 20),
           ],
         ),
       ),

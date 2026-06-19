@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_shadow.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class RoleSelector extends StatelessWidget {
   final String selectedRole;
@@ -17,10 +17,11 @@ class RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Role', style: AppTextStyles.label),
+        Text('Role', style: AppTextStyles.label(c)),
         const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
@@ -67,6 +68,7 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -76,10 +78,10 @@ class _RoleCard extends StatelessWidget {
           vertical: AppSpacing.lg,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : AppColors.surface,
+          color: isSelected ? c.primaryLight : c.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? c.primary : c.border,
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected ? AppShadow.cardHover : AppShadow.none,
@@ -89,14 +91,14 @@ class _RoleCard extends StatelessWidget {
             Icon(
               icon,
               size: 32,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected ? c.primary : c.textSecondary,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               label,
-              style: AppTextStyles.body.copyWith(
+              style: AppTextStyles.body(c).copyWith(
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                color: isSelected ? c.primary : c.textPrimary,
               ),
             ),
           ],

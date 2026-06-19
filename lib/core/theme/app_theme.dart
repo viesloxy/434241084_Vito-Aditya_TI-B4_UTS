@@ -1,119 +1,82 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_radius.dart';
 import '../constants/app_shadow.dart';
 import '../constants/app_spacing.dart';
 import '../constants/app_text_styles.dart';
+import 'app_palette.dart';
 
 /// Global theme — Material 3 + tokens dari style guide.
 ///
-/// Diadopsi dari `FlutterShop Free Version/lib/theme/app_theme.dart`,
-/// `input_decoration_theme.dart`, dan `button_theme.dart`.
+/// Mendukung light & dark mode via `AppPalette` ThemeExtension.
+/// `lightTheme` dan `darkTheme` keduanya dipakai di `MaterialApp`.
 ///
 /// Konvensi FlutterShop (lihat `lib/constants.dart`):
 /// - `defaultPadding = 16`      → outer page padding
 /// - `defaultBorderRadious = 12` → radius default (input/button/card)
 /// - `fontFamily: "Plus Jakarta"`
-/// - `scaffoldBackgroundColor: Colors.white`
+/// - `scaffoldBackgroundColor: Colors.white` (light) / deep neutral (dark)
 ///
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 0 & 6.
 class AppTheme {
   AppTheme._();
 
-  /// Input fill. FlutterShop `lightGreyColor = #F8F8F9`.
-  static const Color _inputFill = AppColors.inputFill;
-
-  /// Border default. FlutterShop `Colors.transparent` (no visible border
-  /// sampai focus). Kita pakai `inputBorder` (`#E8E8E9`) untuk fallback.
-  static const OutlineInputBorder _outlineBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)), // 12
-    borderSide: BorderSide(color: Colors.transparent),
-  );
-
-  static const OutlineInputBorder _focusedBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-    borderSide: BorderSide(color: AppColors.primary),
-  );
-
-  static const OutlineInputBorder _errorBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-    borderSide: BorderSide(color: AppColors.error),
-  );
-
-  /// Input decoration ala FlutterShop:
-  /// - fill `lightGreyColor` (`#F8F8F9`)
-  /// - border transparan
-  /// - focused border primary 1 px
-  /// - hint color `greyColor` (`#B8B5C3`)
-  /// - **TIDAK set contentPadding** → pakai default Material
-  static const InputDecorationTheme _inputDecoration = InputDecorationTheme(
-    fillColor: _inputFill,
-    filled: true,
-    hintStyle: TextStyle(color: Color(0xFFB8B5C3)), // greyColor FlutterShop
-    border: _outlineBorder,
-    enabledBorder: _outlineBorder,
-    focusedBorder: _focusedBorder,
-    errorBorder: _errorBorder,
-    focusedErrorBorder: _errorBorder,
-  );
-
-  static ThemeData get lightTheme {
+  /// Build ThemeData dari AppPalette (parametric untuk light/dark).
+  static ThemeData _buildTheme(AppPalette c) {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Plus Jakarta',
-      brightness: Brightness.light,
-      // FlutterShop: primarySwatch + primaryColor = #7B61FF.
-      // Kita override dengan brand #3921D9.
+      brightness: c.background.computeLuminance() > 0.5
+          ? Brightness.light
+          : Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-        primary: AppColors.primary,
-        onPrimary: AppColors.textOnPrimary,
-        surface: AppColors.surface,
-        onSurface: AppColors.textPrimary,
+        seedColor: c.primary,
+        brightness: c.background.computeLuminance() > 0.5
+            ? Brightness.light
+            : Brightness.dark,
+        primary: c.primary,
+        onPrimary: c.textOnPrimary,
+        surface: c.surface,
+        onSurface: c.textPrimary,
       ),
-      // FlutterShop: scaffoldBackgroundColor: Colors.white (kita override juga).
-      scaffoldBackgroundColor: AppColors.background,
-      iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      scaffoldBackgroundColor: c.background,
+      iconTheme: IconThemeData(color: c.textPrimary),
 
-      // ===== AppBar (ala FlutterShop: white, elevation 0) =====
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.surface, // white
+      // ===== AppBar (ala FlutterShop: flat surface, elevation 0) =====
+      appBarTheme: AppBarTheme(
+        backgroundColor: c.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 24),
+        iconTheme: IconThemeData(color: c.textPrimary, size: 24),
         titleTextStyle: TextStyle(
           fontFamily: 'Plus Jakarta',
           fontSize: 16,
           fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
 
       // ===== ElevatedButton (ala FlutterShop) =====
-      // padding all 16, min tinggi 32, radius 12.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.all(AppSpacing.lg), // defaultPadding = 16
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textOnPrimary,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          backgroundColor: c.primary,
+          foregroundColor: c.textOnPrimary,
           minimumSize: const Size(double.infinity, 32),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
           ),
-          textStyle: AppTextStyles.button, // override ke Plus Jakarta 16/w700
+          textStyle: AppTextStyles.button(c),
           elevation: 0,
         ),
       ),
 
       // ===== OutlinedButton (ala FlutterShop) =====
-      // side 1.5 px blackColor10 (#E8E8E9). Kita pakai AppColors.border.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.all(AppSpacing.lg),
           minimumSize: const Size(double.infinity, 32),
-          side: const BorderSide(color: AppColors.border, width: 1.5),
+          side: BorderSide(color: c.border, width: 1.5),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
           ),
@@ -122,27 +85,49 @@ class AppTheme {
 
       // ===== TextButton (ala FlutterShop: fg = primary) =====
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+        style: TextButton.styleFrom(foregroundColor: c.primary),
       ),
 
-      // ===== InputDecoration (ala FlutterShop, no custom contentPadding) =====
-      inputDecorationTheme: _inputDecoration,
+      // ===== InputDecoration (ala FlutterShop) =====
+      inputDecorationTheme: InputDecorationTheme(
+        fillColor: c.inputFill,
+        filled: true,
+        hintStyle: TextStyle(color: c.textTertiary),
+        border: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: Colors.transparent),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: Colors.transparent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: c.primary),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: c.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          borderSide: BorderSide(color: c.error),
+        ),
+      ),
 
-      // ===== Card (flat ala product_card OutlinedButton pattern) =====
-      // FlutterShop TIDAK set cardTheme — default Card elevation 1.
-      // Kita override flat: elevation 0 + border 1 px ala OutlinedButton.
-      cardTheme: const CardThemeData(
-        color: AppColors.surface,
+      // ===== Card (flat 2D ala FlutterShop) =====
+      cardTheme: CardThemeData(
+        color: c.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
-          side: BorderSide(color: AppColors.border, width: 1),
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+          side: BorderSide(color: c.border, width: 1),
         ),
       ),
 
       // ===== Divider =====
-      dividerTheme: const DividerThemeData(
-        color: AppColors.divider,
+      dividerTheme: DividerThemeData(
+        color: c.divider,
         thickness: 1,
         space: 1,
       ),
@@ -150,31 +135,63 @@ class AppTheme {
       // ===== Snackbar (custom, floating) =====
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.textPrimary,
-        contentTextStyle: AppTextStyles.body.copyWith(color: Colors.white),
+        backgroundColor: c.textPrimary,
+        contentTextStyle: AppTextStyles.body(c).copyWith(color: c.background),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
         ),
       ),
 
-      // ===== Checkbox (ala FlutterShop: side = blackColor40) =====
+      // ===== Checkbox =====
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        side: const BorderSide(color: AppColors.textTertiary, width: 1.5),
+        side: BorderSide(color: c.textTertiary, width: 1.5),
       ),
 
-      // BottomSheet default shape ala FlutterShop (radius 24 atas).
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
+      // ===== BottomSheet =====
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: c.surface,
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.xxl), // 24
+            top: Radius.circular(AppRadius.xxl),
           ),
         ),
         clipBehavior: Clip.hardEdge,
       ),
+
+      // ===== Dialog =====
+      dialogTheme: DialogThemeData(
+        backgroundColor: c.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+          side: BorderSide(color: c.border, width: 1),
+        ),
+      ),
+
+      // ===== ProgressIndicator =====
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: c.primary,
+        linearTrackColor: c.surfaceAlt,
+        circularTrackColor: c.surfaceAlt,
+      ),
+
+      // ===== ListTile =====
+      listTileTheme: ListTileThemeData(
+        iconColor: c.textSecondary,
+        textColor: c.textPrimary,
+        tileColor: c.surface,
+      ),
+
+      // ===== AppPalette ThemeExtension =====
+      extensions: <ThemeExtension<dynamic>>[
+        c,
+      ],
     );
   }
+
+  static ThemeData get lightTheme => _buildTheme(AppPalette.light);
+  static ThemeData get darkTheme => _buildTheme(AppPalette.dark);
 
   // Re-export shadow tokens agar import ringkas.
   static const List<BoxShadow> fab = AppShadow.fab;

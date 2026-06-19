@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Bottom navigation bar khusus untuk role Helpdesk.
 /// Menggunakan icon `assignment` (bukan `description` seperti Admin)
@@ -20,9 +20,10 @@ class HelpdeskBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: c.surface,
         boxShadow: [
           BoxShadow(
             color: Color(0x1A000000),
@@ -95,6 +96,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -111,7 +113,7 @@ class _NavItem extends StatelessWidget {
                   size: 24,
                   // Pakai primary indigo untuk active state mengikuti design system,
                   // bisa diganti dengan HelpdeskColors.primaryDark jika mau full helpdesk color
-                  color: isActive ? const Color(0xFF3B82F6) : AppColors.textSecondary,
+                  color: isActive ? const Color(0xFF3B82F6) : c.textSecondary,
                 ),
                 if (badgeCount > 0)
                   Positioned(
@@ -120,7 +122,7 @@ class _NavItem extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.error,
+                        color: c.error,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
@@ -143,7 +145,7 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? const Color(0xFF3B82F6) : AppColors.textSecondary,
+                color: isActive ? const Color(0xFF3B82F6) : c.textSecondary,
               ),
             ),
           ],

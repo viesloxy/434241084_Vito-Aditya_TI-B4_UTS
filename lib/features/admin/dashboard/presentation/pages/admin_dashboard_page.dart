@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_max_width.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
@@ -10,12 +9,13 @@ import '../../../widgets/admin_ticket_card.dart';
 import '../../../widgets/loading_skeleton.dart';
 import '../../../widgets/empty_state.dart';
 import '../../../widgets/error_state.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 enum DashboardState { loading, loaded, empty, error }
 
 /// Admin Dashboard ala FlutterShop — full-bleed (AppMaxWidth.infinite).
 /// Section pattern: header → stats grid → categories → recent tickets.
-/// Semua aksen pakai `AppColors.primary` (flat 2D, no decorative colors).
+/// Semua aksen pakai `c.primary` (flat 2D, no decorative colors).
 ///
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.
 class AdminDashboardPage extends StatefulWidget {
@@ -76,15 +76,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     const adminName = 'Sarah Admin';
     const adminRole = 'Administrator';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshData,
-          color: AppColors.primary,
+          color: c.primary,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(AppSpacing.lg), // defaultPadding = 16
@@ -111,6 +112,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Widget _buildHeader(BuildContext context, String adminName, String adminRole) {
+
+    final c = context.palette;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -121,7 +124,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             children: [
               Text(
                 'Selamat datang,',
-                style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
               ),
               const SizedBox(height: AppSpacing.xs),
               Row(
@@ -129,7 +132,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   Flexible(
                     child: Text(
                       adminName,
-                      style: AppTextStyles.h2,
+                      style: AppTextStyles.h2(c),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -140,13 +143,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
+                      color: c.primaryLight,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       adminRole,
-                      style: AppTextStyles.overline.copyWith(
-                        color: AppColors.primary,
+                      style: AppTextStyles.overline(c).copyWith(
+                        color: c.primary,
                         fontSize: 10,
                       ),
                     ),
@@ -159,7 +162,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.search, color: AppColors.textPrimary),
+              icon: Icon(Icons.search, color: c.textPrimary),
               onPressed: () {},
             ),
             // Avatar dengan profil.jpeg (dummy)
@@ -167,9 +170,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.surfaceAlt,
+                color: c.surfaceAlt,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.border, width: 2),
+                border: Border.all(color: c.border, width: 2),
                 image: const DecorationImage(
                   image: AssetImage('assets/images/profil.jpeg'),
                   fit: BoxFit.cover,
@@ -183,6 +186,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Widget _buildStatsSection(BuildContext context) {
+
+    final c = context.palette;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 600;
@@ -193,13 +198,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Statistik Tiket', style: AppTextStyles.h4),
+                Text('Statistik Tiket', style: AppTextStyles.h4(c)),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
                   child: Text(
                     'Lihat Semua',
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.primary,
+                    style: AppTextStyles.body(c).copyWith(
+                      color: c.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -235,19 +240,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Widget _buildCategoriesSection(BuildContext context) {
+
+    final c = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Kategori Tiket', style: AppTextStyles.h4),
+            Text('Kategori Tiket', style: AppTextStyles.h4(c)),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
               child: Text(
                 'Kelola',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.primary,
+                style: AppTextStyles.body(c).copyWith(
+                  color: c.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -280,19 +287,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Widget _buildRecentTicketsSection(BuildContext context) {
+
+    final c = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Tiket Terbaru', style: AppTextStyles.h4),
+            Text('Tiket Terbaru', style: AppTextStyles.h4(c)),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/admin/tickets'),
               child: Text(
                 'Lihat Semua',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.primary,
+                style: AppTextStyles.body(c).copyWith(
+                  color: c.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),

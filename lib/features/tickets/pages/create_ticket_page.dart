@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/custom_button.dart';
+import '../../../core/theme/app_palette.dart';
 
 class CreateTicketPage extends StatefulWidget {
   const CreateTicketPage({super.key});
@@ -53,12 +53,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return null;
   }
 
-  Future<void> _handleSubmit() async {
+  Future<void> _handleSubmit(BuildContext context) async {
+    final c = context.palette;
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Pilih kategori tiket'),
-          backgroundColor: AppColors.error,
+          backgroundColor: c.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
         ),
@@ -70,7 +71,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Pilih tingkat prioritas'),
-          backgroundColor: AppColors.error,
+          backgroundColor: c.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
         ),
@@ -93,7 +94,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 Text('Tiket berhasil dibuat!'),
               ],
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: c.success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
           ),
@@ -109,7 +110,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     }
   }
 
-  void _handleClose() {
+  void _handleClose(BuildContext context) {
+
+    final c = context.palette;
     // Check if form has data
     final hasData = _titleController.text.isNotEmpty ||
         _descriptionController.text.isNotEmpty ||
@@ -135,7 +138,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Go back to previous page
               },
-              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              style: TextButton.styleFrom(foregroundColor: c.error),
               child: const Text('Batalkan'),
             ),
           ],
@@ -148,18 +151,19 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.textPrimary),
-          onPressed: _handleClose,
+          icon: Icon(Icons.close, color: c.textPrimary),
+          onPressed: () => _handleClose(context),
         ),
-        title: const Text(
+        title: Text(
           'Buat Tiket Baru',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
         ),
         centerTitle: true,
       ),
@@ -175,9 +179,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Kategori Section
-                      const Text(
+                      Text(
                         'Kategori *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
                       ),
                       const SizedBox(height: AppConstants.spacingSm),
                       Wrap(
@@ -191,10 +195,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primaryLight : AppColors.surface,
+                                color: isSelected ? c.primaryLight : c.surface,
                                 borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.primary : AppColors.border,
+                                  color: isSelected ? c.primary : c.border,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -204,7 +208,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                                   Icon(
                                     cat['icon'],
                                     size: 16,
-                                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                    color: isSelected ? c.primary : c.textSecondary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -212,7 +216,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                      color: isSelected ? c.primary : c.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -249,9 +253,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                       const SizedBox(height: AppConstants.spacing2xl),
 
                       // Prioritas Section
-                      const Text(
+                      Text(
                         'Prioritas *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
                       ),
                       const SizedBox(height: AppConstants.spacingSm),
                       Row(
@@ -267,10 +271,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                                 ),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? pri['color'].withValues(alpha: 0.15) : AppColors.surface,
+                                  color: isSelected ? pri['color'].withValues(alpha: 0.15) : c.surface,
                                   borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
                                   border: Border.all(
-                                    color: isSelected ? pri['color'] : AppColors.border,
+                                    color: isSelected ? pri['color'] : c.border,
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
@@ -280,7 +284,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? pri['color'] : AppColors.textPrimary,
+                                      color: isSelected ? pri['color'] : c.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -293,9 +297,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                       const SizedBox(height: AppConstants.spacing2xl),
 
                       // Lampiran Section
-                      const Text(
+                      Text(
                         'Lampiran (Opsional)',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
                       ),
                       const SizedBox(height: AppConstants.spacingSm),
                       GestureDetector(
@@ -313,22 +317,22 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(AppConstants.spacing2xl),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: c.surface,
                             borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-                            border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                            border: Border.all(color: c.border, style: BorderStyle.solid),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.add_photo_alternate_outlined, size: 40, color: AppColors.textSecondary),
+                              Icon(Icons.add_photo_alternate_outlined, size: 40, color: c.textSecondary),
                               const SizedBox(height: AppConstants.spacingSm),
-                              const Text(
+                              Text(
                                 'Tambah File',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.primary),
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.primary),
                               ),
                               const SizedBox(height: AppConstants.spacingXs),
-                              const Text(
+                              Text(
                                 'Maksimal 5MB per file',
-                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: c.textSecondary),
                               ),
                             ],
                           ),
@@ -342,13 +346,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
               // Submit Button
               Container(
                 padding: const EdgeInsets.all(AppConstants.spacingLg),
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
+                decoration: BoxDecoration(
+                  color: c.surface,
                   boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, -2))],
                 ),
                 child: CustomButton(
                   text: 'Kirim Tiket',
-                  onPressed: _handleSubmit,
+                  onPressed: () => _handleSubmit(context),
                   isLoading: _isLoading,
                   icon: Icons.send,
                 ),

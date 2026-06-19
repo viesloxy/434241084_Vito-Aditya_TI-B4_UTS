@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 /// Halaman notifikasi untuk role Helpdesk.
 /// Notifikasi yang diterima Helpdesk:
@@ -101,7 +101,9 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
     }
   }
 
-  Color _getIconColor(String type) {
+  Color _getIconColor(BuildContext context, String type) {
+
+    final c = context.palette;
     switch (type) {
       case 'ticket_assigned':
         return const Color(0xFF3B82F6);
@@ -112,23 +114,24 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
       case 'ticket_closed':
         return const Color(0xFF6B7280);
       default:
-        return AppColors.textSecondary;
+        return c.textSecondary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Notifikasi',
           style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary),
+              color: c.textPrimary),
         ),
         centerTitle: true,
         actions: [
@@ -157,12 +160,12 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
                   Icon(Icons.notifications_off_outlined,
                       size: 64,
                       color:
-                          AppColors.textSecondary.withValues(alpha: 0.5)),
+                          c.textSecondary.withValues(alpha: 0.5)),
                   const SizedBox(height: AppConstants.spacingLg),
-                  const Text('Tidak ada notifikasi',
+                  Text('Tidak ada notifikasi',
                       style: TextStyle(
                           fontSize: 16,
-                          color: AppColors.textSecondary)),
+                          color: c.textSecondary)),
                 ],
               ),
             )
@@ -173,26 +176,26 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
               separatorBuilder: (context, index) => Divider(
                   height: 1,
                   indent: 72,
-                  color: AppColors.divider),
+                  color: c.divider),
               itemBuilder: (context, index) {
                 final notif = _notifications[index];
                 final isRead = notif['isRead'] as bool;
                 return Container(
                   color: isRead
-                      ? AppColors.surface
+                      ? c.surface
                       : const Color(0xFFEFF6FF),
                   child: ListTile(
                     leading: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: _getIconColor(notif['type'] as String)
+                        color: _getIconColor(context, notif['type'] as String)
                             .withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         _getIcon(notif['type'] as String),
-                        color: _getIconColor(notif['type'] as String),
+                        color: _getIconColor(context, notif['type'] as String),
                         size: 20,
                       ),
                     ),
@@ -206,7 +209,7 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
                               fontWeight: isRead
                                   ? FontWeight.w500
                                   : FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                         ),
@@ -225,16 +228,16 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         notif['message'] as String,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary),
+                            color: c.textSecondary),
                       ),
                     ),
                     trailing: Text(
                       notif['time'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 10,
-                          color: AppColors.textSecondary),
+                          color: c.textSecondary),
                     ),
                     onTap: () {
                       setState(() => notif['isRead'] = true);

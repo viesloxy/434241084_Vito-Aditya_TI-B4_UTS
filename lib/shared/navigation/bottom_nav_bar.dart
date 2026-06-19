@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -13,9 +13,10 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: c.surface,
         boxShadow: [
           BoxShadow(
             color: Color(0x1A000000),
@@ -91,6 +92,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -105,7 +107,7 @@ class _NavItem extends StatelessWidget {
                 Icon(
                   isActive ? activeIcon : icon,
                   size: 24,
-                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                  color: isActive ? c.primary : c.textSecondary,
                 ),
                 if (badgeCount > 0)
                   Positioned(
@@ -114,7 +116,7 @@ class _NavItem extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.error,
+                        color: c.error,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
@@ -137,7 +139,7 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                color: isActive ? c.primary : c.textSecondary,
               ),
             ),
           ],
@@ -158,6 +160,7 @@ class _CreateTicketNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -169,13 +172,13 @@ class _CreateTicketNavItem extends StatelessWidget {
               width: 44,
               height: 32,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : AppColors.primaryLight,
+                color: isActive ? c.primary : c.primaryLight,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 Icons.add,
                 size: 24,
-                color: isActive ? Colors.white : AppColors.primary,
+                color: isActive ? Colors.white : c.primary,
               ),
             ),
             const SizedBox(height: 4),
@@ -184,7 +187,7 @@ class _CreateTicketNavItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                color: isActive ? c.primary : c.textSecondary,
               ),
             ),
           ],

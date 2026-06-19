@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/category_badge.dart';
+import '../../../core/theme/app_palette.dart';
 
 class TicketDetailPage extends StatefulWidget {
   final Map<String, dynamic>? ticketData;
@@ -87,29 +87,30 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final priorityColor = _getPriorityColor(_ticket['priority']);
+    final c = context.palette;
+    final priorityColor = _getPriorityColor(context, _ticket['priority']);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: c.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           _ticket['ticketId'],
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: c.textPrimary),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_outlined, color: AppColors.textPrimary),
+            icon: Icon(Icons.share_outlined, color: c.textPrimary),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+            icon: Icon(Icons.more_vert, color: c.textPrimary),
             onPressed: () {},
           ),
         ],
@@ -126,7 +127,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                   Container(
                     padding: const EdgeInsets.all(AppConstants.spacingLg),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
                       boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 3, offset: Offset(0, 1))],
                     ),
@@ -135,7 +136,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                       children: [
                         Text(
                           _ticket['title'],
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
                         ),
                         const SizedBox(height: AppConstants.spacingMd),
                         Row(
@@ -152,15 +153,15 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                   const SizedBox(height: AppConstants.spacingLg),
 
                   // Status Timeline
-                  const Text(
+                  Text(
                     'Status Tiket',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary),
                   ),
                   const SizedBox(height: AppConstants.spacingMd),
                   Container(
                     padding: const EdgeInsets.all(AppConstants.spacingLg),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
                     ),
                     child: Column(
@@ -174,7 +175,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                                   width: 24,
                                   height: 24,
                                   decoration: BoxDecoration(
-                                    color: item['isCompleted'] ? AppColors.success : AppColors.border,
+                                    color: item['isCompleted'] ? c.success : c.border,
                                     shape: BoxShape.circle,
                                   ),
                                   child: item['isCompleted']
@@ -185,7 +186,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                                   Container(
                                     width: 2,
                                     height: 30,
-                                    color: _statusTimeline[index + 1]['isCompleted'] ? AppColors.success : AppColors.border,
+                                    color: _statusTimeline[index + 1]['isCompleted'] ? c.success : c.border,
                                   ),
                               ],
                             ),
@@ -199,12 +200,12 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: item['isCompleted'] ? FontWeight.w600 : FontWeight.w400,
-                                      color: item['isCompleted'] ? AppColors.textPrimary : AppColors.textSecondary,
+                                      color: item['isCompleted'] ? c.textPrimary : c.textSecondary,
                                     ),
                                   ),
                                   Text(
                                     item['time'],
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12, color: c.textSecondary),
                                   ),
                                 ],
                               ),
@@ -218,15 +219,15 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                   const SizedBox(height: AppConstants.spacingLg),
 
                   // Info Details
-                  const Text(
+                  Text(
                     'Detail Tiket',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary),
                   ),
                   const SizedBox(height: AppConstants.spacingMd),
                   Container(
                     padding: const EdgeInsets.all(AppConstants.spacingLg),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
                     ),
                     child: Column(
@@ -246,36 +247,36 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                   const SizedBox(height: AppConstants.spacingLg),
 
                   // Description
-                  const Text(
+                  Text(
                     'Deskripsi',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary),
                   ),
                   const SizedBox(height: AppConstants.spacingMd),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppConstants.spacingLg),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
                     ),
                     child: Text(
                       _ticket['description'],
-                      style: const TextStyle(fontSize: 14, height: 1.5, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 14, height: 1.5, color: c.textPrimary),
                     ),
                   ),
 
                   const SizedBox(height: AppConstants.spacingLg),
 
                   // Attachment
-                  const Text(
+                  Text(
                     'Lampiran',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary),
                   ),
                   const SizedBox(height: AppConstants.spacingMd),
                   Container(
                     padding: const EdgeInsets.all(AppConstants.spacingLg),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
                     ),
                     child: Row(
@@ -284,10 +285,10 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
+                            color: c.primaryLight,
                             borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
                           ),
-                          child: const Icon(Icons.image, color: AppColors.primary),
+                          child: Icon(Icons.image, color: c.primary),
                         ),
                         const SizedBox(width: AppConstants.spacingMd),
                         Expanded(
@@ -296,17 +297,17 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                             children: [
                               Text(
                                 _ticket['attachments'][0],
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
                               ),
-                              const Text(
+                              Text(
                                 '1.2 MB',
-                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: c.textSecondary),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.download_outlined, color: AppColors.primary),
+                          icon: Icon(Icons.download_outlined, color: c.primary),
                           onPressed: () {},
                         ),
                       ],
@@ -316,9 +317,9 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                   const SizedBox(height: AppConstants.spacingLg),
 
                   // Comments Section
-                  const Text(
+                  Text(
                     'Percakapan',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary),
                   ),
                   const SizedBox(height: AppConstants.spacingMd),
 
@@ -327,7 +328,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(AppConstants.spacing2xl),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
                       ),
                       child: Column(
@@ -335,12 +336,12 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 48,
-                            color: AppColors.textSecondary.withValues(alpha: 0.5),
+                            color: c.textSecondary.withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: AppConstants.spacingMd),
-                          const Text(
+                          Text(
                             'Belum ada percakapan',
-                            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 14, color: c.textSecondary),
                           ),
                         ],
                       ),
@@ -377,21 +378,21 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
               AppConstants.spacingLg,
               AppConstants.spacingMd + MediaQuery.of(context).padding.bottom,
             ),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
+            decoration: BoxDecoration(
+              color: c.surface,
               boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 3, offset: Offset(0, -1))],
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.attach_file, color: AppColors.textSecondary),
+                  icon: Icon(Icons.attach_file, color: c.textSecondary),
                   onPressed: () {},
                 ),
                 Expanded(
                   child: Container(
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: c.background,
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: TextField(
@@ -417,7 +418,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
                         ),
                       )
                     : IconButton(
-                        icon: const Icon(Icons.send, color: AppColors.primary),
+                        icon: Icon(Icons.send, color: c.primary),
                         onPressed: _sendComment,
                       ),
               ],
@@ -428,7 +429,9 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     );
   }
 
-  Color _getPriorityColor(String priority) {
+  Color _getPriorityColor(BuildContext context, String priority) {
+
+    final c = context.palette;
     switch (priority.toLowerCase()) {
       case 'tinggi':
         return const Color(0xFFEF4444);
@@ -437,7 +440,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
       case 'rendah':
         return const Color(0xFF10B981);
       default:
-        return AppColors.textPrimary;
+        return c.textPrimary;
     }
   }
 }
@@ -451,18 +454,19 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 14, color: c.textSecondary)),
           Text(
             value,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: valueColor ?? AppColors.textPrimary,
+              color: valueColor ?? c.textPrimary,
             ),
           ),
         ],
@@ -486,6 +490,7 @@ class _CommentBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Row(
       mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,7 +498,7 @@ class _CommentBubble extends StatelessWidget {
         if (!isUser) ...[
           CircleAvatar(
             radius: 16,
-            backgroundColor: AppColors.textSecondary,
+            backgroundColor: c.textSecondary,
             child: Text(
               name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join(),
               style: const TextStyle(fontSize: 12, color: Colors.white),
@@ -505,7 +510,7 @@ class _CommentBubble extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(AppConstants.spacingMd),
             decoration: BoxDecoration(
-              color: isUser ? AppColors.primary : AppColors.surface,
+              color: isUser ? c.primary : c.surface,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -522,20 +527,20 @@ class _CommentBubble extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isUser ? Colors.white.withValues(alpha: 0.8) : AppColors.textSecondary,
+                    color: isUser ? Colors.white.withValues(alpha: 0.8) : c.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   message,
-                  style: TextStyle(fontSize: 14, color: isUser ? Colors.white : AppColors.textPrimary),
+                  style: TextStyle(fontSize: 14, color: isUser ? Colors.white : c.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   time,
                   style: TextStyle(
                     fontSize: 10,
-                    color: isUser ? Colors.white.withValues(alpha: 0.6) : AppColors.textSecondary,
+                    color: isUser ? Colors.white.withValues(alpha: 0.6) : c.textSecondary,
                   ),
                 ),
               ],
@@ -546,7 +551,7 @@ class _CommentBubble extends StatelessWidget {
           const SizedBox(width: AppConstants.spacingSm),
           CircleAvatar(
             radius: 16,
-            backgroundColor: AppColors.primary,
+            backgroundColor: c.primary,
             child: Text(
               name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join(),
               style: const TextStyle(fontSize: 12, color: Colors.white),

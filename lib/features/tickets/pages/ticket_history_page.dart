@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/category_badge.dart';
+import '../../../core/theme/app_palette.dart';
 
 class TicketHistoryPage extends StatefulWidget {
   const TicketHistoryPage({super.key});
@@ -60,31 +60,32 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
         title: _isSearchVisible
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Cari tiket...',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: AppColors.textSecondary),
+                  hintStyle: TextStyle(color: c.textSecondary),
                 ),
-                style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 16, color: c.textPrimary),
                 onChanged: (_) => setState(() {}),
               )
-            : const Text(
+            : Text(
                 'Tiket Saya',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
               ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(_isSearchVisible ? Icons.close : Icons.search, color: AppColors.textPrimary),
+            icon: Icon(_isSearchVisible ? Icons.close : Icons.search, color: c.textPrimary),
             onPressed: () {
               setState(() {
                 _isSearchVisible = !_isSearchVisible;
@@ -93,10 +94,10 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list, color: AppColors.textPrimary),
+            icon: Icon(Icons.filter_list, color: c.textPrimary),
             onPressed: () {
               // Show filter modal
-              _showFilterModal();
+              _showFilterModal(context);
             },
           ),
         ],
@@ -105,7 +106,7 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
         children: [
           // Filter Chips
           Container(
-            color: AppColors.surface,
+            color: c.surface,
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spacingLg,
               vertical: AppConstants.spacingMd,
@@ -123,16 +124,16 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : AppColors.background,
+                          color: isSelected ? c.primary : c.background,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+                          border: Border.all(color: isSelected ? c.primary : c.border),
                         ),
                         child: Text(
                           filter['name'],
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Colors.white : c.textPrimary,
                           ),
                         ),
                       ),
@@ -146,7 +147,7 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
           // Ticket List
           Expanded(
             child: _filteredTickets.isEmpty
-                ? _buildEmptyState()
+                ? _buildEmptyState(context)
                 : RefreshIndicator(
                     onRefresh: () async => await Future.delayed(const Duration(seconds: 1)),
                     child: ListView.separated(
@@ -174,7 +175,9 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+
+    final c = context.palette;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spacing2xl),
@@ -184,21 +187,21 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
             Icon(
               Icons.description_outlined,
               size: 64,
-              color: AppColors.textSecondary.withValues(alpha: 0.5),
+              color: c.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppConstants.spacingLg),
-            const Text(
+            Text(
               'Belum Ada Tiket',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: AppConstants.spacingSm),
-            const Text(
+            Text(
               'Tiket yang Anda buat akan muncul di sini',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: c.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppConstants.spacing2xl),
@@ -209,7 +212,7 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
               icon: const Icon(Icons.add),
               label: const Text('Buat Tiket Baru'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: c.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -223,7 +226,9 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
     );
   }
 
-  void _showFilterModal() {
+  void _showFilterModal(BuildContext context) {
+
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -236,14 +241,14 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Filter Tiket',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
               ),
               const SizedBox(height: AppConstants.spacingLg),
-              const Text(
+              Text(
                 'Status',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
               ),
               const SizedBox(height: AppConstants.spacingMd),
               Wrap(
@@ -258,9 +263,9 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
                       setState(() => _selectedFilter = filter['value']);
                       Navigator.pop(context);
                     },
-                    selectedColor: AppColors.primary,
+                    selectedColor: c.primary,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected ? Colors.white : c.textPrimary,
                     ),
                   );
                 }).toList(),
@@ -274,8 +279,8 @@ class _TicketHistoryPageState extends State<TicketHistoryPage> {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surface,
-                    foregroundColor: AppColors.primary,
+                    backgroundColor: c.surface,
+                    foregroundColor: c.primary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
@@ -312,12 +317,13 @@ class _TicketListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spacingLg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
           boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 3, offset: Offset(0, 1))],
         ),
@@ -329,19 +335,19 @@ class _TicketListItem extends StatelessWidget {
                 children: [
                   Text(
                     ticketId,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                   const SizedBox(height: AppConstants.spacingSm),
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -357,17 +363,17 @@ class _TicketListItem extends StatelessWidget {
                   const SizedBox(height: AppConstants.spacingMd),
                   Text(
                     date,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: AppConstants.spacingMd),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 24),
+            Icon(Icons.chevron_right, color: c.textSecondary, size: 24),
           ],
         ),
       ),

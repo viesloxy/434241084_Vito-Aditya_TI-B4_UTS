@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../widgets/admin_ticket_card.dart';
 import '../../../widgets/empty_state.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 enum SortOption { tanggalTerbaru, tanggalTerlama, prioritasTinggi, prioritasRendah }
 
@@ -182,7 +182,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     });
   }
 
-  void _showBulkActionSheet() {
+  void _showBulkActionSheet(BuildContext context) {
+
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -194,7 +196,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.select_all, color: AppColors.primary),
+              leading: Icon(Icons.select_all, color: c.primary),
               title: const Text('Pilih Semua'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -202,19 +204,19 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person_add, color: AppColors.primary),
+              leading: Icon(Icons.person_add, color: c.primary),
               title: const Text('Assign ke Helpdesk'),
               onTap: () {
                 Navigator.pop(ctx);
-                _showAssignDialog();
+                _showAssignDialog(context);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: AppColors.error),
+              leading: Icon(Icons.delete, color: c.error),
               title: const Text('Hapus Terpilih'),
               onTap: () {
                 Navigator.pop(ctx);
-                _deleteSelected();
+                _deleteSelected(context);
               },
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -224,7 +226,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     );
   }
 
-  void _showAssignDialog() {
+  void _showAssignDialog(BuildContext context) {
+
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -233,7 +237,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.person, color: AppColors.primary),
+              leading: Icon(Icons.person, color: c.primary),
               title: const Text('John Helpdesk'),
               subtitle: const Text('5 tiket aktif'),
               onTap: () {
@@ -243,7 +247,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person, color: AppColors.primary),
+              leading: Icon(Icons.person, color: c.primary),
               title: const Text('Sarah Helpdesk'),
               subtitle: const Text('3 tiket aktif'),
               onTap: () {
@@ -252,8 +256,8 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                 _toggleSelectionMode();
               },
             ),
-            const ListTile(
-              leading: Icon(Icons.person, color: AppColors.textTertiary),
+            ListTile(
+              leading: Icon(Icons.person, color: c.textTertiary),
               title: Text('Budi Helpdesk'),
               subtitle: Text('0 tiket aktif (Cuti)'),
               enabled: false,
@@ -264,7 +268,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     );
   }
 
-  void _deleteSelected() {
+  void _deleteSelected(BuildContext context) {
+
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -278,7 +284,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               _snack('${_selectedTickets.length} tiket dihapus');
               _toggleSelectionMode();
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: c.error),
             child: const Text('Hapus'),
           ),
         ],
@@ -286,7 +292,8 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     );
   }
 
-  void _showSortDropdown() {
+  void _showSortDropdown(BuildContext context) {
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -298,7 +305,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Urutkan', style: AppTextStyles.h3),
+            Text('Urutkan', style: AppTextStyles.h3(c)),
             const SizedBox(height: AppSpacing.lg),
             for (final opt in SortOption.values)
               RadioListTile<SortOption>(
@@ -338,16 +345,17 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 600;
         return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(isWide),
+          backgroundColor: c.background,
+          appBar: _buildAppBar(context, isWide),
           body: Column(
             children: [
-              _buildFilterChips(isWide),
-              _buildSortBar(isWide),
+              _buildFilterChips(context, isWide),
+              _buildSortBar(context, isWide),
               Expanded(
                 child: _filteredTickets.isEmpty && !_isLoading
                     ? _buildEmptyState()
@@ -355,16 +363,18 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               ),
             ],
           ),
-          bottomNavigationBar: _isSelectionMode ? _buildSelectionBar() : null,
+          bottomNavigationBar: _isSelectionMode ? _buildSelectionBar(context) : null,
         );
       },
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isWide) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     if (_isSelectionMode) {
       return AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: c.primary,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: _toggleSelectionMode,
@@ -376,14 +386,14 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: _showBulkActionSheet,
+            onPressed: () => _showBulkActionSheet(context),
           ),
         ],
       );
     }
 
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       elevation: 0,
       title: _isSearchVisible
           ? TextField(
@@ -392,18 +402,18 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               decoration: InputDecoration(
                 hintText: 'Cari tiket...',
                 border: InputBorder.none,
-                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                hintStyle: AppTextStyles.body(c).copyWith(color: c.textSecondary),
               ),
-              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.body(c).copyWith(color: c.textPrimary),
               onChanged: (_) => _debouncer.run(() => setState(() {})),
             )
-          : Text('Daftar Tiket', style: AppTextStyles.h4),
+          : Text('Daftar Tiket', style: AppTextStyles.h4(c)),
       centerTitle: true,
       actions: [
         IconButton(
           icon: Icon(
             _isSearchVisible ? Icons.close : Icons.search,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
           ),
           onPressed: () {
             setState(() {
@@ -413,16 +423,18 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.filter_list, color: AppColors.textPrimary),
+          icon: Icon(Icons.filter_list, color: c.textPrimary),
           onPressed: () => _showFilterModal(context),
         ),
       ],
     );
   }
 
-  Widget _buildFilterChips(bool isWide) {
+  Widget _buildFilterChips(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
-      color: AppColors.surface,
+      color: c.surface,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
@@ -443,18 +455,18 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                     vertical: isWide ? 10 : 8,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.surface,
+                    color: isSelected ? c.primary : c.surface,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.border,
+                      color: isSelected ? c.primary : c.border,
                     ),
                   ),
                   child: Text(
                     filter['name'] as String,
-                    style: AppTextStyles.body.copyWith(
+                    style: AppTextStyles.body(c).copyWith(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected ? Colors.white : c.textPrimary,
                     ),
                   ),
                 ),
@@ -466,9 +478,11 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     );
   }
 
-  Widget _buildSortBar(bool isWide) {
+  Widget _buildSortBar(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
-      color: AppColors.surface,
+      color: c.surface,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm,
@@ -477,15 +491,15 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
         children: [
           Text(
             '${_filteredTickets.length} tiket',
-            style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
           ),
           const Spacer(),
           TextButton.icon(
-            onPressed: _showSortDropdown,
-            icon: const Icon(Icons.sort, size: 18, color: AppColors.primary),
+            onPressed: () => _showSortDropdown(context),
+            icon: Icon(Icons.sort, size: 18, color: c.primary),
             label: Text(
               _sortLabel(_sortOption).split('(').first.trim(),
-              style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+              style: AppTextStyles.caption(c).copyWith(color: c.primary),
             ),
           ),
         ],
@@ -553,34 +567,38 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     );
   }
 
-  Widget _buildSelectionBar() {
+  Widget _buildSelectionBar(BuildContext context) {
+
+    final c = context.palette;
     return Container(
-      color: AppColors.surface,
+      color: c.surface,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: SafeArea(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildSelectionButton(Icons.select_all, 'Pilih Semua', _selectAll),
-            _buildSelectionButton(Icons.person_add, 'Assign Helpdesk', _showAssignDialog),
-            _buildSelectionButton(Icons.delete, 'Hapus', _deleteSelected),
+            _buildSelectionButton(context, Icons.select_all, 'Pilih Semua', _selectAll),
+            _buildSelectionButton(context, Icons.person_add, 'Assign Helpdesk', () => _showAssignDialog(context)),
+            _buildSelectionButton(context, Icons.delete, 'Hapus', () => _deleteSelected(context)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSelectionButton(IconData icon, String label, VoidCallback onTap) {
+  Widget _buildSelectionButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.primary),
+          Icon(icon, color: c.primary),
           const SizedBox(height: 4),
           Text(
             label,
-            style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+            style: AppTextStyles.caption(c).copyWith(color: c.primary),
           ),
         ],
       ),
@@ -588,6 +606,8 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   }
 
   void _showFilterModal(BuildContext context) {
+
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -599,9 +619,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Filter Tiket', style: AppTextStyles.h3),
+            Text('Filter Tiket', style: AppTextStyles.h3(c)),
             const SizedBox(height: AppSpacing.lg),
-            Text('Status', style: AppTextStyles.label),
+            Text('Status', style: AppTextStyles.label(c)),
             const SizedBox(height: AppSpacing.md),
             Wrap(
               spacing: AppSpacing.sm,
@@ -615,9 +635,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                     setState(() => _selectedFilter = filter['value'] as String);
                     Navigator.pop(ctx);
                   },
-                  selectedColor: AppColors.primary,
+                  selectedColor: c.primary,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    color: isSelected ? Colors.white : c.textPrimary,
                     fontFamily: 'Plus Jakarta',
                   ),
                 );

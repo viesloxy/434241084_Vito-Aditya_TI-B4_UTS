@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_max_width.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_shadow.dart';
@@ -9,6 +8,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// Login Page ala FlutterShop Free Version.
 ///
@@ -84,7 +84,8 @@ class _LoginPageState extends State<LoginPage> {
     return 'Login gagal: $text';
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleLogin(BuildContext context) async {
+    final c = context.palette;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -99,8 +100,9 @@ class _LoginPageState extends State<LoginPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         _floatingSnackBar(
+          context: context,
           message: 'Login berhasil! Selamat datang, ${user.fullName}.',
-          background: AppColors.success,
+          background: c.success,
           icon: Icons.check_circle_outline,
         ),
       );
@@ -110,8 +112,9 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         _floatingSnackBar(
+          context: context,
           message: _humanizeError(e),
-          background: AppColors.error,
+          background: c.error,
           icon: Icons.error_outline,
         ),
       );
@@ -121,10 +124,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   SnackBar _floatingSnackBar({
+    required BuildContext context,
     required String message,
     required Color background,
     required IconData icon,
   }) {
+    final c = context.palette;
     return SnackBar(
       content: Row(
         children: [
@@ -133,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.body.copyWith(color: Colors.white),
+              style: AppTextStyles.body(c).copyWith(color: Colors.white),
             ),
           ),
         ],
@@ -155,8 +160,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -176,8 +182,8 @@ class _LoginPageState extends State<LoginPage> {
                       height: 96,
                       padding: const EdgeInsets.all(AppSpacing.xl),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: AppColors.primaryGradient,
+                        gradient: LinearGradient(
+                          colors: c.primaryGradient,
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -192,12 +198,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
 
-                  const Text('Selamat Datang', style: AppTextStyles.h1),
+                  Text('Selamat Datang', style: AppTextStyles.h1(c)),
                   const SizedBox(height: AppSpacing.sm),
 
-                  const Text(
+                  Text(
                     'Masuk dengan akun Anda untuk membuat dan melacak tiket helpdesk.',
-                    style: AppTextStyles.body,
+                    style: AppTextStyles.body(c),
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
@@ -218,7 +224,7 @@ class _LoginPageState extends State<LoginPage> {
                     prefixIcon: const AppFieldPrefix(icon: Icons.lock_outline),
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _handleLogin(),
+                    onSubmitted: (_) => _handleLogin(context),
                     validator: _validatePassword,
                     suffixIcon: AppPasswordSuffix(
                       obscure: _obscurePassword,
@@ -233,8 +239,9 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           _floatingSnackBar(
+                            context: context,
                             message: 'Hubungi admin untuk reset password.',
-                            background: AppColors.info,
+                            background: c.info,
                             icon: Icons.info_outline,
                           ),
                         );
@@ -267,7 +274,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         'Ingat saya',
-                        style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                        style: AppTextStyles.body(c).copyWith(color: c.textPrimary),
                       ),
                     ],
                   ),
@@ -275,7 +282,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: AppSpacing.xxl),
 
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: _isLoading ? null : () => _handleLogin(context),
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,
@@ -293,9 +300,9 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Belum punya akun?',
-                        style: AppTextStyles.body,
+                        style: AppTextStyles.body(c),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/register'),
@@ -326,12 +333,13 @@ class _DemoAccountsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.infoLight,
+        color: c.infoLight,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.info.withValues(alpha: 0.4)),
+        border: Border.all(color: c.info.withValues(alpha: 0.4)),
         boxShadow: AppShadow.dialog,
       ),
       child: Column(
@@ -339,12 +347,12 @@ class _DemoAccountsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline, size: 16, color: AppColors.info),
+              Icon(Icons.info_outline, size: 16, color: c.info),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'Akun Demo (testing)',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.info,
+                style: AppTextStyles.caption(c).copyWith(
+                  color: c.info,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -372,8 +380,8 @@ class _DemoAccountsCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Password semua akun: password123',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.info,
+            style: AppTextStyles.caption(c).copyWith(
+              color: c.info,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -398,6 +406,7 @@ class _DemoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -405,12 +414,12 @@ class _DemoRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: AppSpacing.xs),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: AppColors.info),
+            Icon(icon, size: 16, color: c.info),
             const SizedBox(width: AppSpacing.sm),
             Text(
               role,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.info,
+              style: AppTextStyles.caption(c).copyWith(
+                color: c.info,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -418,13 +427,13 @@ class _DemoRow extends StatelessWidget {
             Expanded(
               child: Text(
                 email,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.info,
+                style: AppTextStyles.caption(c).copyWith(
+                  color: c.info,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            const Icon(Icons.touch_app, size: 14, color: AppColors.info),
+            Icon(Icons.touch_app, size: 14, color: c.info),
           ],
         ),
       ),

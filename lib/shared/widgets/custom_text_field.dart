@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/theme/app_palette.dart';
 
 /// TextFormField ala FlutterShop Free Version.
 ///
@@ -50,11 +50,12 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (labelText != null) ...[
-          Text(labelText!, style: AppTextStyles.label),
+          Text(labelText!, style: AppTextStyles.label(c)),
           const SizedBox(height: AppSpacing.sm),
         ],
         TextFormField(
@@ -88,12 +89,13 @@ class AppFieldPrefix extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md), // 12
       child: Icon(
         icon,
         size: 24,
-        color: color ?? AppColors.textTertiary,
+        color: color ?? c.textTertiary,
       ),
     );
   }
@@ -107,11 +109,12 @@ class AppPasswordSuffix extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return IconButton(
       onPressed: onPressed,
       icon: Icon(
         obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-        color: AppColors.textSecondary,
+        color: c.textSecondary,
         size: 20,
       ),
     );

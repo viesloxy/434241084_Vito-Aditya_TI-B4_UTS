@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 /// Admin Profile ala FlutterShop — flat 2D, header + sectioned list,
-/// divider-only. Semua aksen pakai `AppColors.primary`.
+/// divider-only. Semua aksen pakai `c.primary`.
 ///
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.9.
 class AdminProfilePage extends StatelessWidget {
@@ -14,6 +14,7 @@ class AdminProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     const adminName = 'Sarah Administrator';
     const adminEmail = 'sarah.admin@university.ac.id';
     const adminRole = 'Administrator';
@@ -29,16 +30,16 @@ class AdminProfilePage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildHeader(adminName, adminEmail, adminRole),
+              _buildHeader(context, adminName, adminEmail, adminRole),
               const SizedBox(height: AppSpacing.lg),
-              _buildAccountInfo(adminName, adminEmail, adminRole, adminNip),
+              _buildAccountInfo(context, adminName, adminEmail, adminRole, adminNip),
               const SizedBox(height: AppSpacing.lg),
-              _buildMenuSection(menuItems),
+              _buildMenuSection(context, menuItems),
               const SizedBox(height: AppSpacing.lg),
               _buildLogoutSection(context),
               const SizedBox(height: AppSpacing.xxl),
@@ -49,11 +50,13 @@ class AdminProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(String adminName, String adminEmail, String adminRole) {
+  Widget _buildHeader(BuildContext context, String adminName, String adminEmail, String adminRole) {
+
+    final c = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      color: AppColors.surface,
+      color: c.surface,
       child: Column(
         children: [
           // Avatar dari profil.jpeg (dummy)
@@ -61,9 +64,9 @@ class AdminProfilePage extends StatelessWidget {
             width: 88,
             height: 88,
             decoration: BoxDecoration(
-              color: AppColors.surfaceAlt,
+              color: c.surfaceAlt,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.border, width: 2),
+              border: Border.all(color: c.border, width: 2),
               image: const DecorationImage(
                 image: AssetImage('assets/images/profil.jpeg'),
                 fit: BoxFit.cover,
@@ -71,22 +74,22 @@ class AdminProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Text(adminName, style: AppTextStyles.h3),
+          Text(adminName, style: AppTextStyles.h3(c)),
           const SizedBox(height: AppSpacing.xs),
-          Text(adminEmail, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+          Text(adminEmail, style: AppTextStyles.body(c).copyWith(color: c.textSecondary)),
           const SizedBox(height: AppSpacing.md),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
+              color: c.primaryLight,
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.admin_panel_settings, size: 14, color: AppColors.primary),
+                Icon(Icons.admin_panel_settings, size: 14, color: c.primary),
                 const SizedBox(width: 6),
-                Text(adminRole, style: AppTextStyles.overline.copyWith(color: AppColors.primary)),
+                Text(adminRole, style: AppTextStyles.overline(c).copyWith(color: c.primary)),
               ],
             ),
           ),
@@ -95,16 +98,18 @@ class AdminProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountInfo(String adminName, String adminEmail, String adminRole, String adminNip) {
+  Widget _buildAccountInfo(BuildContext context, String adminName, String adminEmail, String adminRole, String adminNip) {
+
+    final c = context.palette;
     return Container(
       width: double.infinity,
-      color: AppColors.surface,
+      color: c.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: Text('Informasi Akun', style: AppTextStyles.h4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+            child: Text('Informasi Akun', style: AppTextStyles.h4(c)),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
@@ -122,23 +127,25 @@ class AdminProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuSection(List<Map<String, dynamic>> menuItems) {
+  Widget _buildMenuSection(BuildContext context, List<Map<String, dynamic>> menuItems) {
+
+    final c = context.palette;
     return Container(
-      color: AppColors.surface,
+      color: c.surface,
       child: Column(
         children: List.generate(menuItems.length, (index) {
           final item = menuItems[index];
           return Column(
             children: [
               ListTile(
-                leading: Icon(item['icon'] as IconData, color: AppColors.primary, size: 24),
+                leading: Icon(item['icon'] as IconData, color: c.primary, size: 24),
                 title: Text(item['title'] as String,
-                  style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+                  style: AppTextStyles.body(c).copyWith(color: c.textPrimary)),
+                trailing: Icon(Icons.chevron_right, color: c.textTertiary),
                 onTap: item['onTap'] as VoidCallback,
               ),
               if (index < menuItems.length - 1)
-                const Divider(height: 1, indent: 56, color: AppColors.divider),
+                Divider(height: 1, indent: 56, color: c.divider),
             ],
           );
         }),
@@ -147,12 +154,14 @@ class AdminProfilePage extends StatelessWidget {
   }
 
   Widget _buildLogoutSection(BuildContext context) {
+
+    final c = context.palette;
     return Container(
       width: double.infinity,
-      color: AppColors.surface,
+      color: c.surface,
       child: ListTile(
-        leading: const Icon(Icons.logout, color: AppColors.error, size: 24),
-        title: Text('Keluar', style: AppTextStyles.body.copyWith(color: AppColors.error)),
+        leading: Icon(Icons.logout, color: c.error, size: 24),
+        title: Text('Keluar', style: AppTextStyles.body(c).copyWith(color: c.error)),
         onTap: () => _showLogoutDialog(context),
       ),
     );
@@ -172,6 +181,8 @@ class AdminProfilePage extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context) {
+
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -185,16 +196,16 @@ class AdminProfilePage extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: c.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.logout, size: 32, color: AppColors.error),
+              child: Icon(Icons.logout, size: 32, color: c.error),
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Text('Keluar?', style: AppTextStyles.h3),
+            Text('Keluar?', style: AppTextStyles.h3(c)),
             const SizedBox(height: AppSpacing.sm),
-            const Text('Apakah Anda yakin ingin keluar dari akun ini?',
-              style: AppTextStyles.body, textAlign: TextAlign.center),
+            Text('Apakah Anda yakin ingin keluar dari akun ini?',
+              style: AppTextStyles.body(c), textAlign: TextAlign.center),
           ],
         ),
         actions: [
@@ -217,7 +228,7 @@ class AdminProfilePage extends StatelessWidget {
                     } catch (_) {}
                     navigator.pushNamedAndRemoveUntil('/login', (route) => false);
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                  style: ElevatedButton.styleFrom(backgroundColor: c.error),
                   child: const Text('Keluar'),
                 ),
               ),
@@ -237,15 +248,16 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+          Text(label, style: AppTextStyles.body(c).copyWith(color: c.textSecondary)),
           Text(value,
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTextStyles.body(c).copyWith(
+              color: c.textPrimary,
               fontWeight: FontWeight.w500,
             )),
         ],

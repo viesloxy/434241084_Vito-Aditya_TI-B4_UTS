@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/category_badge.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class TicketCard extends StatelessWidget {
   final String ticketId;
@@ -24,12 +24,13 @@ class TicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spacingLg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
           boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 3, offset: Offset(0, 1))],
         ),
@@ -39,18 +40,18 @@ class TicketCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(ticketId, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                  Text(ticketId, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: c.textSecondary)),
                   const SizedBox(height: AppConstants.spacingSm),
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: AppConstants.spacingMd),
                   Row(children: [CategoryBadge(category: category), const SizedBox(width: AppConstants.spacingSm), StatusBadge(status: status)]),
                   const SizedBox(height: AppConstants.spacingMd),
-                  Text(date, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary)),
+                  Text(date, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: c.textSecondary)),
                 ],
               ),
             ),
             const SizedBox(width: AppConstants.spacingMd),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 24),
+            Icon(Icons.chevron_right, color: c.textSecondary, size: 24),
           ],
         ),
       ),

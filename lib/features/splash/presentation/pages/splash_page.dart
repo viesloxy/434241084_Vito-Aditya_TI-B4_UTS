@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_shadow.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// Splash screen ala FlutterShop Free Version.
 ///
@@ -81,12 +81,13 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: AppColors.primaryGradient,
+            colors: c.primaryGradient,
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -109,7 +110,7 @@ class _SplashPageState extends State<SplashPage>
                   height: 120,
                   padding: const EdgeInsets.all(AppSpacing.xl),
                   decoration: BoxDecoration(
-                    color: AppColors.surface, // white
+                    color: c.surface, // white
                     borderRadius: BorderRadius.circular(AppRadius.xxl), // 24
                     boxShadow: AppShadow.fab,
                   ),

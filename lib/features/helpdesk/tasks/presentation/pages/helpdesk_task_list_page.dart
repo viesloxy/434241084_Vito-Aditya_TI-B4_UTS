@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
+import '../../../../../core/theme/app_palette.dart';
 // (EmptyState & LoadingSkeleton tidak digunakan di halaman ini)
 // import '../../../../admin/widgets/empty_state.dart';
 // import '../../../../admin/widgets/loading_skeleton.dart';
@@ -180,19 +180,20 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 600;
         return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(isWide),
+          backgroundColor: c.background,
+          appBar: _buildAppBar(context, isWide),
           body: Column(
             children: [
-              _buildFilterChips(isWide),
-              _buildSortBar(isWide),
+              _buildFilterChips(context, isWide),
+              _buildSortBar(context, isWide),
               Expanded(
                 child: _filteredTasks.isEmpty && !_isLoading
-                    ? _buildEmptyState()
+                    ? _buildEmptyState(context)
                     : _buildTaskList(isWide),
               ),
             ],
@@ -202,9 +203,11 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isWide) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       elevation: 0,
       title: _isSearchVisible
           ? TextField(
@@ -214,31 +217,31 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                 hintText: 'Cari tugas...',
                 border: InputBorder.none,
                 hintStyle: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                     fontSize: isWide ? 18 : 16),
               ),
               style: TextStyle(
                   fontSize: isWide ? 18 : 16,
-                  color: AppColors.textPrimary),
+                  color: c.textPrimary),
               onChanged: (_) {
                 _debouncer.run(() {
                   setState(() {});
                 });
               },
             )
-          : const Text(
+          : Text(
               'Daftar Tugas Saya',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
       centerTitle: true,
       actions: [
         IconButton(
           icon: Icon(_isSearchVisible ? Icons.close : Icons.search,
-              color: AppColors.textPrimary),
+              color: c.textPrimary),
           onPressed: () {
             setState(() {
               _isSearchVisible = !_isSearchVisible;
@@ -250,9 +253,11 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  Widget _buildFilterChips(bool isWide) {
+  Widget _buildFilterChips(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
-      color: AppColors.surface,
+      color: c.surface,
       padding: EdgeInsets.symmetric(
         horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
         vertical: AppConstants.spacingMd,
@@ -275,12 +280,12 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF3B82F6)
-                        : AppColors.background,
+                        : c.background,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
                           ? const Color(0xFF3B82F6)
-                          : AppColors.border,
+                          : c.border,
                     ),
                   ),
                   child: Text(
@@ -291,7 +296,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                           isSelected ? FontWeight.w600 : FontWeight.w400,
                       color: isSelected
                           ? Colors.white
-                          : AppColors.textPrimary,
+                          : c.textPrimary,
                     ),
                   ),
                 ),
@@ -303,9 +308,11 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  Widget _buildSortBar(bool isWide) {
+  Widget _buildSortBar(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
-      color: AppColors.surface,
+      color: c.surface,
       padding: EdgeInsets.symmetric(
         horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
         vertical: AppConstants.spacingSm,
@@ -316,7 +323,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
             '${_filteredTasks.length} tugas',
             style: TextStyle(
               fontSize: isWide ? 14 : 12,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
           const Spacer(),
@@ -379,7 +386,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                 ? () => _showStartTaskDialog(task)
                 : null,
             onResolve: task['status'] == 'in_progress'
-                ? () => _showResolveTaskDialog(task)
+                ? () => _showResolveTaskDialog(context, task)
                 : null,
           );
         },
@@ -387,7 +394,9 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+
+    final c = context.palette;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spacing2xl),
@@ -396,17 +405,17 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
           children: [
             Icon(Icons.assignment_outlined,
                 size: 64,
-                color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                color: c.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: AppConstants.spacingLg),
-            const Text('Tidak Ada Tugas',
+            Text('Tidak Ada Tugas',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: AppConstants.spacingSm),
-            const Text(
+            Text(
               'Tugas yang sesuai filter akan muncul di sini',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: c.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppConstants.spacing2xl),
@@ -535,7 +544,9 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  void _showResolveTaskDialog(Map<String, dynamic> task) {
+  void _showResolveTaskDialog(BuildContext context, Map<String, dynamic> task) {
+
+    final c = context.palette;
     final noteController = TextEditingController();
 
     showDialog(
@@ -543,9 +554,9 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: AppColors.success),
+            Icon(Icons.check_circle, color: c.success),
             SizedBox(width: 8),
             Text('Selesaikan Tiket'),
           ],
@@ -601,7 +612,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
               _loadInitialData();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: c.success,
             ),
             child: const Text('Selesaikan'),
           ),

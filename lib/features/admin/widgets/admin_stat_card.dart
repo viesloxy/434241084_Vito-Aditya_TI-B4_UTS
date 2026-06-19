@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// StatCard ala FlutterShop — flat, border 1 px, radius 12.
 ///
@@ -28,15 +28,16 @@ class AdminStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: c.border, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,16 +50,16 @@ class AdminStatCard extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: c.primaryLight,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Icon(icon, size: 20, color: AppColors.textPrimary),
+                  child: Icon(icon, size: 20, color: c.textPrimary),
                 ),
                 // Chevron netral
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   size: 12,
-                  color: AppColors.textTertiary,
+                  color: c.textTertiary,
                 ),
               ],
             ),
@@ -66,8 +67,8 @@ class AdminStatCard extends StatelessWidget {
             // Angka NETRAL (bukan primary)
             Text(
               count.toString(),
-              style: AppTextStyles.h1.copyWith(
-                color: AppColors.textPrimary,
+              style: AppTextStyles.h1(c).copyWith(
+                color: c.textPrimary,
                 fontSize: 28,
                 height: 1.1,
               ),
@@ -76,7 +77,7 @@ class AdminStatCard extends StatelessWidget {
             // Judul di-override ke secondary (label-style)
             Text(
               title,
-              style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
             ),
           ],
         ),

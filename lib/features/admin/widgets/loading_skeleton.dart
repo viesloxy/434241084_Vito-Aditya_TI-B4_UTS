@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// LoadingSkeleton ala FlutterShop — flat card dengan shimmer boxes.
 class LoadingSkeleton extends StatefulWidget {
@@ -46,36 +46,38 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.itemCount,
           separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-          itemBuilder: (context, index) => _buildSkeletonCard(_animation.value),
+          itemBuilder: (context, index) => _buildSkeletonCard(context, _animation.value),
         );
       },
     );
   }
 
-  Widget _buildSkeletonCard(double opacity) {
+  Widget _buildSkeletonCard(BuildContext context, double opacity) {
+
+    final c = context.palette;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: c.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildShimmerBox(width: 80, opacity: opacity),
+          _buildShimmerBox(context, width: 80, opacity: opacity),
           const SizedBox(height: AppSpacing.sm),
-          _buildShimmerBox(width: double.infinity, height: 16, opacity: opacity),
+          _buildShimmerBox(context, width: double.infinity, height: 16, opacity: opacity),
           const SizedBox(height: 4),
-          _buildShimmerBox(width: 200, height: 16, opacity: opacity),
+          _buildShimmerBox(context, width: 200, height: 16, opacity: opacity),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              _buildShimmerBox(width: 70, height: 24, opacity: opacity),
+              _buildShimmerBox(context, width: 70, height: 24, opacity: opacity),
               const SizedBox(width: AppSpacing.sm),
-              _buildShimmerBox(width: 60, height: 24, opacity: opacity),
+              _buildShimmerBox(context, width: 60, height: 24, opacity: opacity),
               const Spacer(),
-              _buildShimmerBox(width: 100, height: 14, opacity: opacity),
+              _buildShimmerBox(context, width: 100, height: 14, opacity: opacity),
             ],
           ),
         ],
@@ -83,16 +85,18 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
     );
   }
 
-  Widget _buildShimmerBox({
+  Widget _buildShimmerBox(BuildContext context, {
     required double width,
     double height = 12,
     required double opacity,
   }) {
+
+    final c = context.palette;
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.textTertiary.withValues(alpha: opacity),
+        color: c.textTertiary.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -104,12 +108,13 @@ class StatCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: c.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +123,7 @@ class StatCardSkeleton extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.textTertiary.withValues(alpha: 0.2),
+              color: c.textTertiary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
           ),
@@ -127,7 +132,7 @@ class StatCardSkeleton extends StatelessWidget {
             width: 50,
             height: 28,
             decoration: BoxDecoration(
-              color: AppColors.textTertiary.withValues(alpha: 0.2),
+              color: c.textTertiary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -136,7 +141,7 @@ class StatCardSkeleton extends StatelessWidget {
             width: 80,
             height: 12,
             decoration: BoxDecoration(
-              color: AppColors.textTertiary.withValues(alpha: 0.2),
+              color: c.textTertiary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(4),
             ),
           ),

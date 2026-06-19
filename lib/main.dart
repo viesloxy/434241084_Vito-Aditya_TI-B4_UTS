@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_mode_controller.dart';
 import 'features/splash/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
@@ -10,6 +11,7 @@ import 'features/tickets/pages/create_ticket_page.dart';
 import 'features/tickets/pages/ticket_detail_page.dart';
 import 'features/tickets/pages/ticket_history_page.dart';
 import 'features/notifications/presentation/pages/notifications_page.dart';
+import 'features/settings/presentation/pages/theme_settings_page.dart';
 
 // Admin imports
 import 'features/admin/pages/admin_scaffold_page.dart';
@@ -47,10 +49,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Helpdesk',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+    final themeController = ThemeModeController.instance;
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeController.listenable,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: 'Helpdesk',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: mode,
       initialRoute: '/',
       routes: {
         // Splash & Auth
@@ -81,6 +89,11 @@ class MyApp extends StatelessWidget {
         '/helpdesk/notifications': (context) =>
             const HelpdeskNotificationsPage(),
         '/helpdesk/profile': (context) => const HelpdeskProfilePage(),
+
+        // Settings
+        '/settings/theme': (context) => const ThemeSettingsPage(),
+      },
+        );
       },
     );
   }

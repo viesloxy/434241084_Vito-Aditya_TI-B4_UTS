@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_max_width.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../shared/widgets/status_badge.dart';
 import '../../../../../shared/widgets/category_badge.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 enum DetailPageState { loading, loaded, error }
 
 /// Admin Ticket Detail ala FlutterShop — flat 2D, no decorative color, all
-/// accents use `AppColors.primary`. Sectioned, full-bleed body.
+/// accents use `c.primary`. Sectioned, full-bleed body.
 ///
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.4.
 class AdminTicketDetailPage extends StatefulWidget {
@@ -87,41 +87,44 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
-      body: _buildBody(),
-      bottomNavigationBar: _buildCommentInput(),
+      backgroundColor: c.background,
+      appBar: _buildAppBar(context),
+      body: _buildBody(context),
+      bottomNavigationBar: _buildCommentInput(context),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+
+    final c = context.palette;
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+        icon: Icon(Icons.arrow_back, color: c.textPrimary),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
         _getString('ticketId', '#TK-0000'),
-        style: AppTextStyles.h4,
+        style: AppTextStyles.h4(c),
       ),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.share_outlined, color: AppColors.textPrimary),
+          icon: Icon(Icons.share_outlined, color: c.textPrimary),
           onPressed: () => _showSnackBar('Link berhasil disalin'),
         ),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+          icon: Icon(Icons.more_vert, color: c.textPrimary),
           onSelected: (value) {
             switch (value) {
               case 'edit':
                 _showSnackBar('Edit tiket');
                 break;
               case 'delete':
-                _showDeleteConfirmation();
+                _showDeleteConfirmation(context);
                 break;
               case 'print':
                 _showSnackBar('Cetak tiket');
@@ -138,18 +141,20 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
+
+    final c = context.palette;
     switch (_state) {
       case DetailPageState.loading:
-        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+        return Center(child: CircularProgressIndicator(color: c.primary));
       case DetailPageState.error:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.textTertiary),
+              Icon(Icons.error_outline, size: 64, color: c.textTertiary),
               const SizedBox(height: AppSpacing.lg),
-              Text('Gagal memuat detail tiket', style: AppTextStyles.body),
+              Text('Gagal memuat detail tiket', style: AppTextStyles.body(c)),
               const SizedBox(height: AppSpacing.md),
               ElevatedButton(onPressed: _loadData, child: const Text('Coba Lagi')),
             ],
@@ -163,19 +168,19 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTicketHeader(),
+                _buildTicketHeader(context),
                 const SizedBox(height: AppSpacing.xl),
                 _buildStatusTimeline(),
                 const SizedBox(height: AppSpacing.xl),
                 _buildTicketDetails(),
                 const SizedBox(height: AppSpacing.xl),
-                _buildDescriptionSection(),
+                _buildDescriptionSection(context),
                 const SizedBox(height: AppSpacing.xl),
-                _buildAttachmentsSection(),
+                _buildAttachmentsSection(context),
                 const SizedBox(height: AppSpacing.xl),
-                _buildConversationSection(),
+                _buildConversationSection(context),
                 const SizedBox(height: AppSpacing.xl),
-                _buildQuickActions(),
+                _buildQuickActions(context),
                 const SizedBox(height: AppSpacing.lg),
               ],
             ),
@@ -184,7 +189,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     }
   }
 
-  Widget _buildTicketHeader() {
+  Widget _buildTicketHeader(BuildContext context) {
+
+    final c = context.palette;
     final title = _getString('title', 'Judul tidak tersedia');
     final category = _getString('category', 'Lainnya');
     final status = _getString('status', 'baru');
@@ -196,7 +203,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.h3),
+          Text(title, style: AppTextStyles.h3(c)),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,
@@ -204,16 +211,16 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             children: [
               CategoryBadge(category: category),
               StatusBadge(status: status),
-              _buildPriorityBadge(priority),
+              _buildPriorityBadge(context, priority),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+              Icon(Icons.access_time, size: 14, color: c.textSecondary),
               const SizedBox(width: 4),
               Text('Dibuat: $date',
-                style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
             ],
           ),
         ],
@@ -221,7 +228,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildPriorityBadge(String priority) {
+  Widget _buildPriorityBadge(BuildContext context, String priority) {
+
+    final c = context.palette;
     IconData icon;
     String label;
     Color bg;
@@ -230,21 +239,21 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       case 'tinggi':
         icon = Icons.keyboard_double_arrow_up;
         label = 'Tinggi';
-        bg = AppColors.priorityHighBg;
-        fg = AppColors.priorityHighText;
+        bg = c.priorityHighBg;
+        fg = c.priorityHighText;
         break;
       case 'rendah':
         icon = Icons.keyboard_double_arrow_down;
         label = 'Rendah';
-        bg = AppColors.priorityLowBg;
-        fg = AppColors.priorityLowText;
+        bg = c.priorityLowBg;
+        fg = c.priorityLowText;
         break;
       case 'sedang':
       default:
         icon = Icons.remove;
         label = 'Sedang';
-        bg = AppColors.priorityMedBg;
-        fg = AppColors.priorityMedText;
+        bg = c.priorityMedBg;
+        fg = c.priorityMedText;
     }
 
     return Container(
@@ -259,7 +268,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
           Text(label,
-            style: AppTextStyles.overline.copyWith(
+            style: AppTextStyles.overline(c).copyWith(
               color: fg,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -302,8 +311,8 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         children: [
           _DetailRow(label: 'Pembuat', value: creator, icon: Icons.person_outline, isEditable: false),
           _DetailRow(label: 'Email', value: email, icon: Icons.email_outlined, isEditable: false),
-          _DetailRow(label: 'Prioritas', value: priority, icon: Icons.flag_outlined, isEditable: true, onTap: _showPriorityDropdown),
-          _DetailRow(label: 'Ditugaskan', value: assignedTo.isEmpty ? 'Belum ditugaskan' : assignedTo, icon: Icons.assignment_ind_outlined, isEditable: true, onTap: _showAssignModal),
+          _DetailRow(label: 'Prioritas', value: priority, icon: Icons.flag_outlined, isEditable: true, onTap: () => _showPriorityDropdown(context)),
+          _DetailRow(label: 'Ditugaskan', value: assignedTo.isEmpty ? 'Belum ditugaskan' : assignedTo, icon: Icons.assignment_ind_outlined, isEditable: true, onTap: () => _showAssignModal(context)),
           _DetailRow(label: 'Tanggal Dibuat', value: date, icon: Icons.calendar_today_outlined, isEditable: false),
           _DetailRow(label: 'Terakhir Update', value: date, icon: Icons.update_outlined, isEditable: false),
         ],
@@ -311,15 +320,17 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildDescriptionSection() {
+  Widget _buildDescriptionSection(BuildContext context) {
+
+    final c = context.palette;
     final description = _getString('description', '');
 
     return _Section(
       title: 'Deskripsi',
       child: Text(
         description.isEmpty ? 'Tidak ada deskripsi' : description,
-        style: AppTextStyles.body.copyWith(
-          color: description.isEmpty ? AppColors.textSecondary : AppColors.textPrimary,
+        style: AppTextStyles.body(c).copyWith(
+          color: description.isEmpty ? c.textSecondary : c.textPrimary,
           fontStyle: description.isEmpty ? FontStyle.italic : FontStyle.normal,
           height: 1.5,
         ),
@@ -327,21 +338,25 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildAttachmentsSection() {
+  Widget _buildAttachmentsSection(BuildContext context) {
+
+    final c = context.palette;
     return _Section(
       title: 'Lampiran',
       child: _attachments.isEmpty
-          ? Text('Tidak ada lampiran', style: AppTextStyles.body.copyWith(color: AppColors.textSecondary))
+          ? Text('Tidak ada lampiran', style: AppTextStyles.body(c).copyWith(color: c.textSecondary))
           : Column(
               children: List.generate(_attachments.length, (index) {
                 final attachment = _attachments[index];
-                return _buildAttachmentItem(attachment);
+                return _buildAttachmentItem(context, attachment);
               }),
             ),
     );
   }
 
-  Widget _buildAttachmentItem(Map<String, dynamic> attachment) {
+  Widget _buildAttachmentItem(BuildContext context, Map<String, dynamic> attachment) {
+
+    final c = context.palette;
     final isImage = attachment['type'] == 'image';
     final name = attachment['name'] as String? ?? 'file';
     final size = attachment['size'] as String? ?? '-';
@@ -350,9 +365,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
+        color: c.surfaceAlt,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         children: [
@@ -360,12 +375,12 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
+              color: c.primaryLight,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(
               isImage ? Icons.image : Icons.insert_drive_file,
-              color: AppColors.primary,
+              color: c.primary,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -373,13 +388,13 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w500)),
-                Text(size, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                Text(name, style: AppTextStyles.body(c).copyWith(fontWeight: FontWeight.w500)),
+                Text(size, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.download, color: AppColors.primary),
+            icon: Icon(Icons.download, color: c.primary),
             onPressed: () => _showSnackBar('Mengunduh $name'),
           ),
         ],
@@ -387,26 +402,30 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildConversationSection() {
+  Widget _buildConversationSection(BuildContext context) {
+
+    final c = context.palette;
     return _Section(
       title: 'Percakapan',
       child: _conversations.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Text('Belum ada percakapan', style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+                child: Text('Belum ada percakapan', style: AppTextStyles.body(c).copyWith(color: c.textSecondary)),
               ),
             )
           : Column(
               children: List.generate(_conversations.length, (index) {
                 final chat = _conversations[index];
-                return _buildChatBubble(chat);
+                return _buildChatBubble(context, chat);
               }),
             ),
     );
   }
 
-  Widget _buildChatBubble(Map<String, dynamic> chat) {
+  Widget _buildChatBubble(BuildContext context, Map<String, dynamic> chat) {
+
+    final c = context.palette;
     final isMe = chat['isMe'] as bool? ?? false;
     final sender = chat['sender'] as String? ?? 'Unknown';
     final message = chat['message'] as String? ?? '';
@@ -419,7 +438,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : AppColors.surfaceAlt,
+          color: isMe ? c.primary : c.surfaceAlt,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -427,7 +446,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             bottomRight: Radius.circular(isMe ? 4 : 16),
           ),
           border: Border.all(
-            color: isMe ? AppColors.primary : AppColors.border,
+            color: isMe ? c.primary : c.border,
             width: 1,
           ),
         ),
@@ -436,22 +455,22 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           children: [
             if (!isMe) ...[
               Text(sender,
-                style: AppTextStyles.overline.copyWith(
-                  color: AppColors.primary,
+                style: AppTextStyles.overline(c).copyWith(
+                  color: c.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 )),
               const SizedBox(height: 4),
             ],
             Text(message,
-              style: AppTextStyles.body.copyWith(
-                color: isMe ? AppColors.textOnPrimary : AppColors.textPrimary,
+              style: AppTextStyles.body(c).copyWith(
+                color: isMe ? c.textOnPrimary : c.textPrimary,
               )),
             const SizedBox(height: 4),
             Text(time,
-              style: AppTextStyles.overline.copyWith(
+              style: AppTextStyles.overline(c).copyWith(
                 fontSize: 10,
-                color: isMe ? AppColors.textOnPrimary : AppColors.textSecondary,
+                color: isMe ? c.textOnPrimary : c.textSecondary,
               )),
           ],
         ),
@@ -459,14 +478,16 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(BuildContext context) {
+
+    final c = context.palette;
     final status = _getString('status', 'submitted');
 
     if (status == 'submitted' || status == 'baru') {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
-          onPressed: _showAssignModal,
+          onPressed: () => _showAssignModal(context),
           icon: const Icon(Icons.person_add_outlined, size: 18),
           label: const Text('Assign ke Helpdesk'),
         ),
@@ -476,7 +497,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       return SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          onPressed: _showCancelAssignmentDialog,
+          onPressed: () => _showCancelAssignmentDialog(context),
           icon: const Icon(Icons.cancel_outlined, size: 18),
           label: const Text('Batalkan Assignment'),
         ),
@@ -486,7 +507,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
-          onPressed: _showCloseTicketDialog,
+          onPressed: () => _showCloseTicketDialog(context),
           icon: const Icon(Icons.lock_outline, size: 18),
           label: const Text('Close Tiket (QC)'),
         ),
@@ -496,9 +517,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
+        color: c.surfaceAlt,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         children: [
@@ -507,7 +528,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                 ? Icons.hourglass_top_outlined
                 : Icons.lock_outline,
             size: 16,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -515,7 +536,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               status == 'in_progress' || status == 'diproses'
                   ? 'Helpdesk sedang mengerjakan tiket. Tidak ada aksi yang tersedia.'
                   : 'Tiket sudah ditutup (final).',
-              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
             ),
           ),
         ],
@@ -523,11 +544,13 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildCommentInput() {
+  Widget _buildCommentInput(BuildContext context) {
+
+    final c = context.palette;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
       ),
       child: SafeArea(
         child: Column(
@@ -538,7 +561,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.attach_file, color: AppColors.textSecondary),
+                    icon: Icon(Icons.attach_file, color: c.textSecondary),
                     onPressed: () => _showSnackBar('Pilih lampiran'),
                   ),
                   Expanded(
@@ -550,7 +573,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                       decoration: InputDecoration(
                         hintText: 'Ketik pesan...',
                         filled: true,
-                        fillColor: AppColors.inputFill,
+                        fillColor: c.inputFill,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md,
                           vertical: AppSpacing.sm + 2,
@@ -569,8 +592,8 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                     icon: Icon(
                       Icons.send,
                       color: _commentController.text.isEmpty
-                          ? AppColors.textTertiary
-                          : AppColors.primary,
+                          ? c.textTertiary
+                          : c.primary,
                     ),
                     onPressed: _commentController.text.isEmpty
                         ? null
@@ -590,11 +613,11 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                 children: [
                   Text(
                     '$_characterCount/$_maxCharacters',
-                    style: AppTextStyles.overline.copyWith(
+                    style: AppTextStyles.overline(c).copyWith(
                       fontSize: 11,
                       color: _characterCount > _maxCharacters
-                          ? AppColors.error
-                          : AppColors.textSecondary,
+                          ? c.error
+                          : c.textSecondary,
                     ),
                   ),
                 ],
@@ -607,7 +630,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showPriorityDropdown() {
+  void _showPriorityDropdown(BuildContext context) {
+
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -619,7 +644,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Ubah Prioritas', style: AppTextStyles.h3),
+            Text('Ubah Prioritas', style: AppTextStyles.h3(c)),
             const SizedBox(height: AppSpacing.lg),
             for (final p in const ['tinggi', 'sedang', 'rendah'])
               ListTile(
@@ -627,12 +652,12 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                   p == 'tinggi'
                       ? Icons.keyboard_double_arrow_up
                       : (p == 'sedang' ? Icons.remove : Icons.keyboard_double_arrow_down),
-                  color: p == _selectedPriority ? AppColors.primary : AppColors.textSecondary,
+                  color: p == _selectedPriority ? c.primary : c.textSecondary,
                 ),
                 title: Text(p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah'),
-                  style: AppTextStyles.body),
+                  style: AppTextStyles.body(c)),
                 trailing: p == _selectedPriority
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: c.primary)
                     : null,
                 onTap: () {
                   setState(() => _selectedPriority = p);
@@ -648,7 +673,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showAssignModal() {
+  void _showAssignModal(BuildContext context) {
+
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -663,18 +690,18 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.person_add_outlined, color: AppColors.primary),
+                Icon(Icons.person_add_outlined, color: c.primary),
                 const SizedBox(width: AppSpacing.sm),
-                Text('Tugaskan ke Helpdesk', style: AppTextStyles.h3),
+                Text('Tugaskan ke Helpdesk', style: AppTextStyles.h3(c)),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
             TextField(
               decoration: InputDecoration(
                 hintText: 'Cari helpdesk...',
-                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                prefixIcon: Icon(Icons.search, color: c.textSecondary),
                 filled: true,
-                fillColor: AppColors.inputFill,
+                fillColor: c.inputFill,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide.none,
@@ -691,21 +718,21 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: c.primary,
                   child: Text(initial,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textOnPrimary,
+                    style: AppTextStyles.caption(c).copyWith(
+                      color: c.textOnPrimary,
                       fontWeight: FontWeight.w600,
                     )),
                 ),
-                title: Text(name, style: AppTextStyles.body),
+                title: Text(name, style: AppTextStyles.body(c)),
                 subtitle: Text(
                   isAvailable ? 'Tersedia • $workload tiket aktif' : 'Cuti',
-                  style: AppTextStyles.caption.copyWith(
-                    color: isAvailable ? AppColors.primary : AppColors.textSecondary,
+                  style: AppTextStyles.caption(c).copyWith(
+                    color: isAvailable ? c.primary : c.textSecondary,
                   ),
                 ),
-                trailing: !isAvailable ? const Icon(Icons.block, color: AppColors.textTertiary) : null,
+                trailing: !isAvailable ? Icon(Icons.block, color: c.textTertiary) : null,
                 onTap: isAvailable
                     ? () {
                         Navigator.pop(ctx);
@@ -725,7 +752,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showCancelAssignmentDialog() {
+  void _showCancelAssignmentDialog(BuildContext context) {
+
+    final c = context.palette;
     final reasonController = TextEditingController();
     showDialog(
       context: context,
@@ -735,9 +764,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         ),
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: AppColors.primary),
+            Icon(Icons.warning_amber_rounded, color: c.primary),
             const SizedBox(width: AppSpacing.sm),
-            Text('Batalkan Assignment', style: AppTextStyles.h4),
+            Text('Batalkan Assignment', style: AppTextStyles.h4(c)),
           ],
         ),
         content: Column(
@@ -746,10 +775,10 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           children: [
             Text(
               'Tiket akan dikembalikan ke status Submitted. Helpdesk saat ini tidak akan lagi melihat tiket ini.',
-              style: AppTextStyles.caption,
+              style: AppTextStyles.caption(c),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text('Alasan pembatalan:', style: AppTextStyles.bodySm.copyWith(fontWeight: FontWeight.w500)),
+            Text('Alasan pembatalan:', style: AppTextStyles.bodySm(c).copyWith(fontWeight: FontWeight.w500)),
             const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: reasonController,
@@ -757,7 +786,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               decoration: InputDecoration(
                 hintText: 'Misal: Helpdesk berhalangan...',
                 filled: true,
-                fillColor: AppColors.inputFill,
+                fillColor: c.inputFill,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide.none,
@@ -781,7 +810,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               });
               _showSnackBar('Assignment dibatalkan');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: c.primary),
             child: const Text('Batalkan Assignment'),
           ),
         ],
@@ -789,7 +818,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showCloseTicketDialog() {
+  void _showCloseTicketDialog(BuildContext context) {
+
+    final c = context.palette;
     bool userConfirmed = false;
     bool helpdeskProof = false;
     bool qcSuitable = false;
@@ -804,9 +835,9 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           ),
           title: Row(
             children: [
-              const Icon(Icons.check_circle, color: AppColors.primary),
+              Icon(Icons.check_circle, color: c.primary),
               const SizedBox(width: AppSpacing.sm),
-              Text('Close Tiket (QC)', style: AppTextStyles.h4),
+              Text('Close Tiket (QC)', style: AppTextStyles.h4(c)),
             ],
           ),
           content: SingleChildScrollView(
@@ -815,26 +846,26 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Checklist Quality Control:',
-                  style: AppTextStyles.bodySm.copyWith(fontWeight: FontWeight.w500)),
+                  style: AppTextStyles.bodySm(c).copyWith(fontWeight: FontWeight.w500)),
                 const SizedBox(height: AppSpacing.sm),
                 CheckboxListTile(
                   value: userConfirmed,
                   onChanged: (v) => setDialogState(() => userConfirmed = v ?? false),
-                  title: Text('User sudah konfirmasi selesai', style: AppTextStyles.caption),
+                  title: Text('User sudah konfirmasi selesai', style: AppTextStyles.caption(c)),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
                 CheckboxListTile(
                   value: helpdeskProof,
                   onChanged: (v) => setDialogState(() => helpdeskProof = v ?? false),
-                  title: Text('Helpdesk sudah upload bukti', style: AppTextStyles.caption),
+                  title: Text('Helpdesk sudah upload bukti', style: AppTextStyles.caption(c)),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
                 CheckboxListTile(
                   value: qcSuitable,
                   onChanged: (v) => setDialogState(() => qcSuitable = v ?? false),
-                  title: Text('Hasil kerja sesuai dengan laporan', style: AppTextStyles.caption),
+                  title: Text('Hasil kerja sesuai dengan laporan', style: AppTextStyles.caption(c)),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
@@ -845,7 +876,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                   decoration: InputDecoration(
                     labelText: 'Catatan penutupan (opsional)',
                     filled: true,
-                    fillColor: AppColors.inputFill,
+                    fillColor: c.inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide.none,
@@ -867,7 +898,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                       _showSnackBar('Tiket ditutup (Closed)');
                     }
                   : null,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(backgroundColor: c.primary),
               child: const Text('Close Tiket'),
             ),
           ],
@@ -876,16 +907,18 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showDeleteConfirmation() {
+  void _showDeleteConfirmation(BuildContext context) {
+
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
-        title: Text('Hapus Tiket', style: AppTextStyles.h4),
+        title: Text('Hapus Tiket', style: AppTextStyles.h4(c)),
         content: Text('Apakah Anda yakin ingin menghapus tiket ini?',
-          style: AppTextStyles.body),
+          style: AppTextStyles.body(c)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           TextButton(
@@ -894,7 +927,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               Navigator.pop(context);
               _showSnackBar('Tiket dihapus');
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: c.error),
             child: const Text('Hapus'),
           ),
         ],
@@ -926,19 +959,20 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: c.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title.isNotEmpty) ...[
-            Text(title, style: AppTextStyles.h4),
+            Text(title, style: AppTextStyles.h4(c)),
             const SizedBox(height: AppSpacing.md),
           ],
           child,
@@ -965,28 +999,29 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: isEditable ? onTap : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.textSecondary),
+            Icon(icon, size: 18, color: c.textSecondary),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                  Text(label, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
                   Text(value,
-                    style: AppTextStyles.body.copyWith(
+                    style: AppTextStyles.body(c).copyWith(
                       fontWeight: isEditable ? FontWeight.w500 : FontWeight.w400,
-                      color: isEditable ? AppColors.primary : AppColors.textPrimary,
+                      color: isEditable ? c.primary : c.textPrimary,
                     )),
                 ],
               ),
             ),
-            if (isEditable) const Icon(Icons.chevron_right, size: 20, color: AppColors.primary),
+            if (isEditable) Icon(Icons.chevron_right, size: 20, color: c.primary),
           ],
         ),
       ),
@@ -1009,6 +1044,7 @@ class _TimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1018,22 +1054,22 @@ class _TimelineItem extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: isCompleted ? AppColors.primary : AppColors.surface,
+                color: isCompleted ? c.primary : c.surface,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isCompleted ? AppColors.primary : AppColors.border,
+                  color: isCompleted ? c.primary : c.border,
                   width: 2,
                 ),
               ),
               child: isCompleted
-                  ? const Icon(Icons.check, size: 14, color: AppColors.textOnPrimary)
+                  ? Icon(Icons.check, size: 14, color: c.textOnPrimary)
                   : null,
             ),
             if (!isLast)
               Container(
                 width: 2,
                 height: 40,
-                color: isCompleted ? AppColors.primary : AppColors.border,
+                color: isCompleted ? c.primary : c.border,
               ),
           ],
         ),
@@ -1045,12 +1081,12 @@ class _TimelineItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                  style: AppTextStyles.body.copyWith(
+                  style: AppTextStyles.body(c).copyWith(
                     fontWeight: FontWeight.w600,
-                    color: isCompleted ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: isCompleted ? c.textPrimary : c.textSecondary,
                   )),
                 const SizedBox(height: 2),
-                Text(date, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                Text(date, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
               ],
             ),
           ),

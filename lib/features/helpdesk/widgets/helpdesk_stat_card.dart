@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Stat card untuk dashboard Helpdesk.
 /// Menampilkan statistik personal (assigned to this helpdesk).
@@ -22,15 +22,16 @@ class HelpdeskStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spacingLg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: c.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,17 +48,17 @@ class HelpdeskStatCard extends StatelessWidget {
             const SizedBox(height: AppConstants.spacingSm),
             Text(
               count.toString(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

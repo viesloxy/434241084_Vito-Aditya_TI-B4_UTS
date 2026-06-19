@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/category_badge.dart';
 import '../../../shared/widgets/priority_badge.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Task card khusus Helpdesk.
 /// Berbeda dengan AdminTicketCard: tombol quick action adalah
@@ -38,15 +38,16 @@ class HelpdeskTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spacingLg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: c.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,17 +57,17 @@ class HelpdeskTaskCard extends StatelessWidget {
               children: [
                 Text(
                   ticketId,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
                 Text(
                   date,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
               ],
@@ -74,10 +75,10 @@ class HelpdeskTaskCard extends StatelessWidget {
             const SizedBox(height: AppConstants.spacingSm),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -95,15 +96,15 @@ class HelpdeskTaskCard extends StatelessWidget {
             const SizedBox(height: AppConstants.spacingSm),
             Row(
               children: [
-                const Icon(Icons.person_outline,
-                    size: 12, color: AppColors.textSecondary),
+                Icon(Icons.person_outline,
+                    size: 12, color: c.textSecondary),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     'Dari: $createdBy',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -116,22 +117,22 @@ class HelpdeskTaskCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppConstants.spacingSm),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: c.background,
                   borderRadius:
                       BorderRadius.circular(AppConstants.radiusSmall),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.note_outlined,
-                        size: 14, color: AppColors.textSecondary),
+                    Icon(Icons.note_outlined,
+                        size: 14, color: c.textSecondary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         resolutionNote!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                           fontStyle: FontStyle.italic,
                         ),
                         maxLines: 2,
@@ -172,7 +173,7 @@ class HelpdeskTaskCard extends StatelessWidget {
                     icon: const Icon(Icons.check_circle, size: 18),
                     label: const Text('Selesaikan'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
+                      backgroundColor: c.success,
                       foregroundColor: Colors.white,
                       padding:
                           const EdgeInsets.symmetric(vertical: 10),

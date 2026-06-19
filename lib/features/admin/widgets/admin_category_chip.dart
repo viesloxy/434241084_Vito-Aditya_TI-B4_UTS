@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Filter chip ala FlutterShop — pill rounded 12.
 ///
@@ -30,12 +30,13 @@ class AdminCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     // Token-driven warna — single source of truth (AppColors)
-    final bg = isActive ? AppColors.primary : AppColors.surface;
-    final fg = isActive ? AppColors.textOnPrimary : AppColors.textPrimary;
-    final iconColor = isActive ? AppColors.textOnPrimary : AppColors.textPrimary;
-    final badgeBg = isActive ? AppColors.textOnPrimary.withValues(alpha: 0.2) : AppColors.primaryLight;
-    final badgeFg = isActive ? AppColors.textOnPrimary : AppColors.primary;
+    final bg = isActive ? c.primary : c.surface;
+    final fg = isActive ? c.textOnPrimary : c.textPrimary;
+    final iconColor = isActive ? c.textOnPrimary : c.textPrimary;
+    final badgeBg = isActive ? c.textOnPrimary.withValues(alpha: 0.2) : c.primaryLight;
+    final badgeFg = isActive ? c.textOnPrimary : c.primary;
 
     return InkWell(
       onTap: onTap,
@@ -50,7 +51,7 @@ class AdminCategoryChip extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.border,
+            color: isActive ? c.primary : c.border,
             width: 1,
           ),
         ),
@@ -61,7 +62,7 @@ class AdminCategoryChip extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs + 2),
             Text(
               category,
-              style: AppTextStyles.bodySm.copyWith(color: fg, fontWeight: FontWeight.w500),
+              style: AppTextStyles.bodySm(c).copyWith(color: fg, fontWeight: FontWeight.w500),
             ),
             const SizedBox(width: AppSpacing.xs + 2),
             Container(
@@ -72,7 +73,7 @@ class AdminCategoryChip extends StatelessWidget {
               ),
               child: Text(
                 count.toString(),
-                style: AppTextStyles.overline.copyWith(
+                style: AppTextStyles.overline(c).copyWith(
                   color: badgeFg,
                   fontWeight: FontWeight.w600,
                 ),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_max_width.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 /// Admin Notifications ala FlutterShop — flat 2D, divider-only list.
-/// Semua icon & aksen pakai `AppColors.primary` (no decorative colors).
+/// Semua icon & aksen pakai `c.primary` (no decorative colors).
 ///
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.9.
 class AdminNotificationsPage extends StatefulWidget {
@@ -88,12 +88,13 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
-        title: const Text('Notifikasi', style: AppTextStyles.h4),
+        title: Text('Notifikasi', style: AppTextStyles.h4(c)),
         centerTitle: true,
         actions: [
           if (_unreadCount > 0)
@@ -101,50 +102,52 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
               onPressed: _markAllAsRead,
               child: Text(
                 'Tandai semua dibaca',
-                style: AppTextStyles.body.copyWith(
-                  color: AppColors.primary,
+                style: AppTextStyles.body(c).copyWith(
+                  color: c.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
         ],
       ),
-      body: _notifications.isEmpty ? _buildEmptyState() : _buildNotificationList(),
+      body: _notifications.isEmpty ? _buildEmptyState(context) : _buildNotificationList(context),
     );
   }
 
-  Widget _buildNotificationList() {
+  Widget _buildNotificationList(BuildContext context) {
+
+    final c = context.palette;
     return RefreshIndicator(
       onRefresh: _loadInitialData,
-      color: AppColors.primary,
+      color: c.primary,
       child: CenteredContent(
         maxWidth: AppMaxWidth.infinite,
         child: ListView.separated(
           itemCount: _notifications.length,
           separatorBuilder: (context, index) =>
-              const Divider(height: 1, color: AppColors.divider),
+              Divider(height: 1, color: c.divider),
           itemBuilder: (context, index) {
             final notif = _notifications[index];
             return Dismissible(
               key: Key('admin_notif_$index'),
               background: Container(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: c.primary.withValues(alpha: 0.1),
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.only(left: AppSpacing.xl),
-                child: const Icon(Icons.check, color: AppColors.primary),
+                child: Icon(Icons.check, color: c.primary),
               ),
               secondaryBackground: Container(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: c.error.withValues(alpha: 0.1),
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: AppSpacing.xl),
-                child: const Icon(Icons.delete, color: AppColors.error),
+                child: Icon(Icons.delete, color: c.error),
               ),
               confirmDismiss: (direction) async {
                 if (direction == DismissDirection.startToEnd) {
                   _markAsRead(index);
                   return false;
                 }
-                return await _showDeleteConfirmation();
+                return await _showDeleteConfirmation(context);
               },
               onDismissed: (direction) {
                 if (direction == DismissDirection.endToStart) _deleteNotification(index);
@@ -167,19 +170,21 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+
+    final c = context.palette;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.notifications_off_outlined, size: 64, color: AppColors.textTertiary),
+            Icon(Icons.notifications_off_outlined, size: 64, color: c.textTertiary),
             const SizedBox(height: AppSpacing.lg),
-            Text('Tidak Ada Notifikasi', style: AppTextStyles.h4),
+            Text('Tidak Ada Notifikasi', style: AppTextStyles.h4(c)),
             const SizedBox(height: AppSpacing.sm),
             Text('Notifikasi akan muncul di sini',
-              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
               textAlign: TextAlign.center),
           ],
         ),
@@ -187,20 +192,21 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     );
   }
 
-  Future<bool> _showDeleteConfirmation() async {
+  Future<bool> _showDeleteConfirmation(BuildContext context) async {
+    final c = context.palette;
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
-        title: Text('Hapus Notifikasi?', style: AppTextStyles.h4),
-        content: Text('Notifikasi ini akan dihapus.', style: AppTextStyles.body),
+        title: Text('Hapus Notifikasi?', style: AppTextStyles.h4(c)),
+        content: Text('Notifikasi ini akan dihapus.', style: AppTextStyles.body(c)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: c.error),
             child: const Text('Hapus'),
           ),
         ],
@@ -228,10 +234,11 @@ class _NotificationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       child: Container(
-        color: isRead ? AppColors.surface : AppColors.primaryLight,
+        color: isRead ? c.surface : c.primaryLight,
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,7 +250,7 @@ class _NotificationItem extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: isRead ? Colors.transparent : AppColors.primary,
+                  color: isRead ? Colors.transparent : c.primary,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -253,10 +260,10 @@ class _NotificationItem extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: c.primaryLight,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, size: 20, color: AppColors.primary),
+              child: Icon(icon, size: 20, color: c.primary),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -265,30 +272,30 @@ class _NotificationItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.body.copyWith(
+                    style: AppTextStyles.body(c).copyWith(
                       fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: AppTextStyles.bodySm.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     time,
-                    style: AppTextStyles.overline.copyWith(
+                    style: AppTextStyles.overline(c).copyWith(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+            Icon(Icons.chevron_right, color: c.textTertiary, size: 20),
           ],
         ),
       ),

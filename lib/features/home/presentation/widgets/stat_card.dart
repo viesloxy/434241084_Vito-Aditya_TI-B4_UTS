@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -12,10 +12,11 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
       padding: const EdgeInsets.all(AppConstants.spacingLg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
         boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 3, offset: Offset(0, 1))],
       ),
@@ -28,9 +29,9 @@ class StatCard extends StatelessWidget {
             child: Icon(icon, size: 20, color: color),
           ),
           const SizedBox(height: AppConstants.spacingMd),
-          Text(count.toString(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text(count.toString(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: c.textPrimary)),
           const SizedBox(height: AppConstants.spacingXs),
-          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary)),
+          Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: c.textSecondary)),
         ],
       ),
     );

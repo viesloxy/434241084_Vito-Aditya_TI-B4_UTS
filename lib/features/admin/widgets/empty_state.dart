@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// EmptyState ala FlutterShop — icon muted 80×80, text center.
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.11.
@@ -21,6 +21,7 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -31,21 +32,21 @@ class EmptyState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.1),
+                color: c.textTertiary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: AppColors.textTertiary),
+              child: Icon(icon, size: 40, color: c.textTertiary),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               title,
-              style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.h3(c).copyWith(color: c.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               message,
-              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
               textAlign: TextAlign.center,
             ),
             if (onRefresh != null) ...[
@@ -54,7 +55,7 @@ class EmptyState extends StatelessWidget {
                 onPressed: onRefresh,
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Refresh'),
-                style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                style: TextButton.styleFrom(foregroundColor: c.primary),
               ),
             ],
           ],

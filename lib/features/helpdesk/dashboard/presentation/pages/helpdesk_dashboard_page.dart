@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
 import '../../../../helpdesk/widgets/helpdesk_stat_card.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
 import '../../../../admin/widgets/loading_skeleton.dart';
 import '../../../../admin/widgets/empty_state.dart';
 import '../../../../admin/widgets/error_state.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 enum DashboardState { loading, loaded, empty, error }
 
@@ -22,30 +22,30 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   DashboardState _state = DashboardState.loading;
 
   // Stats personal - hanya tiket yang di-assign ke Helpdesk ini
-  final List<Map<String, dynamic>> _stats = [
+  List<Map<String, dynamic>> _buildStats(AppPalette c) => [
     {
       'title': 'Tugas Total',
       'count': 45,
       'icon': Icons.assignment_outlined,
-      'color': const Color(0xFF3B82F6),
+      'color': c.primary,
     },
     {
       'title': 'Tugas Baru',
       'count': 5,
       'icon': Icons.fiber_new,
-      'color': const Color(0xFFF59E0B),
+      'color': c.warning,
     },
     {
       'title': 'In Progress',
       'count': 2,
       'icon': Icons.pending,
-      'color': const Color(0xFF6366F1),
+      'color': c.info,
     },
     {
       'title': 'Selesai',
       'count': 38,
       'icon': Icons.check_circle_outline,
-      'color': AppColors.success,
+      'color': c.success,
     },
   ];
 
@@ -133,11 +133,12 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     const helpdeskName = 'John Helpdesk';
     const helpdeskRole = 'Helpdesk';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshData,
@@ -157,7 +158,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                         height: isWide
                             ? AppConstants.spacing2xl
                             : AppConstants.spacingXl),
-                    _buildStatsSection(context, _stats, isWide),
+                    _buildStatsSection(context, _buildStats(c), isWide),
                     SizedBox(
                         height: isWide
                             ? AppConstants.spacing2xl
@@ -181,6 +182,8 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
 
   Widget _buildHeader(BuildContext context, String name, String role,
       double maxWidth) {
+
+    final c = context.palette;
     final isWide = maxWidth > 400;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,7 +198,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                 style: TextStyle(
                   fontSize: maxWidth > 360 ? 14 : 12,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
@@ -207,7 +210,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                       style: TextStyle(
                         fontSize: maxWidth > 360 ? 20 : 18,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -237,8 +240,8 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_outlined,
-                  color: AppColors.textPrimary),
+              icon: Icon(Icons.notifications_outlined,
+                  color: c.textPrimary),
               onPressed: () {
                 Navigator.pushNamed(context, '/helpdesk/notifications');
               },
@@ -265,6 +268,8 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
 
   Widget _buildStatsSection(BuildContext context,
       List<Map<String, dynamic>> stats, bool isWide) {
+
+    final c = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -276,7 +281,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
               style: TextStyle(
                   fontSize: isWide ? 18 : 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
+                  color: c.textPrimary),
             ),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/helpdesk/tasks'),
@@ -313,17 +318,19 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   }
 
   Widget _buildActiveTasksSection(BuildContext context) {
+
+    final c = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tugas yang Perlu Dikerjakan',
+            Text('Tugas yang Perlu Dikerjakan',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
+                    color: c.textPrimary)),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/helpdesk/tasks'),
               child: const Text('Lihat Semua',
@@ -390,7 +397,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                   ? () => _showStartTaskDialog(task)
                   : null,
               onResolve: task['status'] == 'in_progress'
-                  ? () => _showResolveTaskDialog(task)
+                  ? () => _showResolveTaskDialog(context, task)
                   : null,
             );
           },
@@ -399,6 +406,8 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   }
 
   Widget _buildResolvedTasksSection(BuildContext context) {
+
+    final c = context.palette;
     if (_state != DashboardState.loaded || _resolvedTasks.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -408,11 +417,11 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Tugas Selesai',
+            Text('Tugas Selesai',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
+                    color: c.textPrimary)),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/helpdesk/tasks'),
               child: const Text('Lihat Semua',
@@ -497,7 +506,9 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
     );
   }
 
-  void _showResolveTaskDialog(Map<String, dynamic> task) {
+  void _showResolveTaskDialog(BuildContext context, Map<String, dynamic> task) {
+
+    final c = context.palette;
     final noteController = TextEditingController();
 
     showDialog(
@@ -505,9 +516,9 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: AppColors.success),
+            Icon(Icons.check_circle, color: c.success),
             SizedBox(width: 8),
             Text('Selesaikan Tiket'),
           ],
@@ -563,7 +574,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
               _loadData();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: c.success,
             ),
             child: const Text('Selesaikan'),
           ),

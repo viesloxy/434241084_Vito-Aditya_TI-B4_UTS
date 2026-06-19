@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/category_card.dart';
 import '../widgets/ticket_card.dart';
+import '../../../../core/theme/app_palette.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     const userName = 'John Doe';
     const userInitial = 'JD';
 
     final stats = [
-      {'title': 'Total Tiket', 'count': 12, 'icon': Icons.description_outlined, 'color': AppColors.primary},
+      {'title': 'Total Tiket', 'count': 12, 'icon': Icons.description_outlined, 'color': c.primary},
       {'title': 'Belum Ditangani', 'count': 3, 'icon': Icons.access_time, 'color': const Color(0xFFF59E0B)},
       {'title': 'Sedang Diproses', 'count': 5, 'icon': Icons.refresh, 'color': const Color(0xFF3B82F6)},
-      {'title': 'Selesai', 'count': 4, 'icon': Icons.check_circle_outline, 'color': AppColors.success},
+      {'title': 'Selesai', 'count': 4, 'icon': Icons.check_circle_outline, 'color': c.success},
     ];
 
     final categories = [
@@ -35,7 +36,7 @@ class HomePage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => await Future.delayed(const Duration(seconds: 1)),
@@ -52,9 +53,9 @@ class HomePage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Selamat datang,', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary)),
+                        Text('Selamat datang,', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: c.textSecondary)),
                         const SizedBox(height: 2),
-                        Text(userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Text(userName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: c.textPrimary)),
                       ],
                     ),
                     Row(
@@ -66,14 +67,14 @@ class HomePage extends StatelessWidget {
                           },
                           child: Stack(
                             children: [
-                              IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary), onPressed: null),
-                              const Positioned(right: 8, top: 8, child: CircleAvatar(radius: 4, backgroundColor: AppColors.error)),
+                              IconButton(icon: Icon(Icons.notifications_outlined, color: c.textPrimary), onPressed: null),
+                              Positioned(right: 8, top: 8, child: CircleAvatar(radius: 4, backgroundColor: c.error)),
                             ],
                           ),
                         ),
                         GestureDetector(
                           onTap: () {},
-                          child: CircleAvatar(radius: 18, backgroundColor: AppColors.primary, child: Text(userInitial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white))),
+                          child: CircleAvatar(radius: 18, backgroundColor: c.primary, child: Text(userInitial, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white))),
                         ),
                       ],
                     ),
@@ -83,7 +84,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: AppConstants.spacing2xl),
 
                 // Quick Stats
-                const Text('Statistik Tiket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                Text('Statistik Tiket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary)),
                 const SizedBox(height: AppConstants.spacingMd),
                 GridView.builder(
                   shrinkWrap: true,
@@ -104,7 +105,7 @@ class HomePage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: AppConstants.spacingMd),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryHover], begin: Alignment.centerLeft, end: Alignment.centerRight),
+                      gradient: LinearGradient(colors: [c.primary, c.primaryHover], begin: Alignment.centerLeft, end: Alignment.centerRight),
                       borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
                     ),
                     child: const Row(
@@ -121,7 +122,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: AppConstants.spacing2xl),
 
                 // Kategori
-                const Text('Kategori Tiket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                Text('Kategori Tiket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary)),
                 const SizedBox(height: AppConstants.spacingMd),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -146,13 +147,13 @@ class HomePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Tiket Terbaru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    Text('Tiket Terbaru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textPrimary)),
                     TextButton(
                       onPressed: () {
                         // Navigate to ticket history tab
                         Navigator.pushNamed(context, '/tickets');
                       },
-                      child: const Text('Lihat Semua', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.primary)),
+                      child: Text('Lihat Semua', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.primary)),
                     ),
                   ],
                 ),

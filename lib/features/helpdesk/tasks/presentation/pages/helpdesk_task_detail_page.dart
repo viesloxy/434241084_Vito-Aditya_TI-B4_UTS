@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
 import '../../../../../shared/widgets/status_badge.dart';
 import '../../../../../shared/widgets/category_badge.dart';
+import '../../../../../core/theme/app_palette.dart';
 
 enum DetailPageState { loading, loaded, error }
 
@@ -106,45 +106,50 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 600;
         return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(isWide),
-          body: _buildBody(isWide),
-          bottomNavigationBar: _buildCommentInput(isWide),
+          backgroundColor: c.background,
+          appBar: _buildAppBar(context, isWide),
+          body: _buildBody(context, isWide),
+          bottomNavigationBar: _buildCommentInput(context, isWide),
         );
       },
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isWide) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       elevation: 0,
       leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: c.textPrimary),
           onPressed: () => Navigator.pop(context)),
       title: Text(
         _getString('ticketId', '#TK-0000'),
         style: TextStyle(
             fontSize: isWide ? 18 : 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary),
+            color: c.textPrimary),
       ),
       centerTitle: true,
       actions: [
         IconButton(
-            icon: const Icon(Icons.report_outlined,
-                color: AppColors.textPrimary),
-            onPressed: () => _showReportDialog(),
+            icon: Icon(Icons.report_outlined,
+                color: c.textPrimary),
+            onPressed: () => _showReportDialog(context),
             tooltip: 'Lapor ke Admin'),
       ],
     );
   }
 
-  Widget _buildBody(bool isWide) {
+  Widget _buildBody(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     switch (_state) {
       case DetailPageState.loading:
         return const Center(child: CircularProgressIndicator());
@@ -153,8 +158,8 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline,
-                  size: 64, color: AppColors.error),
+              Icon(Icons.error_outline,
+                  size: 64, color: c.error),
               const SizedBox(height: AppConstants.spacingLg),
               const Text('Gagal memuat detail tugas'),
               const SizedBox(height: AppConstants.spacingMd),
@@ -171,27 +176,27 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTaskHeader(isWide),
+              _buildTaskHeader(context, isWide),
               SizedBox(
                   height:
                       isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildStatusTimeline(isWide),
+              _buildStatusTimeline(context, isWide),
               SizedBox(
                   height:
                       isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildTaskDetails(isWide),
+              _buildTaskDetails(context, isWide),
               SizedBox(
                   height:
                       isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildDescriptionSection(isWide),
+              _buildDescriptionSection(context, isWide),
               SizedBox(
                   height:
                       isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildConversationSection(isWide),
+              _buildConversationSection(context, isWide),
               SizedBox(
                   height:
                       isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildActionButton(isWide),
+              _buildActionButton(context, isWide),
               const SizedBox(height: AppConstants.spacingLg),
             ],
           ),
@@ -199,7 +204,9 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     }
   }
 
-  Widget _buildTaskHeader(bool isWide) {
+  Widget _buildTaskHeader(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     final title = _getString('title', 'Judul tidak tersedia');
     final category = _getString('category', 'Lainnya');
     final status = _getString('status', 'signed_assigned');
@@ -210,7 +217,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
       padding: EdgeInsets.all(
           isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
       decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,7 +230,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
                   style: TextStyle(
                       fontSize: isWide ? 20 : 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary),
+                      color: c.textPrimary),
                 ),
               ),
             ],
@@ -236,19 +243,19 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
             children: [
               CategoryBadge(category: category),
               StatusBadge(status: status),
-              _buildPriorityBadge(priority),
+              _buildPriorityBadge(context, priority),
             ],
           ),
           SizedBox(
               height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
           Row(
             children: [
-              const Icon(Icons.access_time,
-                  size: 14, color: AppColors.textSecondary),
+              Icon(Icons.access_time,
+                  size: 14, color: c.textSecondary),
               const SizedBox(width: 4),
               Text('Di-assign: $date',
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 12, color: c.textSecondary)),
             ],
           ),
         ],
@@ -256,7 +263,9 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildPriorityBadge(String priority) {
+  Widget _buildPriorityBadge(BuildContext context, String priority) {
+
+    final c = context.palette;
     Color bgColor;
     Color textColor;
     String label;
@@ -264,8 +273,8 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
 
     switch (priority.toLowerCase()) {
       case 'tinggi':
-        bgColor = AppColors.error.withValues(alpha: 0.1);
-        textColor = AppColors.error;
+        bgColor = c.error.withValues(alpha: 0.1);
+        textColor = c.error;
         label = 'Tinggi';
         icon = Icons.keyboard_double_arrow_up;
         break;
@@ -276,14 +285,14 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
         icon = Icons.remove;
         break;
       case 'rendah':
-        bgColor = AppColors.success.withValues(alpha: 0.1);
-        textColor = AppColors.success;
+        bgColor = c.success.withValues(alpha: 0.1);
+        textColor = c.success;
         label = 'Rendah';
         icon = Icons.keyboard_double_arrow_down;
         break;
       default:
-        bgColor = AppColors.textSecondary.withValues(alpha: 0.1);
-        textColor = AppColors.textSecondary;
+        bgColor = c.textSecondary.withValues(alpha: 0.1);
+        textColor = c.textSecondary;
         label = priority;
         icon = Icons.help_outline;
     }
@@ -307,12 +316,14 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildStatusTimeline(bool isWide) {
+  Widget _buildStatusTimeline(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
       padding: EdgeInsets.all(
           isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
       decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +332,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
               style: TextStyle(
                   fontSize: isWide ? 16 : 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
+                  color: c.textPrimary)),
           SizedBox(
               height:
                   isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
@@ -341,7 +352,9 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildTaskDetails(bool isWide) {
+  Widget _buildTaskDetails(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     final createdBy = _getString('createdBy', 'Unknown');
     final email = '${createdBy.toLowerCase().replaceAll(' ', '.')}@student.ac.id';
     final priority = _getString('priority', 'sedang');
@@ -351,7 +364,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
       padding: EdgeInsets.all(
           isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
       decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,41 +373,40 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
               style: TextStyle(
                   fontSize: isWide ? 16 : 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
+                  color: c.textPrimary)),
           SizedBox(
               height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-          _buildDetailRow(
-              'Pembuat', createdBy, Icons.person_outline, false, isWide),
-          _buildDetailRow('Email', email, Icons.email_outlined, false, isWide),
-          _buildDetailRow(
-              'Prioritas', priority, Icons.flag_outlined, false, isWide),
-          _buildDetailRow(
-              'Tanggal Di-assign', date, Icons.calendar_today_outlined, false, isWide),
+          _buildDetailRow(context, 'Pembuat', createdBy, Icons.person_outline, false, isWide),
+          _buildDetailRow(context, 'Email', email, Icons.email_outlined, false, isWide),
+          _buildDetailRow(context, 'Prioritas', priority, Icons.flag_outlined, false, isWide),
+          _buildDetailRow(context, 'Tanggal Di-assign', date, Icons.calendar_today_outlined, false, isWide),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, IconData icon,
+  Widget _buildDetailRow(BuildContext context, String label, String value, IconData icon,
       bool isEditable, bool isWide) {
+
+    final c = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
+          Icon(icon, size: 18, color: c.textSecondary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 12, color: c.textSecondary)),
                 Text(value,
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textPrimary)),
+                        color: c.textPrimary)),
               ],
             ),
           ),
@@ -403,7 +415,9 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildDescriptionSection(bool isWide) {
+  Widget _buildDescriptionSection(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     final description = _getString(
         'description',
         'Tidak bisa login ke email kampus saya sejak kemarin. Sudah mencoba reset password tetapi tidak menerima email reset. Mohon bantuannya untuk reset password email saya.');
@@ -412,7 +426,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
       padding: EdgeInsets.all(
           isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
       decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,7 +435,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
               style: TextStyle(
                   fontSize: isWide ? 16 : 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
+                  color: c.textPrimary)),
           SizedBox(
               height: isWide ? AppConstants.spacingSm : 4),
           Text(
@@ -433,12 +447,14 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildConversationSection(bool isWide) {
+  Widget _buildConversationSection(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
       padding: EdgeInsets.all(
           isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
       decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,26 +463,28 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
               style: TextStyle(
                   fontSize: isWide ? 16 : 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
+                  color: c.textPrimary)),
           SizedBox(
               height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
           if (_conversations.isEmpty)
-            const Center(
+            Center(
                 child: Padding(
                     padding: EdgeInsets.all(24),
                     child: Text('Belum ada percakapan',
-                        style: TextStyle(color: AppColors.textSecondary))))
+                        style: TextStyle(color: c.textSecondary))))
           else
             ...List.generate(_conversations.length, (index) {
               final chat = _conversations[index];
-              return _buildChatBubble(chat);
+              return _buildChatBubble(context, chat);
             }),
         ],
       ),
     );
   }
 
-  Widget _buildChatBubble(Map<String, dynamic> chat) {
+  Widget _buildChatBubble(BuildContext context, Map<String, dynamic> chat) {
+
+    final c = context.palette;
     final isMe = chat['isMe'] as bool? ?? false;
     final sender = chat['sender'] as String? ?? 'Unknown';
     final message = chat['message'] as String? ?? '';
@@ -480,7 +498,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
             maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: const EdgeInsets.all(AppConstants.spacingMd),
         decoration: BoxDecoration(
-          color: isMe ? const Color(0xFF3B82F6) : AppColors.background,
+          color: isMe ? const Color(0xFF3B82F6) : c.background,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -519,19 +537,21 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
             Text(message,
                 style: TextStyle(
                     fontSize: 14,
-                    color: isMe ? Colors.white : AppColors.textPrimary)),
+                    color: isMe ? Colors.white : c.textPrimary)),
             const SizedBox(height: 4),
             Text(time,
                 style: TextStyle(
                     fontSize: 10,
-                    color: isMe ? Colors.white70 : AppColors.textSecondary)),
+                    color: isMe ? Colors.white70 : c.textSecondary)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(bool isWide) {
+  Widget _buildActionButton(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     final status = _getString('status', 'signed_assigned');
 
     if (status == 'signed_assigned') {
@@ -569,11 +589,11 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
           const SizedBox(width: AppConstants.spacingSm),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _showResolveTaskDialog(),
+              onPressed: () => _showResolveTaskDialog(context),
               icon: const Icon(Icons.check_circle, size: 18),
               label: const Text('Selesaikan'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: c.success,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -589,21 +609,21 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
       return Container(
         padding: const EdgeInsets.all(AppConstants.spacingMd),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: c.background,
           borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
         ),
         child: Row(
           children: [
             Icon(Icons.lock_outline,
-                size: 16, color: AppColors.textSecondary),
+                size: 16, color: c.textSecondary),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 status == 'resolved'
                     ? 'Tiket sudah selesai. Menunggu konfirmasi User.'
                     : 'Tiket sudah ditutup.',
-                style: const TextStyle(
-                    fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(
+                    fontSize: 13, color: c.textSecondary),
               ),
             ),
           ],
@@ -612,13 +632,15 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     }
   }
 
-  Widget _buildCommentInput(bool isWide) {
+  Widget _buildCommentInput(BuildContext context, bool isWide) {
+
+    final c = context.palette;
     return Container(
       padding: EdgeInsets.all(
           isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
       decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border))),
+          color: c.surface,
+          border: Border(top: BorderSide(color: c.border))),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -626,8 +648,8 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
             Row(
               children: [
                 IconButton(
-                    icon: const Icon(Icons.attach_file,
-                        color: AppColors.textSecondary),
+                    icon: Icon(Icons.attach_file,
+                        color: c.textSecondary),
                     onPressed: () => _showSnackBar('Pilih lampiran')),
                 Expanded(
                   child: TextField(
@@ -642,7 +664,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
                               AppConstants.radiusLarge),
                           borderSide: BorderSide.none),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: c.background,
                       contentPadding: EdgeInsets.symmetric(
                           horizontal: isWide ? 16 : 12,
                           vertical: isWide ? 12 : 10),
@@ -655,7 +677,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
                 IconButton(
                   icon: Icon(Icons.send,
                       color: _commentController.text.isEmpty
-                          ? AppColors.textSecondary
+                          ? c.textSecondary
                           : const Color(0xFF3B82F6)),
                   onPressed: _commentController.text.isEmpty
                       ? null
@@ -676,8 +698,8 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
                       style: TextStyle(
                           fontSize: 11,
                           color: _characterCount > _maxCharacters
-                              ? AppColors.error
-                              : AppColors.textSecondary)),
+                              ? c.error
+                              : c.textSecondary)),
                 ],
               ),
             ),
@@ -772,7 +794,9 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  void _showResolveTaskDialog() {
+  void _showResolveTaskDialog(BuildContext context) {
+
+    final c = context.palette;
     final noteController = TextEditingController();
     bool problemSolved = false;
     bool proofUploaded = false;
@@ -783,9 +807,9 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
         builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.check_circle, color: AppColors.success),
+              Icon(Icons.check_circle, color: c.success),
               SizedBox(width: 8),
               Text('Selesaikan Tiket'),
             ],
@@ -848,7 +872,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success),
+                  backgroundColor: c.success),
               child: const Text('Selesaikan'),
             ),
           ],
@@ -857,16 +881,18 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  void _showReportDialog() {
+  void _showReportDialog(BuildContext context) {
+
+    final c = context.palette;
     final issueController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.report_outlined, color: AppColors.warning),
+            Icon(Icons.report_outlined, color: c.warning),
             SizedBox(width: 8),
             Text('Lapor ke Admin'),
           ],
@@ -906,7 +932,7 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
               _showSnackBar('Laporan terkirim ke Admin');
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.warning),
+                backgroundColor: c.warning),
             child: const Text('Kirim'),
           ),
         ],
@@ -942,6 +968,7 @@ class _TimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -952,15 +979,15 @@ class _TimelineItem extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 color: isCompleted
-                    ? AppColors.success
-                    : (isActive ? const Color(0xFF3B82F6) : AppColors.background),
+                    ? c.success
+                    : (isActive ? const Color(0xFF3B82F6) : c.background),
                 shape: BoxShape.circle,
                 border: Border.all(
                     color: isCompleted
-                        ? AppColors.success
+                        ? c.success
                         : (isActive
                             ? const Color(0xFF3B82F6)
-                            : AppColors.border),
+                            : c.border),
                     width: 2),
               ),
               child: isCompleted
@@ -973,7 +1000,7 @@ class _TimelineItem extends StatelessWidget {
               Container(
                   width: 2,
                   height: 40,
-                  color: isCompleted ? AppColors.success : AppColors.border),
+                  color: isCompleted ? c.success : c.border),
           ],
         ),
         const SizedBox(width: 12),
@@ -988,11 +1015,11 @@ class _TimelineItem extends StatelessWidget {
                         fontSize: 14,
                         fontWeight:
                             isActive ? FontWeight.w600 : FontWeight.w400,
-                        color: AppColors.textPrimary)),
+                        color: c.textPrimary)),
                 const SizedBox(height: 2),
                 Text(date,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 12, color: c.textSecondary)),
               ],
             ),
           ),

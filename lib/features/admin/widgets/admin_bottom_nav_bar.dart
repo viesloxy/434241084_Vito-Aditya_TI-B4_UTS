@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// BottomNavBar ala FlutterShop — flat white, top divider, icon 24 + label 11.
 /// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.5.
@@ -17,10 +17,11 @@ class AdminBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.divider, width: 1)),
       ),
       child: SafeArea(
         child: SizedBox(
@@ -84,6 +85,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return InkWell(
       onTap: onTap,
       child: SizedBox(
@@ -97,7 +99,7 @@ class _NavItem extends StatelessWidget {
                 Icon(
                   isActive ? activeIcon : icon,
                   size: 24,
-                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                  color: isActive ? c.primary : c.textSecondary,
                 ),
                 if (badgeCount > 0)
                   Positioned(
@@ -106,7 +108,7 @@ class _NavItem extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.error,
+                        color: c.error,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
@@ -131,7 +133,7 @@ class _NavItem extends StatelessWidget {
                 fontFamily: 'Plus Jakarta',
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                color: isActive ? c.primary : c.textSecondary,
               ),
             ),
           ],

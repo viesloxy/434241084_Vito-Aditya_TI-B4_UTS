@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_max_width.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../widgets/role_selector.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// Register Page ala FlutterShop Free Version.
 ///
@@ -75,7 +75,8 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  Future<void> _handleRegister() async {
+  Future<void> _handleRegister(BuildContext context) async {
+    final c = context.palette;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -93,12 +94,12 @@ class _RegisterPageState extends State<RegisterPage> {
             Expanded(
               child: Text(
                 'Registrasi berhasil! Silakan login.',
-                style: AppTextStyles.body.copyWith(color: Colors.white),
+                style: AppTextStyles.body(c).copyWith(color: Colors.white),
               ),
             ),
           ],
         ),
-        backgroundColor: AppColors.success,
+        backgroundColor: c.success,
         behavior: SnackBarBehavior.floating,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
@@ -111,14 +112,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: c.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Daftar Akun'),
@@ -135,12 +137,12 @@ class _RegisterPageState extends State<RegisterPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                 // "Let's get started!" ala FlutterShop (headlineSmall)
-                const Text('Buat Akun Baru', style: AppTextStyles.h1),
+                Text('Buat Akun Baru', style: AppTextStyles.h1(c)),
                 const SizedBox(height: AppSpacing.sm), // defaultPadding / 2
 
-                const Text(
+                Text(
                   'Silakan masukkan data valid untuk membuat akun.',
-                  style: AppTextStyles.body,
+                  style: AppTextStyles.body(c),
                 ),
                 const SizedBox(height: AppSpacing.lg), // defaultPadding
 
@@ -197,7 +199,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
                   validator: _validateConfirmPassword,
-                  onSubmitted: (_) => _handleRegister(),
+                  onSubmitted: (_) => _handleRegister(context),
                   suffixIcon: AppPasswordSuffix(
                     obscure: _obscureConfirmPassword,
                     onPressed: () => setState(
@@ -208,7 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // ===== Register Button (ala "Continue" di FlutterShop) =====
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _handleRegister,
+                  onPressed: _isLoading ? null : () => _handleRegister(context),
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
@@ -226,9 +228,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Sudah punya akun?',
-                      style: AppTextStyles.body,
+                      style: AppTextStyles.body(c),
                     ),
                     TextButton(
                       onPressed: () =>

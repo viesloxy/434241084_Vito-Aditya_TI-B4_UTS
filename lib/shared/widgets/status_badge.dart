@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Status badge untuk tiket. Mendukung 6 status sesuai workflow 3 role:
 /// - submitted: Tiket baru, perlu di-assign Admin
@@ -18,7 +18,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final config = _getStatusConfig(status);
+    final config = _getStatusConfig(context, status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -50,53 +50,54 @@ class StatusBadge extends StatelessWidget {
   }
 
   /// Status workflow 3-role + legacy mapping. Semua token via `AppColors`.
-  Map<String, dynamic> _getStatusConfig(String status) {
+  Map<String, dynamic> _getStatusConfig(BuildContext context, String status) {
+    final c = context.palette;
     switch (status.toLowerCase()) {
       case 'submitted':
       case 'baru':
         return {
-          'bg': AppColors.statusBaruBg,
-          'text': AppColors.statusBaruText,
+          'bg': c.statusBaruBg,
+          'text': c.statusBaruText,
           'icon': Icons.access_time,
         };
       case 'signed_assigned':
       case 'ditangani':
         return {
-          'bg': AppColors.statusProsesBg,
-          'text': AppColors.statusProsesText,
+          'bg': c.statusProsesBg,
+          'text': c.statusProsesText,
           'icon': Icons.assignment_ind,
         };
       case 'in_progress':
       case 'diproses':
         return {
-          'bg': AppColors.infoLight,
-          'text': AppColors.statusProsesText,
+          'bg': c.infoLight,
+          'text': c.statusProsesText,
           'icon': Icons.refresh,
         };
       case 'resolved':
       case 'selesai':
         return {
-          'bg': AppColors.statusSelesaiBg,
-          'text': AppColors.statusSelesaiText,
+          'bg': c.statusSelesaiBg,
+          'text': c.statusSelesaiText,
           'icon': Icons.check_circle,
         };
       case 'closed':
         return {
-          'bg': AppColors.border,
-          'text': AppColors.textPrimary,
+          'bg': c.border,
+          'text': c.textPrimary,
           'icon': Icons.lock,
         };
       case 'rejected':
       case 'ditolak':
         return {
-          'bg': AppColors.statusTolakBg,
-          'text': AppColors.statusTolakText,
+          'bg': c.statusTolakBg,
+          'text': c.statusTolakText,
           'icon': Icons.cancel,
         };
       default:
         return {
-          'bg': AppColors.border,
-          'text': AppColors.textSecondary,
+          'bg': c.border,
+          'text': c.textSecondary,
           'icon': Icons.circle,
         };
     }
