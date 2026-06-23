@@ -41,6 +41,22 @@ class AppTheme {
       scaffoldBackgroundColor: c.background,
       iconTheme: IconThemeData(color: c.textPrimary),
 
+      // ===== TextTheme (ala FlutterShop: titleSmall untuk section header) =====
+      textTheme: TextTheme(
+        bodyMedium: TextStyle(
+          fontFamily: 'Plus Jakarta',
+          color: c.textSecondary,
+          fontSize: 14,
+        ),
+        titleSmall: TextStyle(
+          fontFamily: 'Plus Jakarta',
+          color: c.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          height: 1,
+        ),
+      ),
+
       // ===== AppBar (ala FlutterShop: flat surface, elevation 0) =====
       appBarTheme: AppBarTheme(
         backgroundColor: c.surface,

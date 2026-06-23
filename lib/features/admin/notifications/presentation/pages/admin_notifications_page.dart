@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_max_width.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
@@ -120,52 +120,59 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     return RefreshIndicator(
       onRefresh: _loadInitialData,
       color: c.primary,
-      child: CenteredContent(
-        maxWidth: AppMaxWidth.infinite,
-        child: ListView.separated(
-          itemCount: _notifications.length,
-          separatorBuilder: (context, index) =>
-              Divider(height: 1, color: c.divider),
-          itemBuilder: (context, index) {
-            final notif = _notifications[index];
-            return Dismissible(
-              key: Key('admin_notif_$index'),
-              background: Container(
-                color: c.primary.withValues(alpha: 0.1),
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.only(left: AppSpacing.xl),
-                child: Icon(Icons.check, color: c.primary),
+      child: ListView.separated(
+        itemCount: _notifications.length,
+        separatorBuilder: (context, index) =>
+            Divider(height: 1, color: c.divider),
+        itemBuilder: (context, index) {
+          final notif = _notifications[index];
+          return Dismissible(
+            key: Key('admin_notif_$index'),
+            background: Container(
+              color: c.primary.withValues(alpha: 0.1),
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.only(left: AppSpacing.xl),
+              child: SvgPicture.asset(
+                'assets/icons/Doublecheck.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
               ),
-              secondaryBackground: Container(
-                color: c.error.withValues(alpha: 0.1),
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: AppSpacing.xl),
-                child: Icon(Icons.delete, color: c.error),
+            ),
+            secondaryBackground: Container(
+              color: c.error.withValues(alpha: 0.1),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: AppSpacing.xl),
+              child: SvgPicture.asset(
+                'assets/icons/Delete.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
               ),
-              confirmDismiss: (direction) async {
-                if (direction == DismissDirection.startToEnd) {
-                  _markAsRead(index);
-                  return false;
-                }
-                return await _showDeleteConfirmation(context);
+            ),
+            confirmDismiss: (direction) async {
+              if (direction == DismissDirection.startToEnd) {
+                _markAsRead(index);
+                return false;
+              }
+              return await _showDeleteConfirmation(context);
+            },
+            onDismissed: (direction) {
+              if (direction == DismissDirection.endToStart) _deleteNotification(index);
+            },
+            child: _NotificationItem(
+              icon: _getIcon(notif['type']),
+              title: notif['title'],
+              message: notif['message'],
+              time: notif['time'],
+              isRead: notif['isRead'],
+              onTap: () {
+                _markAsRead(index);
+                Navigator.pushNamed(context, '/admin/ticket-detail', arguments: notif);
               },
-              onDismissed: (direction) {
-                if (direction == DismissDirection.endToStart) _deleteNotification(index);
-              },
-              child: _NotificationItem(
-                icon: _getIcon(notif['type']),
-                title: notif['title'],
-                message: notif['message'],
-                time: notif['time'],
-                isRead: notif['isRead'],
-                onTap: () {
-                  _markAsRead(index);
-                  Navigator.pushNamed(context, '/admin/ticket-detail', arguments: notif);
-                },
-              ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -295,7 +302,13 @@ class _NotificationItem extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: c.textTertiary, size: 20),
+            SvgPicture.asset(
+              'assets/icons/miniRight.svg',
+              width: 16,
+              height: 16,
+              colorFilter:
+                  ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+            ),
           ],
         ),
       ),

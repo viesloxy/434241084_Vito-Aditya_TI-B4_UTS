@@ -1,28 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// StatCard ala FlutterShop — flat, border 1 px, radius 12.
-///
-/// Pewarnaan: angka & judul pakai `textPrimary` (netral), icon container
-/// pakai `primaryLight` dengan icon `textPrimary` (netral gelap), chevron
-/// pakai `textTertiary`. Primary TIDAK dipakai — sesuai style guide section 2
-/// ("Primary hanya untuk CTA utama, tab aktif, link, focus state").
-///
-/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.3 (Cards).
+/// SVG icon dalam soft container (primaryLight), chevron miniRight.svg.
 class AdminStatCard extends StatelessWidget {
   final String title;
   final int count;
-  final IconData icon;
+  final String svgAsset;
   final VoidCallback? onTap;
 
   const AdminStatCard({
     super.key,
     required this.title,
     required this.count,
-    required this.icon,
+    required this.svgAsset,
     this.onTap,
   });
 
@@ -45,7 +40,6 @@ class AdminStatCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Icon di soft container, icon sendiri netral (bukan primary)
                 Container(
                   width: 40,
                   height: 40,
@@ -53,18 +47,26 @@ class AdminStatCard extends StatelessWidget {
                     color: c.primaryLight,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Icon(icon, size: 20, color: c.textPrimary),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      svgAsset,
+                      width: 20,
+                      height: 20,
+                      colorFilter:
+                          ColorFilter.mode(c.primary, BlendMode.srcIn),
+                    ),
+                  ),
                 ),
-                // Chevron netral
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 12,
-                  color: c.textTertiary,
+                SvgPicture.asset(
+                  'assets/icons/miniRight.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter:
+                      ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            // Angka NETRAL (bukan primary)
             Text(
               count.toString(),
               style: AppTextStyles.h1(c).copyWith(
@@ -74,7 +76,6 @@ class AdminStatCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xs),
-            // Judul di-override ke secondary (label-style)
             Text(
               title,
               style: AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),

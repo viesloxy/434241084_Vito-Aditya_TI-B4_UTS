@@ -1,173 +1,207 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/theme/app_palette.dart';
 
-/// Admin Profile ala FlutterShop — flat 2D, header + sectioned list,
-/// divider-only. Semua aksen pakai `c.primary`.
+/// Admin Profile ala FlutterShop — body: ListView, ProfileCard ListTile,
+/// section headers (Padding+Text titleSmall), DividerMenuTile per item,
+/// Logout ListTile tanpa chevron di bagian bawah.
 ///
-/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.9.
+/// Referensi: `FlutterShop/lib/screens/profile/views/profile_screen.dart`
 class AdminProfilePage extends StatelessWidget {
   const AdminProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
+
     const adminName = 'Sarah Administrator';
     const adminEmail = 'sarah.admin@university.ac.id';
     const adminRole = 'Administrator';
     const adminNip = '12345678';
 
-    final menuItems = [
-      {'icon': Icons.people_outline, 'title': 'Manajemen User (User, Helpdesk, Admin)', 'onTap': () => _showComingSoon(context)},
-      {'icon': Icons.analytics_outlined, 'title': 'Laporan & Statistik', 'onTap': () => _showComingSoon(context)},
-      {'icon': Icons.category_outlined, 'title': 'Kelola Kategori', 'onTap': () => _showComingSoon(context)},
-      {'icon': Icons.lock_outlined, 'title': 'Ubah Password', 'onTap': () => _showComingSoon(context)},
-      {'icon': Icons.notifications_outlined, 'title': 'Pengaturan Notifikasi', 'onTap': () => _showComingSoon(context)},
-      {'icon': Icons.info_outlined, 'title': 'Tentang Aplikasi', 'onTap': () => _showComingSoon(context)},
-    ];
-
     return Scaffold(
       backgroundColor: c.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(context, adminName, adminEmail, adminRole),
-              const SizedBox(height: AppSpacing.lg),
-              _buildAccountInfo(context, adminName, adminEmail, adminRole, adminNip),
-              const SizedBox(height: AppSpacing.lg),
-              _buildMenuSection(context, menuItems),
-              const SizedBox(height: AppSpacing.lg),
-              _buildLogoutSection(context),
-              const SizedBox(height: AppSpacing.xxl),
-            ],
-          ),
-        ),
+      // AppBar minimal (diperlukan karena tidak ada global AppBar di scaffold)
+      appBar: AppBar(
+        backgroundColor: c.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        title: Text('Profil', style: AppTextStyles.h4(c)),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, String adminName, String adminEmail, String adminRole) {
-
-    final c = context.palette;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      color: c.surface,
-      child: Column(
+      body: ListView(
         children: [
-          // Avatar dari profil.jpeg (dummy)
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: c.surfaceAlt,
-              shape: BoxShape.circle,
-              border: Border.all(color: c.border, width: 2),
-              image: const DecorationImage(
-                image: AssetImage('assets/images/profil.jpeg'),
-                fit: BoxFit.cover,
+          // ===== PROFILE CARD (ala FlutterShop ProfileCard) =====
+          ListTile(
+            onTap: () {},
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm,
+            ),
+            leading: const CircleAvatar(
+              radius: 28,
+              backgroundImage: AssetImage('assets/images/profil.jpeg'),
+            ),
+            title: Text(
+              adminName,
+              style: const TextStyle(
+                fontFamily: 'Plus Jakarta',
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              adminEmail,
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta',
+                fontSize: 13,
+                color: c.textSecondary,
+              ),
+            ),
+            trailing: SvgPicture.asset(
+              'assets/icons/miniRight.svg',
+              width: 16,
+              height: 16,
+              colorFilter: ColorFilter.mode(
+                c.textTertiary,
+                BlendMode.srcIn,
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(adminName, style: AppTextStyles.h3(c)),
-          const SizedBox(height: AppSpacing.xs),
-          Text(adminEmail, style: AppTextStyles.body(c).copyWith(color: c.textSecondary)),
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
-            decoration: BoxDecoration(
-              color: c.primaryLight,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
+          const Divider(height: 1),
+
+          // ===== ROLE + NIP ROW =====
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.admin_panel_settings, size: 14, color: c.primary),
-                const SizedBox(width: 6),
-                Text(adminRole, style: AppTextStyles.overline(c).copyWith(color: c.primary)),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/Setting.svg',
+                        width: 14,
+                        height: 14,
+                        colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        adminRole,
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: c.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'NIP: $adminNip',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta',
+                    fontSize: 13,
+                    color: c.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+          Divider(height: 1, color: c.divider),
 
-  Widget _buildAccountInfo(BuildContext context, String adminName, String adminEmail, String adminRole, String adminNip) {
-
-    final c = context.palette;
-    return Container(
-      width: double.infinity,
-      color: c.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: Text('Informasi Akun', style: AppTextStyles.h4(c)),
+          // ===== SECTION: MANAJEMEN =====
+          _SectionHeader(title: 'Manajemen'),
+          _DividerMenuTile(
+            svgSrc: 'assets/icons/Man&Woman.svg',
+            text: 'Kelola User',
+            onTap: () => _showComingSoon(context),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
-            child: Column(
-              children: [
-                _InfoRow(label: 'Nama Lengkap', value: adminName),
-                _InfoRow(label: 'Email', value: adminEmail),
-                _InfoRow(label: 'Role', value: adminRole),
-                _InfoRow(label: 'NIP', value: adminNip),
-              ],
+          _DividerMenuTile(
+            svgSrc: 'assets/icons/Order.svg',
+            text: 'Laporan & Statistik',
+            onTap: () => _showComingSoon(context),
+          ),
+          _DividerMenuTile(
+            svgSrc: 'assets/icons/Category.svg',
+            text: 'Kelola Kategori',
+            onTap: () => _showComingSoon(context),
+            isShowDivider: false,
+          ),
+
+          // ===== SECTION: PENGATURAN =====
+          _SectionHeader(title: 'Pengaturan'),
+          _DividerMenuTile(
+            svgSrc: 'assets/icons/Lock.svg',
+            text: 'Ubah Password',
+            onTap: () => _showComingSoon(context),
+          ),
+          _DividerMenuTile(
+            svgSrc: 'assets/icons/Notification.svg',
+            text: 'Pengaturan Notifikasi',
+            onTap: () => _showComingSoon(context),
+            isShowDivider: false,
+          ),
+
+          // ===== SECTION: BANTUAN & LAINNYA =====
+          _SectionHeader(title: 'Bantuan & Lainnya'),
+          _DividerMenuTile(
+            svgSrc: 'assets/icons/info.svg',
+            text: 'Tentang Aplikasi',
+            onTap: () => _showComingSoon(context),
+            isShowDivider: false,
+          ),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // ===== LOGOUT (ala FlutterShop — ListTile saja, tanpa chevron) =====
+          ListTile(
+            onTap: () => _showLogoutDialog(context),
+            minLeadingWidth: 24,
+            leading: SvgPicture.asset(
+              'assets/icons/Logout.svg',
+              height: 24,
+              width: 24,
+              colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuSection(BuildContext context, List<Map<String, dynamic>> menuItems) {
-
-    final c = context.palette;
-    return Container(
-      color: c.surface,
-      child: Column(
-        children: List.generate(menuItems.length, (index) {
-          final item = menuItems[index];
-          return Column(
-            children: [
-              ListTile(
-                leading: Icon(item['icon'] as IconData, color: c.primary, size: 24),
-                title: Text(item['title'] as String,
-                  style: AppTextStyles.body(c).copyWith(color: c.textPrimary)),
-                trailing: Icon(Icons.chevron_right, color: c.textTertiary),
-                onTap: item['onTap'] as VoidCallback,
+            title: Text(
+              'Keluar',
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta',
+                color: c.error,
+                fontSize: 14,
+                height: 1,
               ),
-              if (index < menuItems.length - 1)
-                Divider(height: 1, indent: 56, color: c.divider),
-            ],
-          );
-        }),
-      ),
-    );
-  }
+            ),
+          ),
 
-  Widget _buildLogoutSection(BuildContext context) {
-
-    final c = context.palette;
-    return Container(
-      width: double.infinity,
-      color: c.surface,
-      child: ListTile(
-        leading: Icon(Icons.logout, color: c.error, size: 24),
-        title: Text('Keluar', style: AppTextStyles.body(c).copyWith(color: c.error)),
-        onTap: () => _showLogoutDialog(context),
+          const SizedBox(height: AppSpacing.xxl),
+        ],
       ),
     );
   }
 
   void _showComingSoon(BuildContext context) {
+    final c = context.palette;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Fitur segera hadir'),
@@ -176,12 +210,12 @@ class AdminProfilePage extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
         ),
         margin: const EdgeInsets.all(AppSpacing.lg),
+        backgroundColor: c.textPrimary,
       ),
     );
   }
 
   void _showLogoutDialog(BuildContext context) {
-
     final c = context.palette;
     showDialog(
       context: context,
@@ -199,13 +233,23 @@ class AdminProfilePage extends StatelessWidget {
                 color: c.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.logout, size: 32, color: c.error),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/Logout.svg',
+                  width: 32,
+                  height: 32,
+                  colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text('Keluar?', style: AppTextStyles.h3(c)),
             const SizedBox(height: AppSpacing.sm),
-            Text('Apakah Anda yakin ingin keluar dari akun ini?',
-              style: AppTextStyles.body(c), textAlign: TextAlign.center),
+            Text(
+              'Apakah Anda yakin ingin keluar dari akun ini?',
+              style: AppTextStyles.body(c),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
@@ -226,7 +270,8 @@ class AdminProfilePage extends StatelessWidget {
                     try {
                       await AuthService().signOut();
                     } catch (_) {}
-                    navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+                    navigator.pushNamedAndRemoveUntil(
+                        '/login', (route) => false);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: c.error),
                   child: const Text('Keluar'),
@@ -240,28 +285,75 @@ class AdminProfilePage extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
+// ===== Section header ala FlutterShop (Padding + Text titleSmall) =====
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
 
-  const _InfoRow({required this.label, required this.value});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xxl,
+      ),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
+    );
+  }
+}
+
+// ===== DividerMenuTile ala FlutterShop DividerListTile =====
+class _DividerMenuTile extends StatelessWidget {
+  final String svgSrc;
+  final String text;
+  final VoidCallback? onTap;
+  final bool isShowDivider;
+
+  const _DividerMenuTile({
+    required this.svgSrc,
+    required this.text,
+    this.onTap,
+    this.isShowDivider = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTextStyles.body(c).copyWith(color: c.textSecondary)),
-          Text(value,
-            style: AppTextStyles.body(c).copyWith(
-              color: c.textPrimary,
-              fontWeight: FontWeight.w500,
-            )),
-        ],
-      ),
+    return Column(
+      children: [
+        ListTile(
+          onTap: onTap,
+          minLeadingWidth: 24,
+          leading: SvgPicture.asset(
+            svgSrc,
+            height: 24,
+            width: 24,
+            colorFilter:
+                ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+          ),
+          title: Text(
+            text,
+            style: const TextStyle(
+              fontFamily: 'Plus Jakarta',
+              fontSize: 14,
+              height: 1,
+            ),
+          ),
+          trailing: SvgPicture.asset(
+            'assets/icons/miniRight.svg',
+            width: 16,
+            height: 16,
+            colorFilter: ColorFilter.mode(
+              c.textTertiary,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        if (isShowDivider) const Divider(height: 1),
+      ],
     );
   }
 }

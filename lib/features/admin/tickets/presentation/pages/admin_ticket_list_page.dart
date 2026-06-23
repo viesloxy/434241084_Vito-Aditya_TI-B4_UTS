@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
@@ -376,7 +377,12 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
       return AppBar(
         backgroundColor: c.primary,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: SvgPicture.asset(
+            'assets/icons/Close.svg',
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
           onPressed: _toggleSelectionMode,
         ),
         title: Text(
@@ -385,7 +391,12 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
+            icon: SvgPicture.asset(
+              'assets/icons/DotsV.svg',
+              width: 24,
+              height: 24,
+              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            ),
             onPressed: () => _showBulkActionSheet(context),
           ),
         ],
@@ -411,9 +422,13 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(
-            _isSearchVisible ? Icons.close : Icons.search,
-            color: c.textPrimary,
+          icon: SvgPicture.asset(
+            _isSearchVisible
+                ? 'assets/icons/Close.svg'
+                : 'assets/icons/Search.svg',
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
           ),
           onPressed: () {
             setState(() {
@@ -423,7 +438,12 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           },
         ),
         IconButton(
-          icon: Icon(Icons.filter_list, color: c.textPrimary),
+          icon: SvgPicture.asset(
+            'assets/icons/Filter.svg',
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => _showFilterModal(context),
         ),
       ],
@@ -494,12 +514,23 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
             style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
           ),
           const Spacer(),
-          TextButton.icon(
-            onPressed: () => _showSortDropdown(context),
-            icon: Icon(Icons.sort, size: 18, color: c.primary),
-            label: Text(
-              _sortLabel(_sortOption).split('(').first.trim(),
-              style: AppTextStyles.caption(c).copyWith(color: c.primary),
+          GestureDetector(
+            onTap: () => _showSortDropdown(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/Sort.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _sortLabel(_sortOption).split('(').first.trim(),
+                  style: AppTextStyles.caption(c).copyWith(color: c.primary),
+                ),
+              ],
             ),
           ),
         ],

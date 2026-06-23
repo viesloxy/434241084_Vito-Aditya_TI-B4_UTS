@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
@@ -122,10 +123,12 @@ class AdminTicketCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 14,
-                          color: c.textTertiary,
+                        SvgPicture.asset(
+                          'assets/icons/Profile.svg',
+                          width: 14,
+                          height: 14,
+                          colorFilter: ColorFilter.mode(
+                              c.textTertiary, BlendMode.srcIn),
                         ),
                         const SizedBox(width: 4),
                         Text(
