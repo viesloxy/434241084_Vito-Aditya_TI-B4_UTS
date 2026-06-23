@@ -233,7 +233,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         controller: _titleController,
                         hintText: 'Ringkasan masalah Anda',
                         labelText: 'Judul *',
-                        prefixIcon: const AppFieldPrefix(icon: Icons.title),
+                        prefixIcon: const AppFieldPrefix(svgAsset: 'assets/icons/Edit Square.svg'),
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         validator: _validateTitle,

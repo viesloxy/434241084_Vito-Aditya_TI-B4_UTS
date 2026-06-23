@@ -30,11 +30,12 @@ class AuthService {
     return await getUserProfile(response.user!.id);
   }
 
-  /// Register user baru (role: 'user')
+  /// Register user baru
   Future<AppUser> signUp({
     required String email,
     required String password,
     required String fullName,
+    String role = 'user',
     String? phone,
   }) async {
     final response = await _client.auth.signUp(
@@ -50,12 +51,12 @@ class AuthService {
       throw Exception('Registrasi gagal');
     }
 
-    // Insert ke tabel public.users (role default 'user')
+    // Insert ke tabel public.users
     final userData = await _client.from('users').insert({
       'id': response.user!.id,
       'email': email,
       'full_name': fullName,
-      'role': 'user',
+      'role': role,
       'phone': phone,
     }).select().single();
 

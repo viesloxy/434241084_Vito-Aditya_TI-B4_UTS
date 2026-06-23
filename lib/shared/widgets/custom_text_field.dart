@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/theme/app_palette.dart';
@@ -80,22 +81,27 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-/// Helper untuk wrap prefix icon ala FlutterShop:
+/// Helper untuk wrap prefix SVG icon ala FlutterShop:
 /// `Padding(EdgeInsets.symmetric(vertical: defaultPadding * 0.75))` = 12.
+/// Contoh: `AppFieldPrefix(svgAsset: 'assets/icons/Message.svg')`
 class AppFieldPrefix extends StatelessWidget {
-  final IconData icon;
+  final String svgAsset;
   final Color? color;
-  const AppFieldPrefix({super.key, required this.icon, this.color});
+  const AppFieldPrefix({super.key, required this.svgAsset, this.color});
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md), // 12
-      child: Icon(
-        icon,
-        size: 24,
-        color: color ?? c.textTertiary,
+      child: SvgPicture.asset(
+        svgAsset,
+        height: 24,
+        width: 24,
+        colorFilter: ColorFilter.mode(
+          color ?? c.textTertiary,
+          BlendMode.srcIn,
+        ),
       ),
     );
   }

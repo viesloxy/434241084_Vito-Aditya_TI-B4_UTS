@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
-import '../../../../core/constants/app_max_width.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_shadow.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -10,19 +9,6 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/theme/app_palette.dart';
 
-/// Login Page ala FlutterShop Free Version.
-///
-/// Referensi: `lib/screens/auth/views/login_screen.dart` &
-/// `lib/screens/auth/views/components/login_form.dart`.
-///
-/// Layout:
-/// - Scaffold white (ala FlutterShop `scaffoldBackgroundColor`)
-/// - Outer padding `EdgeInsets.all(defaultPadding)` = 16
-/// - **Form di-center dengan `maxWidth: 360` (CenteredContent)** — konten
-///   tidak mepet ke edge di layar lebar (tablet/landscape/web).
-/// - Spacing mengikuti konvensi FlutterShop (section 4 dokumentasi).
-///
-/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.3.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -161,165 +147,276 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: c.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: CenteredContent(
-            maxWidth: AppMaxWidth.form,
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppSpacing.huge),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ===== Hero banner full-width (ala login_dark.png FlutterShop) =====
+            _LoginHero(height: size.height * 0.38),
 
-                  // ===== Hero: gradient box (96×96) + white logo =====
-                  Center(
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      padding: const EdgeInsets.all(AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: c.primaryGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
-                        boxShadow: AppShadow.fab,
-                      ),
-                      child: SvgPicture.asset(
-                        'assets/logowhite.svg',
-                        fit: BoxFit.contain,
-                      ),
+            // ===== Konten =====
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg), // defaultPadding = 16
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Selamat Datang!', style: AppTextStyles.h1(c)),
+                    const SizedBox(height: AppSpacing.sm), // defaultPadding / 2 = 8
+
+                    Text(
+                      'Masuk dengan akun Anda untuk membuat dan melacak tiket helpdesk.',
+                      style: AppTextStyles.body(c),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
+                    const SizedBox(height: AppSpacing.lg), // defaultPadding = 16
 
-                  Text('Selamat Datang', style: AppTextStyles.h1(c)),
-                  const SizedBox(height: AppSpacing.sm),
-
-                  Text(
-                    'Masuk dengan akun Anda untuk membuat dan melacak tiket helpdesk.',
-                    style: AppTextStyles.body(c),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // ===== Form =====
-                  CustomTextField(
-                    controller: _emailController,
-                    hintText: 'Alamat email',
-                    prefixIcon: const AppFieldPrefix(icon: Icons.email_outlined),
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    validator: _validateEmail,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-
-                  CustomTextField(
-                    controller: _passwordController,
-                    hintText: 'Password',
-                    prefixIcon: const AppFieldPrefix(icon: Icons.lock_outline),
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _handleLogin(context),
-                    validator: _validatePassword,
-                    suffixIcon: AppPasswordSuffix(
-                      obscure: _obscurePassword,
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          _floatingSnackBar(
-                            context: context,
-                            message: 'Hubungi admin untuk reset password.',
-                            background: c.info,
-                            icon: Icons.info_outline,
+                    // ===== Email =====
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      validator: _validateEmail,
+                      decoration: InputDecoration(
+                        hintText: 'Alamat email',
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.md), // 12 = defaultPadding * 0.75
+                          child: SvgPicture.asset(
+                            'assets/icons/Message.svg',
+                            height: 24,
+                            width: 24,
+                            colorFilter: ColorFilter.mode(
+                                c.textTertiary, BlendMode.srcIn),
                           ),
-                        );
-                      },
-                      child: const Text('Lupa password?'),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpacing.lg),
-
-                  _DemoAccountsCard(
-                    onTapUser: () => _fillDemoCredentials('user@demo.com'),
-                    onTapAdmin: () => _fillDemoCredentials('admin@demo.com'),
-                    onTapHelpdesk: () => _fillDemoCredentials('helpdesk@demo.com'),
-                  ),
-
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // ===== Remember Me =====
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: Checkbox(
-                          value: _rememberMe,
-                          onChanged: (v) => setState(() => _rememberMe = v ?? false),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        'Ingat saya',
-                        style: AppTextStyles.body(c).copyWith(color: c.textPrimary),
+                    ),
+                    const SizedBox(height: AppSpacing.lg), // defaultPadding = 16
+
+                    // ===== Password =====
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _handleLogin(context),
+                      validator: _validatePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.md), // 12 = defaultPadding * 0.75
+                          child: SvgPicture.asset(
+                            'assets/icons/Lock.svg',
+                            height: 24,
+                            width: 24,
+                            colorFilter: ColorFilter.mode(
+                                c.textTertiary, BlendMode.srcIn),
+                          ),
+                        ),
+                        suffixIcon: AppPasswordSuffix(
+                          obscure: _obscurePassword,
+                          onPressed: () =>
+                              setState(() => _obscurePassword = !_obscurePassword),
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
 
-                  const SizedBox(height: AppSpacing.xxl),
-
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : () => _handleLogin(context),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    // ===== Lupa password (center ala FlutterShop) =====
+                    Align(
+                      child: TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            _floatingSnackBar(
+                              context: context,
+                              message: 'Hubungi admin untuk reset password.',
+                              background: c.info,
+                              icon: Icons.info_outline,
                             ),
-                          )
-                        : const Text('Masuk'),
-                  ),
-
-                  const SizedBox(height: AppSpacing.lg),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Belum punya akun?',
-                        style: AppTextStyles.body(c),
+                          );
+                        },
+                        child: const Text('Lupa password?'),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/register'),
-                        child: const Text('Daftar'),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+
+                    // ===== Spacing dinamis ala FlutterShop =====
+                    SizedBox(
+                      height: size.height > 700
+                          ? size.height * 0.03
+                          : AppSpacing.lg,
+                    ),
+
+                    // ===== Demo accounts =====
+                    _DemoAccountsCard(
+                      onTapUser: () => _fillDemoCredentials('user@demo.com'),
+                      onTapAdmin: () => _fillDemoCredentials('admin@demo.com'),
+                      onTapHelpdesk:
+                          () => _fillDemoCredentials('helpdesk@demo.com'),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // ===== Remember Me =====
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: Checkbox(
+                            value: _rememberMe,
+                            onChanged: (v) =>
+                                setState(() => _rememberMe = v ?? false),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          'Ingat saya',
+                          style: AppTextStyles.body(c)
+                              .copyWith(color: c.textPrimary),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: AppSpacing.xxl), // defaultPadding * 2
+
+                    // ===== CTA Button =====
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : () => _handleLogin(context),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text('Masuk'),
+                    ),
+
+                    // ===== Sign up row =====
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Belum punya akun?', style: AppTextStyles.body(c)),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/register'),
+                          child: const Text('Daftar'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
+// ===== Hero Banner (pengganti login_dark.png FlutterShop) =====
+class _LoginHero extends StatelessWidget {
+  final double height;
+  const _LoginHero({required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: c.primaryGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Dekorasi lingkaran besar di pojok kanan atas
+          Positioned(
+            right: -40,
+            top: -40,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.07),
+              ),
+            ),
+          ),
+          // Dekorasi lingkaran sedang di pojok kiri bawah
+          Positioned(
+            left: -24,
+            bottom: -24,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.07),
+              ),
+            ),
+          ),
+          // Logo putih di tengah
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.xxl),
+                    boxShadow: AppShadow.fab,
+                  ),
+                  child: SvgPicture.asset(
+                    'assets/logowhite.svg',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'E-Ticketing Helpdesk',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Universitas Airlangga',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ===== Demo Accounts Card =====
 class _DemoAccountsCard extends StatelessWidget {
   final VoidCallback onTapUser;
   final VoidCallback onTapAdmin;
@@ -340,7 +437,6 @@ class _DemoAccountsCard extends StatelessWidget {
         color: c.infoLight,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: c.info.withValues(alpha: 0.4)),
-        boxShadow: AppShadow.dialog,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,24 +455,13 @@ class _DemoAccountsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
+          _DemoRow(role: 'User', email: 'user@demo.com', onTap: onTapUser),
           _DemoRow(
-            icon: Icons.person_outline,
-            role: 'User',
-            email: 'user@demo.com',
-            onTap: onTapUser,
-          ),
+              role: 'Admin', email: 'admin@demo.com', onTap: onTapAdmin),
           _DemoRow(
-            icon: Icons.admin_panel_settings_outlined,
-            role: 'Admin',
-            email: 'admin@demo.com',
-            onTap: onTapAdmin,
-          ),
-          _DemoRow(
-            icon: Icons.support_agent_outlined,
-            role: 'Helpdesk',
-            email: 'helpdesk@demo.com',
-            onTap: onTapHelpdesk,
-          ),
+              role: 'Helpdesk',
+              email: 'helpdesk@demo.com',
+              onTap: onTapHelpdesk),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Password semua akun: password123',
@@ -392,13 +477,11 @@ class _DemoAccountsCard extends StatelessWidget {
 }
 
 class _DemoRow extends StatelessWidget {
-  final IconData icon;
   final String role;
   final String email;
   final VoidCallback onTap;
 
   const _DemoRow({
-    required this.icon,
     required this.role,
     required this.email,
     required this.onTap,
@@ -414,8 +497,6 @@ class _DemoRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: AppSpacing.xs),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: c.info),
-            const SizedBox(width: AppSpacing.sm),
             Text(
               role,
               style: AppTextStyles.caption(c).copyWith(
