@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/theme/app_palette.dart';
@@ -30,7 +31,14 @@ class ErrorState extends StatelessWidget {
                 color: c.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.error_outline, size: 40, color: c.error),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/Close.svg',
+                  width: 40,
+                  height: 40,
+                  colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text('Oops!', style: AppTextStyles.h3(c)),
@@ -42,14 +50,9 @@ class ErrorState extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: AppSpacing.lg),
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Coba Lagi'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: c.primary,
-                  foregroundColor: Colors.white,
-                ),
+                child: const Text('Coba Lagi'),
               ),
             ],
           ],

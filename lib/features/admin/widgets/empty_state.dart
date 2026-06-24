@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// EmptyState ala FlutterShop — icon muted 80×80, text center.
-/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 7.11.
+/// Gunakan [svgAsset] untuk ikon SVG (lebih diutamakan), atau [icon] Material.
 class EmptyState extends StatelessWidget {
   final String title;
   final String message;
   final VoidCallback? onRefresh;
-  final IconData icon;
+  final String? svgAsset;
+  final IconData? icon;
 
   const EmptyState({
     super.key,
     this.title = 'Belum ada data',
     this.message = 'Data akan muncul setelah tersedia',
     this.onRefresh,
+    this.svgAsset,
     this.icon = Icons.inbox_outlined,
   });
 
@@ -35,7 +38,16 @@ class EmptyState extends StatelessWidget {
                 color: c.textTertiary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: c.textTertiary),
+              child: Center(
+                child: svgAsset != null
+                    ? SvgPicture.asset(
+                        svgAsset!,
+                        width: 40,
+                        height: 40,
+                        colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+                      )
+                    : Icon(icon, size: 40, color: c.textTertiary),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(

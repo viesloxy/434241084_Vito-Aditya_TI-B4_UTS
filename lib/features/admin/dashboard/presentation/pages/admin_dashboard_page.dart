@@ -283,7 +283,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             title: 'Belum ada tiket',
             message: 'Tiket yang masuk akan ditampilkan di sini',
             onRefresh: _loadData,
-            icon: Icons.inbox_outlined,
+            svgAsset: 'assets/icons/Order.svg',
           ),
         );
       case DashboardState.error:

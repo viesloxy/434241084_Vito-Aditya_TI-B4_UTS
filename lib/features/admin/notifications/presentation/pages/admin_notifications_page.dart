@@ -45,14 +45,14 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
   int get _unreadCount => _notifications.where((n) => n['isRead'] == false).length;
 
-  IconData _getIcon(String type) {
+  String _getSvg(String type) {
     switch (type) {
-      case 'new_ticket': return Icons.add_circle_outline;
-      case 'ticket_assigned': return Icons.assignment_ind;
-      case 'status_update': return Icons.update;
-      case 'comment': return Icons.chat_bubble_outline;
-      case 'ticket_completed': return Icons.check_circle_outline;
-      default: return Icons.notifications_outlined;
+      case 'new_ticket': return 'assets/icons/Order.svg';
+      case 'ticket_assigned': return 'assets/icons/Man&Woman.svg';
+      case 'status_update': return 'assets/icons/Loading.svg';
+      case 'comment': return 'assets/icons/Message.svg';
+      case 'ticket_completed': return 'assets/icons/Doublecheck.svg';
+      default: return 'assets/icons/Notification.svg';
     }
   }
 
@@ -161,7 +161,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
               if (direction == DismissDirection.endToStart) _deleteNotification(index);
             },
             child: _NotificationItem(
-              icon: _getIcon(notif['type']),
+              svgAsset: _getSvg(notif['type']),
               title: notif['title'],
               message: notif['message'],
               time: notif['time'],
@@ -186,7 +186,12 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.notifications_off_outlined, size: 64, color: c.textTertiary),
+            SvgPicture.asset(
+              'assets/icons/Notification.svg',
+              width: 64,
+              height: 64,
+              colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+            ),
             const SizedBox(height: AppSpacing.lg),
             Text('Tidak Ada Notifikasi', style: AppTextStyles.h4(c)),
             const SizedBox(height: AppSpacing.sm),
@@ -223,7 +228,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 }
 
 class _NotificationItem extends StatelessWidget {
-  final IconData icon;
+  final String svgAsset;
   final String title;
   final String message;
   final String time;
@@ -231,7 +236,7 @@ class _NotificationItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _NotificationItem({
-    required this.icon,
+    required this.svgAsset,
     required this.title,
     required this.message,
     required this.time,
@@ -270,7 +275,14 @@ class _NotificationItem extends StatelessWidget {
                 color: c.primaryLight,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, size: 20, color: c.primary),
+              child: Center(
+                child: SvgPicture.asset(
+                  svgAsset,
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+                ),
+              ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

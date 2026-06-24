@@ -197,7 +197,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.select_all, color: c.primary),
+              leading: SvgPicture.asset('assets/icons/Doublecheck.svg',
+                  width: 24, height: 24,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn)),
               title: const Text('Pilih Semua'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -205,7 +207,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.person_add, color: c.primary),
+              leading: SvgPicture.asset('assets/icons/Man&Woman.svg',
+                  width: 24, height: 24,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn)),
               title: const Text('Assign ke Helpdesk'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -213,7 +217,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.delete, color: c.error),
+              leading: SvgPicture.asset('assets/icons/Delete.svg',
+                  width: 24, height: 24,
+                  colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn)),
               title: const Text('Hapus Terpilih'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -238,7 +244,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.person, color: c.primary),
+              leading: SvgPicture.asset('assets/icons/Profile.svg',
+                  width: 24, height: 24,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn)),
               title: const Text('John Helpdesk'),
               subtitle: const Text('5 tiket aktif'),
               onTap: () {
@@ -248,7 +256,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.person, color: c.primary),
+              leading: SvgPicture.asset('assets/icons/Profile.svg',
+                  width: 24, height: 24,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn)),
               title: const Text('Sarah Helpdesk'),
               subtitle: const Text('3 tiket aktif'),
               onTap: () {
@@ -258,7 +268,9 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.person, color: c.textTertiary),
+              leading: SvgPicture.asset('assets/icons/Profile.svg',
+                  width: 24, height: 24,
+                  colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn)),
               title: Text('Budi Helpdesk'),
               subtitle: Text('0 tiket aktif (Cuti)'),
               enabled: false,
@@ -588,7 +600,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     return EmptyState(
       title: 'Tidak Ada Tiket',
       message: 'Tiket yang sesuai filter akan muncul di sini',
-      icon: Icons.description_outlined,
+      svgAsset: 'assets/icons/Order.svg',
       onRefresh: () {
         setState(() {
           _selectedFilter = 'semua';
@@ -599,7 +611,6 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   }
 
   Widget _buildSelectionBar(BuildContext context) {
-
     final c = context.palette;
     return Container(
       color: c.surface,
@@ -608,30 +619,39 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildSelectionButton(context, Icons.select_all, 'Pilih Semua', _selectAll),
-            _buildSelectionButton(context, Icons.person_add, 'Assign Helpdesk', () => _showAssignDialog(context)),
-            _buildSelectionButton(context, Icons.delete, 'Hapus', () => _deleteSelected(context)),
+            _buildSelectionButton(context, 'assets/icons/Doublecheck.svg', 'Pilih Semua', _selectAll),
+            _buildSelectionButton(context, 'assets/icons/Man&Woman.svg', 'Assign Helpdesk', () => _showAssignDialog(context)),
+            _buildSelectionButton(context, 'assets/icons/Delete.svg', 'Hapus', () => _deleteSelected(context), iconColor: c.error),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSelectionButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
-
+  Widget _buildSelectionButton(BuildContext context, String svgAsset, String label, VoidCallback onTap, {Color? iconColor}) {
     final c = context.palette;
+    final color = iconColor ?? c.primary;
     return InkWell(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: c.primary),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: AppTextStyles.caption(c).copyWith(color: c.primary),
-          ),
-        ],
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              svgAsset,
+              width: 24,
+              height: 24,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: AppTextStyles.caption(c).copyWith(color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
