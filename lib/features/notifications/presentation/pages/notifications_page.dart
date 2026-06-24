@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/constants/app_radius.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/theme/app_palette.dart';
 
+/// User Notifications ala FlutterShop — flat 2D, divider-only list, SVG icons.
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
@@ -10,7 +14,7 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  final List<Map<String, dynamic>> _notifications = [
+  List<Map<String, dynamic>> _notifications = [
     {
       'type': 'status_update',
       'title': 'Status Tiket Diperbarui',
@@ -48,41 +52,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
     },
   ];
 
-  int get _unreadCount => _notifications.where((n) => n['isRead'] == false).length;
+  int get _unreadCount =>
+      _notifications.where((n) => n['isRead'] == false).length;
 
-  IconData _getIcon(String type) {
+  String _getSvg(String type) {
     switch (type) {
       case 'status_update':
-        return Icons.update;
+        return 'assets/icons/Loading.svg';
       case 'new_comment':
-        return Icons.chat_bubble_outline;
+        return 'assets/icons/Message.svg';
       case 'ticket_created':
-        return Icons.add_circle_outline;
+        return 'assets/icons/Order.svg';
       case 'announcement':
-        return Icons.campaign_outlined;
       case 'reminder':
-        return Icons.alarm_outlined;
       default:
-        return Icons.notifications_outlined;
-    }
-  }
-
-  Color _getIconColor(BuildContext context, String type) {
-
-    final c = context.palette;
-    switch (type) {
-      case 'status_update':
-        return const Color(0xFF3B82F6);
-      case 'new_comment':
-        return c.success;
-      case 'ticket_created':
-        return c.primary;
-      case 'announcement':
-        return const Color(0xFFF59E0B);
-      case 'reminder':
-        return const Color(0xFF8B5CF6);
-      default:
-        return c.textSecondary;
+        return 'assets/icons/Notification.svg';
     }
   }
 
@@ -96,21 +80,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
       SnackBar(
         content: const Text('Semua notifikasi ditandai sudah dibaca'),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
       ),
     );
   }
 
   void _markAsRead(int index) {
-    setState(() {
-      _notifications[index]['isRead'] = true;
-    });
+    setState(() => _notifications[index]['isRead'] = true);
   }
 
   void _deleteNotification(int index) {
-    setState(() {
-      _notifications.removeAt(index);
-    });
+    setState(() => _notifications.removeAt(index));
   }
 
   void _handleNotificationTap(Map<String, dynamic> notif) {
@@ -118,52 +101,47 @@ class _NotificationsPageState extends State<NotificationsPage> {
       case 'status_update':
       case 'new_comment':
       case 'ticket_created':
-        // Navigate to ticket detail
         Navigator.pushNamed(context, '/ticket-detail', arguments: notif);
         break;
       case 'announcement':
-        // Show announcement details
         _showAnnouncementDialog(context, notif);
-        break;
-      case 'reminder':
-        // Show reminder details
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(notif['message']),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-            ),
-          ),
-        );
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Buka: ${notif['title']}'),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
             ),
+            margin: const EdgeInsets.all(AppSpacing.lg),
           ),
         );
     }
   }
 
-  void _showAnnouncementDialog(BuildContext context, Map<String, dynamic> notif) {
-
+  void _showAnnouncementDialog(
+      BuildContext context, Map<String, dynamic> notif) {
     final c = context.palette;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
         title: Row(
           children: [
-            Icon(Icons.campaign_outlined, color: c.primary),
-            const SizedBox(width: 8),
-            Expanded(child: Text(notif['title'], style: const TextStyle(fontSize: 16))),
+            SvgPicture.asset(
+              'assets/icons/Notification.svg',
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(notif['title'] as String,
+                  style: AppTextStyles.h4(c)),
+            ),
           ],
         ),
         content: Column(
@@ -171,13 +149,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              notif['message'],
-              style: const TextStyle(fontSize: 14, height: 1.5),
+              notif['message'] as String,
+              style: AppTextStyles.body(c).copyWith(height: 1.5),
             ),
-            const SizedBox(height: AppConstants.spacingMd),
+            const SizedBox(height: AppSpacing.md),
             Text(
-              notif['time'],
-              style: TextStyle(fontSize: 12, color: c.textSecondary),
+              notif['time'] as String,
+              style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
             ),
           ],
         ),
@@ -199,10 +177,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       appBar: AppBar(
         backgroundColor: c.surface,
         elevation: 0,
-        title: Text(
-          'Notifikasi',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
-        ),
+        title: Text('Notifikasi', style: AppTextStyles.h4(c)),
         centerTitle: true,
         actions: [
           if (_unreadCount > 0)
@@ -210,7 +185,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
               onPressed: _markAllAsRead,
               child: Text(
                 'Tandai semua dibaca',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.primary),
+                style: AppTextStyles.body(c).copyWith(
+                  color: c.primary,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
         ],
@@ -218,33 +196,47 @@ class _NotificationsPageState extends State<NotificationsPage> {
       body: _notifications.isEmpty
           ? _buildEmptyState(context)
           : RefreshIndicator(
-              onRefresh: () async => await Future.delayed(const Duration(seconds: 1)),
+              onRefresh: () async =>
+                  await Future.delayed(const Duration(seconds: 1)),
+              color: c.primary,
               child: ListView.separated(
                 itemCount: _notifications.length,
-                separatorBuilder: (context, index) => Divider(height: 1, color: c.divider),
+                separatorBuilder: (context, index) =>
+                    Divider(height: 1, color: c.divider),
                 itemBuilder: (context, index) {
                   final notif = _notifications[index];
                   return Dismissible(
                     key: Key('notif_$index'),
                     background: Container(
-                      color: c.success.withValues(alpha: 0.2),
+                      color: c.primary.withValues(alpha: 0.1),
                       alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.only(left: 20),
-                      child: Icon(Icons.check, color: c.success),
+                      padding: const EdgeInsets.only(left: AppSpacing.xl),
+                      child: SvgPicture.asset(
+                        'assets/icons/Doublecheck.svg',
+                        width: 20,
+                        height: 20,
+                        colorFilter:
+                            ColorFilter.mode(c.primary, BlendMode.srcIn),
+                      ),
                     ),
                     secondaryBackground: Container(
-                      color: c.error.withValues(alpha: 0.2),
+                      color: c.error.withValues(alpha: 0.1),
                       alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      child: Icon(Icons.delete, color: c.error),
+                      padding: const EdgeInsets.only(right: AppSpacing.xl),
+                      child: SvgPicture.asset(
+                        'assets/icons/Delete.svg',
+                        width: 20,
+                        height: 20,
+                        colorFilter:
+                            ColorFilter.mode(c.error, BlendMode.srcIn),
+                      ),
                     ),
                     confirmDismiss: (direction) async {
                       if (direction == DismissDirection.startToEnd) {
                         _markAsRead(index);
                         return false;
-                      } else {
-                        return await _showDeleteConfirmation(context);
                       }
+                      return await _showDeleteConfirmation(context);
                     },
                     onDismissed: (direction) {
                       if (direction == DismissDirection.endToStart) {
@@ -252,12 +244,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       }
                     },
                     child: _NotificationItem(
-                      icon: _getIcon(notif['type']),
-                      iconColor: _getIconColor(context, notif['type']),
-                      title: notif['title'],
-                      message: notif['message'],
-                      time: notif['time'],
-                      isRead: notif['isRead'],
+                      svgAsset: _getSvg(notif['type'] as String),
+                      title: notif['title'] as String,
+                      message: notif['message'] as String,
+                      time: notif['time'] as String,
+                      isRead: notif['isRead'] as bool,
                       onTap: () {
                         _markAsRead(index);
                         _handleNotificationTap(notif);
@@ -271,28 +262,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-
     final c = context.palette;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.spacing2xl),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.notifications_off_outlined,
-              size: 64,
-              color: c.textSecondary.withValues(alpha: 0.5),
+            SvgPicture.asset(
+              'assets/icons/Notification.svg',
+              width: 64,
+              height: 64,
+              colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
             ),
-            const SizedBox(height: AppConstants.spacingLg),
-            Text(
-              'Tidak Ada Notifikasi',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
-            ),
-            const SizedBox(height: AppConstants.spacingSm),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Tidak Ada Notifikasi', style: AppTextStyles.h4(c)),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Notifikasi akan muncul di sini',
-              style: TextStyle(fontSize: 14, color: c.textSecondary),
+              style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -304,30 +292,33 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<bool> _showDeleteConfirmation(BuildContext context) async {
     final c = context.palette;
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Text('Hapus Notifikasi?'),
-        content: const Text('Notifikasi ini akan dihapus.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+            ),
+            title: Text('Hapus Notifikasi?', style: AppTextStyles.h4(c)),
+            content: Text('Notifikasi ini akan dihapus.',
+                style: AppTextStyles.body(c)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: c.error),
+                child: const Text('Hapus'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: c.error),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 }
 
 class _NotificationItem extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
+  final String svgAsset;
   final String title;
   final String message;
   final String time;
@@ -335,8 +326,7 @@ class _NotificationItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _NotificationItem({
-    required this.icon,
-    required this.iconColor,
+    required this.svgAsset,
     required this.title,
     required this.message,
     required this.time,
@@ -347,41 +337,44 @@ class _NotificationItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       child: Container(
-        color: isRead ? c.surface : const Color(0xFFF0F7FF),
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+        color: isRead ? c.surface : c.primaryLight,
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Unread dot
-            if (!isRead)
-              Container(
-                margin: const EdgeInsets.only(right: 12, top: 4),
+            // Unread dot (always reserve space)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, right: AppSpacing.md),
+              child: Container(
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: c.primary,
+                  color: isRead ? Colors.transparent : c.primary,
                   shape: BoxShape.circle,
                 ),
-              )
-            else
-              const SizedBox(width: 20),
-
-            // Icon
+              ),
+            ),
+            // Icon container
             Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+                color: c.primaryLight,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, size: 20, color: iconColor),
+              child: Center(
+                child: SvgPicture.asset(
+                  svgAsset,
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+                ),
+              ),
             ),
-
-            const SizedBox(width: 12),
-
+            const SizedBox(width: AppSpacing.md),
             // Content
             Expanded(
               child: Column(
@@ -389,8 +382,7 @@ class _NotificationItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: AppTextStyles.body(c).copyWith(
                       fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
                       color: c.textPrimary,
                     ),
@@ -398,21 +390,29 @@ class _NotificationItem extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: TextStyle(fontSize: 13, color: c.textSecondary),
+                    style: AppTextStyles.bodySm(c)
+                        .copyWith(color: c.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     time,
-                    style: TextStyle(fontSize: 12, color: c.textSecondary),
+                    style: AppTextStyles.overline(c).copyWith(
+                      fontSize: 12,
+                      color: c.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-
             // Arrow
-            Icon(Icons.chevron_right, color: c.textSecondary, size: 20),
+            SvgPicture.asset(
+              'assets/icons/miniRight.svg',
+              width: 16,
+              height: 16,
+              colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+            ),
           ],
         ),
       ),

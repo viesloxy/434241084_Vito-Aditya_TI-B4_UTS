@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../helpdesk/widgets/helpdesk_stat_card.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
 import '../../../../admin/widgets/loading_skeleton.dart';
@@ -9,8 +12,7 @@ import '../../../../../core/theme/app_palette.dart';
 
 enum DashboardState { loading, loaded, empty, error }
 
-/// Dashboard untuk role Helpdesk.
-/// Menampilkan statistik PERSONAL (tiket yang di-assign ke Helpdesk ini).
+/// Dashboard untuk role Helpdesk — CustomScrollView + Sliver, FlutterShop style.
 class HelpdeskDashboardPage extends StatefulWidget {
   const HelpdeskDashboardPage({super.key});
 
@@ -21,35 +23,13 @@ class HelpdeskDashboardPage extends StatefulWidget {
 class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   DashboardState _state = DashboardState.loading;
 
-  // Stats personal - hanya tiket yang di-assign ke Helpdesk ini
-  List<Map<String, dynamic>> _buildStats(AppPalette c) => [
-    {
-      'title': 'Tugas Total',
-      'count': 45,
-      'icon': Icons.assignment_outlined,
-      'color': c.primary,
-    },
-    {
-      'title': 'Tugas Baru',
-      'count': 5,
-      'icon': Icons.fiber_new,
-      'color': c.warning,
-    },
-    {
-      'title': 'In Progress',
-      'count': 2,
-      'icon': Icons.pending,
-      'color': c.info,
-    },
-    {
-      'title': 'Selesai',
-      'count': 38,
-      'icon': Icons.check_circle_outline,
-      'color': c.success,
-    },
+  static const _stats = [
+    {'title': 'Tugas Total', 'count': 45, 'svgAsset': 'assets/icons/Order.svg'},
+    {'title': 'Tugas Baru', 'count': 5, 'svgAsset': 'assets/icons/Notification.svg'},
+    {'title': 'In Progress', 'count': 2, 'svgAsset': 'assets/icons/Loading.svg'},
+    {'title': 'Selesai', 'count': 38, 'svgAsset': 'assets/icons/Doublecheck.svg'},
   ];
 
-  // Tiket yang perlu dikerjakan (Signed/Assigned atau In Progress)
   final List<Map<String, dynamic>> _activeTasks = [
     {
       'ticketId': '#TK-2024-001',
@@ -80,7 +60,6 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
     },
   ];
 
-  // Tiket yang sudah selesai (Resolved)
   final List<Map<String, dynamic>> _resolvedTasks = [
     {
       'ticketId': '#TK-2024-004',
@@ -113,10 +92,12 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   Future<void> _loadData() async {
     setState(() => _state = DashboardState.loading);
     await Future.delayed(const Duration(seconds: 1));
-    if (_activeTasks.isEmpty && _resolvedTasks.isEmpty) {
-      setState(() => _state = DashboardState.empty);
-    } else {
-      setState(() => _state = DashboardState.loaded);
+    if (mounted) {
+      setState(() {
+        _state = (_activeTasks.isEmpty && _resolvedTasks.isEmpty)
+            ? DashboardState.empty
+            : DashboardState.loaded;
+      });
     }
   }
 
@@ -124,7 +105,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
     await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
       setState(() {
-        _state = _activeTasks.isEmpty && _resolvedTasks.isEmpty
+        _state = (_activeTasks.isEmpty && _resolvedTasks.isEmpty)
             ? DashboardState.empty
             : DashboardState.loaded;
       });
@@ -134,215 +115,216 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    const helpdeskName = 'John Helpdesk';
-    const helpdeskRole = 'Helpdesk';
-
     return Scaffold(
       backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshData,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 600;
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(
-                    isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(
-                        context, helpdeskName, helpdeskRole, constraints.maxWidth),
-                    SizedBox(
-                        height: isWide
-                            ? AppConstants.spacing2xl
-                            : AppConstants.spacingXl),
-                    _buildStatsSection(context, _buildStats(c), isWide),
-                    SizedBox(
-                        height: isWide
-                            ? AppConstants.spacing2xl
-                            : AppConstants.spacingXl),
-                    _buildActiveTasksSection(context),
-                    SizedBox(
-                        height: isWide
-                            ? AppConstants.spacing2xl
-                            : AppConstants.spacingXl),
-                    _buildResolvedTasksSection(context),
-                    const SizedBox(height: AppConstants.spacingLg),
-                  ],
+          color: c.primary,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: Container(
+                  color: c.surface,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: _buildHeader(context),
                 ),
-              );
-            },
+              ),
+
+              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+
+              // Stats grid
+              SliverToBoxAdapter(
+                child: Container(
+                  color: c.surface,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionHeader(
+                        title: 'Statistik Tugas Saya',
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/helpdesk/tasks'),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: AppSpacing.md,
+                          mainAxisSpacing: AppSpacing.md,
+                          childAspectRatio: 1.3,
+                        ),
+                        itemCount: _stats.length,
+                        itemBuilder: (context, index) => HelpdeskStatCard(
+                          title: _stats[index]['title'] as String,
+                          count: _stats[index]['count'] as int,
+                          svgAsset: _stats[index]['svgAsset'] as String,
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/helpdesk/tasks',
+                            arguments: {'filter': _stats[index]['title']},
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+
+              // Active tasks
+              SliverToBoxAdapter(
+                child: Container(
+                  color: c.surface,
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                  child: _SectionHeader(
+                    title: 'Tugas yang Perlu Dikerjakan',
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/helpdesk/tasks'),
+                  ),
+                ),
+              ),
+              _buildActiveContent(),
+
+              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+
+              // Resolved tasks
+              if (_state == DashboardState.loaded && _resolvedTasks.isNotEmpty)
+                ...[
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: c.surface,
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                    child: _SectionHeader(
+                      title: 'Tugas Selesai',
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/helpdesk/tasks'),
+                    ),
+                  ),
+                ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final task = _resolvedTasks[index];
+                      return Container(
+                        color: context.palette.surface,
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          index == 0 ? AppSpacing.md : 0,
+                          AppSpacing.lg,
+                          index == _resolvedTasks.length - 1
+                              ? AppSpacing.lg
+                              : AppSpacing.md,
+                        ),
+                        child: HelpdeskTaskCard(
+                          ticketId: task['ticketId'] as String,
+                          title: task['title'] as String,
+                          category: task['category'] as String,
+                          status: task['status'] as String,
+                          priority: task['priority'] as String,
+                          date: task['date'] as String,
+                          createdBy: task['createdBy'] as String,
+                          resolutionNote: task['resolutionNote'] as String?,
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/helpdesk/task-detail',
+                            arguments: task,
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: _resolvedTasks.length,
+                  ),
+                ),
+              ],
+
+              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, String role,
-      double maxWidth) {
-
+  Widget _buildHeader(BuildContext context) {
     final c = context.palette;
-    final isWide = maxWidth > 400;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Selamat datang,',
-                style: TextStyle(
-                  fontSize: maxWidth > 360 ? 14 : 12,
-                  fontWeight: FontWeight.w400,
-                  color: c.textSecondary,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Selamat datang,',
+              style: AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Text(
+                  'John Helpdesk',
+                  style: AppTextStyles.h4(c),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: maxWidth > 360 ? 20 : 18,
-                        fontWeight: FontWeight.w700,
-                        color: c.textPrimary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                const SizedBox(width: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: c.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    'Helpdesk',
+                    style: AppTextStyles.caption(c).copyWith(
+                      color: c.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDBEAFE),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      role,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E40AF),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
         Row(
           children: [
             IconButton(
-              icon: Icon(Icons.notifications_outlined,
-                  color: c.textPrimary),
-              onPressed: () {
-                Navigator.pushNamed(context, '/helpdesk/notifications');
-              },
+              icon: SvgPicture.asset(
+                'assets/icons/Notification.svg',
+                width: 24,
+                height: 24,
+                colorFilter:
+                    ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+              ),
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/helpdesk/notifications'),
             ),
             GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/helpdesk/profile');
-              },
+              onTap: () => Navigator.pushNamed(context, '/helpdesk/profile'),
               child: CircleAvatar(
-                radius: isWide ? 18 : 16,
-                backgroundColor: const Color(0xFF3B82F6),
-                child: const Text('JH',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white)),
+                radius: 18,
+                backgroundColor: c.primary,
+                child: const Text(
+                  'JH',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildStatsSection(BuildContext context,
-      List<Map<String, dynamic>> stats, bool isWide) {
-
-    final c = context.palette;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Statistik Tugas Saya',
-              style: TextStyle(
-                  fontSize: isWide ? 18 : 16,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/helpdesk/tasks'),
-              child: Text('Lihat Semua',
-                  style: TextStyle(
-                      fontSize: isWide ? 15 : 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF3B82F6))),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppConstants.spacingMd),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isWide ? 4 : 2,
-            crossAxisSpacing: AppConstants.spacingMd,
-            mainAxisSpacing: AppConstants.spacingMd,
-            childAspectRatio: isWide ? 1.2 : 1.3,
-          ),
-          itemCount: stats.length,
-          itemBuilder: (context, index) => HelpdeskStatCard(
-            title: stats[index]['title'] as String,
-            count: stats[index]['count'] as int,
-            icon: stats[index]['icon'] as IconData,
-            color: stats[index]['color'] as Color,
-            onTap: () => Navigator.pushNamed(context, '/helpdesk/tasks',
-                arguments: {'filter': stats[index]['title']}),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActiveTasksSection(BuildContext context) {
-
-    final c = context.palette;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Tugas yang Perlu Dikerjakan',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary)),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/helpdesk/tasks'),
-              child: const Text('Lihat Semua',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF3B82F6))),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppConstants.spacingSm),
-        _buildActiveContent(),
       ],
     );
   }
@@ -350,134 +332,117 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   Widget _buildActiveContent() {
     switch (_state) {
       case DashboardState.loading:
-        return const LoadingSkeleton(itemCount: 3);
+        return SliverToBoxAdapter(
+          child: Container(
+            color: context.palette.surface,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: const LoadingSkeleton(itemCount: 3),
+          ),
+        );
       case DashboardState.empty:
-        return EmptyState(
-          title: 'Tidak ada tugas',
-          message: 'Anda belum memiliki tiket yang perlu dikerjakan',
-          onRefresh: _loadData,
-          icon: Icons.assignment_outlined,
+        return SliverToBoxAdapter(
+          child: Container(
+            color: context.palette.surface,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: EmptyState(
+              title: 'Tidak ada tugas',
+              message: 'Anda belum memiliki tiket yang perlu dikerjakan',
+              onRefresh: _loadData,
+              svgAsset: 'assets/icons/Order.svg',
+            ),
+          ),
         );
       case DashboardState.error:
-        return ErrorState(
-          message: 'Gagal memuat data tugas',
-          onRetry: _loadData,
+        return SliverToBoxAdapter(
+          child: Container(
+            color: context.palette.surface,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: ErrorState(
+              message: 'Gagal memuat data tugas',
+              onRetry: _loadData,
+            ),
+          ),
         );
       case DashboardState.loaded:
         if (_activeTasks.isEmpty) {
-          return EmptyState(
-            title: 'Tidak ada tugas aktif',
-            message: 'Semua tiket sudah selesai. Hebat!',
-            onRefresh: _loadData,
-            icon: Icons.task_alt,
+          return SliverToBoxAdapter(
+            child: Container(
+              color: context.palette.surface,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: EmptyState(
+                title: 'Tidak ada tugas aktif',
+                message: 'Semua tiket sudah selesai. Hebat!',
+                onRefresh: _loadData,
+                svgAsset: 'assets/icons/Doublecheck.svg',
+              ),
+            ),
           );
         }
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _activeTasks.length,
-          separatorBuilder: (context, index) =>
-              const SizedBox(height: AppConstants.spacingMd),
-          itemBuilder: (context, index) {
-            final task = _activeTasks[index];
-            return HelpdeskTaskCard(
-              ticketId: task['ticketId'] as String,
-              title: task['title'] as String,
-              category: task['category'] as String,
-              status: task['status'] as String,
-              priority: task['priority'] as String,
-              date: task['date'] as String,
-              createdBy: task['createdBy'] as String,
-              onTap: () => Navigator.pushNamed(
-                context,
-                '/helpdesk/task-detail',
-                arguments: task,
-              ),
-              onStart: task['status'] == 'signed_assigned'
-                  ? () => _showStartTaskDialog(task)
-                  : null,
-              onResolve: task['status'] == 'in_progress'
-                  ? () => _showResolveTaskDialog(context, task)
-                  : null,
-            );
-          },
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final task = _activeTasks[index];
+              return Container(
+                color: context.palette.surface,
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  index == 0 ? AppSpacing.md : 0,
+                  AppSpacing.lg,
+                  index == _activeTasks.length - 1
+                      ? AppSpacing.lg
+                      : AppSpacing.md,
+                ),
+                child: HelpdeskTaskCard(
+                  ticketId: task['ticketId'] as String,
+                  title: task['title'] as String,
+                  category: task['category'] as String,
+                  status: task['status'] as String,
+                  priority: task['priority'] as String,
+                  date: task['date'] as String,
+                  createdBy: task['createdBy'] as String,
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    '/helpdesk/task-detail',
+                    arguments: task,
+                  ),
+                  onStart: task['status'] == 'signed_assigned'
+                      ? () => _showStartTaskDialog(task)
+                      : null,
+                  onResolve: task['status'] == 'in_progress'
+                      ? () => _showResolveTaskDialog(context, task)
+                      : null,
+                ),
+              );
+            },
+            childCount: _activeTasks.length,
+          ),
         );
     }
   }
 
-  Widget _buildResolvedTasksSection(BuildContext context) {
-
-    final c = context.palette;
-    if (_state != DashboardState.loaded || _resolvedTasks.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Tugas Selesai',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary)),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/helpdesk/tasks'),
-              child: const Text('Lihat Semua',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF3B82F6))),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppConstants.spacingSm),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _resolvedTasks.length,
-          separatorBuilder: (context, index) =>
-              const SizedBox(height: AppConstants.spacingMd),
-          itemBuilder: (context, index) {
-            final task = _resolvedTasks[index];
-            return HelpdeskTaskCard(
-              ticketId: task['ticketId'] as String,
-              title: task['title'] as String,
-              category: task['category'] as String,
-              status: task['status'] as String,
-              priority: task['priority'] as String,
-              date: task['date'] as String,
-              createdBy: task['createdBy'] as String,
-              resolutionNote: task['resolutionNote'] as String?,
-              onTap: () => Navigator.pushNamed(
-                context,
-                '/helpdesk/task-detail',
-                arguments: task,
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   void _showStartTaskDialog(Map<String, dynamic> task) {
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.play_arrow, color: Color(0xFF3B82F6)),
-            SizedBox(width: 8),
-            Text('Mulai Kerjakan'),
+            SvgPicture.asset(
+              'assets/icons/Loading.svg',
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Mulai Kerjakan', style: AppTextStyles.h4(c)),
           ],
         ),
         content: Text(
           'Mulai kerjakan tiket ${task['ticketId']}?\n\nStatus akan berubah menjadi "In Progress".',
-          style: const TextStyle(fontSize: 14),
+          style: AppTextStyles.body(c),
         ),
         actions: [
           TextButton(
@@ -489,15 +454,15 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:
-                      Text('Mulai kerjakan ${task['ticketId']}'),
+                  content: Text('Mulai kerjakan ${task['ticketId']}'),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
               _loadData();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
+              backgroundColor: c.primary,
+              elevation: 0,
             ),
             child: const Text('Mulai'),
           ),
@@ -507,20 +472,25 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
   }
 
   void _showResolveTaskDialog(BuildContext context, Map<String, dynamic> task) {
-
     final c = context.palette;
     final noteController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: c.success),
-            SizedBox(width: 8),
-            Text('Selesaikan Tiket'),
+            SvgPicture.asset(
+              'assets/icons/Doublecheck.svg',
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(c.success, BlendMode.srcIn),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Selesaikan Tiket', style: AppTextStyles.h4(c)),
           ],
         ),
         content: SingleChildScrollView(
@@ -528,12 +498,15 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tiket: ${task['ticketId']}',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              const Text('Catatan penyelesaian:',
-                  style: TextStyle(fontSize: 13)),
-              const SizedBox(height: 8),
+              Text(
+                'Tiket: ${task['ticketId']}',
+                style: AppTextStyles.body(c)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Catatan penyelesaian:',
+                  style: AppTextStyles.bodySm(c)),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: noteController,
                 maxLines: 3,
@@ -541,7 +514,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                   hintText: 'Jelaskan hasil kerja Anda...',
                   border: OutlineInputBorder(
                     borderRadius:
-                        BorderRadius.circular(AppConstants.radiusMedium),
+                        BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
@@ -575,11 +548,47 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: c.success,
+              elevation: 0,
             ),
             child: const Text('Selesaikan'),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback? onTap;
+
+  const _SectionHeader({required this.title, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: c.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        if (onTap != null)
+          GestureDetector(
+            onTap: onTap,
+            child: Text(
+              'Lihat Semua',
+              style: AppTextStyles.bodySm(c).copyWith(
+                color: c.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

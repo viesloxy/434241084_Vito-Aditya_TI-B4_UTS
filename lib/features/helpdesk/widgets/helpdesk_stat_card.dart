@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/theme/app_palette.dart';
 
-/// Stat card untuk dashboard Helpdesk.
-/// Menampilkan statistik personal (assigned to this helpdesk).
+/// StatCard Helpdesk ala FlutterShop — flat, border 1 px, radius 12.
+/// SVG icon dalam soft container (primaryLight), chevron miniRight.svg.
 class HelpdeskStatCard extends StatelessWidget {
   final String title;
   final int count;
-  final IconData icon;
-  final Color color;
+  final String svgAsset;
   final VoidCallback? onTap;
 
   const HelpdeskStatCard({
     super.key,
     required this.title,
     required this.count,
-    required this.icon,
-    required this.color,
+    required this.svgAsset,
     this.onTap,
   });
 
@@ -25,43 +26,59 @@ class HelpdeskStatCard extends StatelessWidget {
     final c = context.palette;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: c.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
-          border: Border.all(color: c.border),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: c.border, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(AppConstants.spacingSm),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
-              ),
-              child: Icon(icon, color: color, size: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: c.primaryLight,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      svgAsset,
+                      width: 20,
+                      height: 20,
+                      colorFilter:
+                          ColorFilter.mode(c.primary, BlendMode.srcIn),
+                    ),
+                  ),
+                ),
+                SvgPicture.asset(
+                  'assets/icons/miniRight.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter:
+                      ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+                ),
+              ],
             ),
-            const SizedBox(height: AppConstants.spacingSm),
+            const SizedBox(height: AppSpacing.md),
             Text(
               count.toString(),
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
+              style: AppTextStyles.h1(c).copyWith(
                 color: c.textPrimary,
+                fontSize: 28,
+                height: 1.1,
               ),
             ),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               title,
-              style: TextStyle(
-                fontSize: 12,
-                color: c.textSecondary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
             ),
           ],
         ),

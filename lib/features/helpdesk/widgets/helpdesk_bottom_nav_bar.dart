@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/theme/app_palette.dart';
 
-/// Bottom navigation bar khusus untuk role Helpdesk.
-/// Menggunakan icon `assignment` (bukan `description` seperti Admin)
-/// untuk menunjukkan bahwa Helpdesk mengelola "tugas".
+/// Bottom nav bar Helpdesk — floating pill, radius 24, shadow.
+/// Icons: Category (Beranda) / Order (Tugas) / Notification / Profile.
 class HelpdeskBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -21,55 +23,56 @@ class HelpdeskBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return Container(
-      decoration: BoxDecoration(
-        color: c.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 3,
-            offset: Offset(0, -1),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home,
-                label: 'Beranda',
-                isActive: currentIndex == 0,
-                onTap: () => onTap(0),
-              ),
-              _NavItem(
-                icon: Icons.assignment_outlined,
-                activeIcon: Icons.assignment,
-                label: 'Tugas',
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-                badgeCount: taskCount,
-              ),
-              _NavItem(
-                icon: Icons.notifications_outlined,
-                activeIcon: Icons.notifications,
-                label: 'Notifikasi',
-                isActive: currentIndex == 2,
-                onTap: () => onTap(2),
-                badgeCount: notificationCount,
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                label: 'Profil',
-                isActive: currentIndex == 3,
-                onTap: () => onTap(3),
-              ),
-            ],
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  svgAsset: 'assets/icons/Category.svg',
+                  label: 'Beranda',
+                  isActive: currentIndex == 0,
+                  onTap: () => onTap(0),
+                ),
+                _NavItem(
+                  svgAsset: 'assets/icons/Order.svg',
+                  label: 'Tugas',
+                  isActive: currentIndex == 1,
+                  onTap: () => onTap(1),
+                  badgeCount: taskCount,
+                ),
+                _NavItem(
+                  svgAsset: 'assets/icons/Notification.svg',
+                  label: 'Notifikasi',
+                  isActive: currentIndex == 2,
+                  onTap: () => onTap(2),
+                  badgeCount: notificationCount,
+                ),
+                _NavItem(
+                  svgAsset: 'assets/icons/Profile.svg',
+                  label: 'Profil',
+                  isActive: currentIndex == 3,
+                  onTap: () => onTap(3),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -78,16 +81,14 @@ class HelpdeskBottomNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final IconData activeIcon;
+  final String svgAsset;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
   final int badgeCount;
 
   const _NavItem({
-    required this.icon,
-    required this.activeIcon,
+    required this.svgAsset,
     required this.label,
     required this.isActive,
     required this.onTap,
@@ -97,9 +98,9 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: SizedBox(
         width: 64,
         child: Column(
@@ -108,27 +109,32 @@ class _NavItem extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(
-                  isActive ? activeIcon : icon,
-                  size: 24,
-                  // Pakai primary indigo untuk active state mengikuti design system,
-                  // bisa diganti dengan HelpdeskColors.primaryDark jika mau full helpdesk color
-                  color: isActive ? const Color(0xFF3B82F6) : c.textSecondary,
+                SvgPicture.asset(
+                  svgAsset,
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                    isActive ? c.primary : c.textSecondary,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 if (badgeCount > 0)
                   Positioned(
                     right: -6,
                     top: -4,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: c.error,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      constraints:
+                          const BoxConstraints(minWidth: 16, minHeight: 16),
                       child: Text(
                         badgeCount > 9 ? '9+' : badgeCount.toString(),
                         style: const TextStyle(
+                          fontFamily: 'Plus Jakarta',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -143,9 +149,10 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
+                fontFamily: 'Plus Jakarta',
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? const Color(0xFF3B82F6) : c.textSecondary,
+                color: isActive ? c.primary : c.textSecondary,
               ),
             ),
           ],

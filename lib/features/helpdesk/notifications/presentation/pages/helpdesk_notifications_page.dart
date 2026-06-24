@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/theme/app_palette.dart';
 
-/// Halaman notifikasi untuk role Helpdesk.
-/// Notifikasi yang diterima Helpdesk:
-/// - Tiket baru di-assign oleh Admin
-/// - Komentar baru dari User
-/// - Update status tiket (oleh sistem)
-/// - Tiket closed oleh Admin
+/// Helpdesk Notifications ala FlutterShop — flat 2D, divider-only list.
 class HelpdeskNotificationsPage extends StatefulWidget {
   const HelpdeskNotificationsPage({super.key});
 
@@ -16,7 +14,8 @@ class HelpdeskNotificationsPage extends StatefulWidget {
       _HelpdeskNotificationsPageState();
 }
 
-class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
+class _HelpdeskNotificationsPageState
+    extends State<HelpdeskNotificationsPage> {
   List<Map<String, dynamic>> _notifications = [];
 
   @override
@@ -37,8 +36,7 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
       {
         'type': 'ticket_assigned',
         'title': 'Tiket Baru Ditugaskan',
-        'message':
-            'Admin menugaskan tiket #TK-2024-007 kepada Anda',
+        'message': 'Admin menugaskan tiket #TK-2024-007 kepada Anda',
         'time': '5 menit yang lalu',
         'isRead': false,
       },
@@ -52,16 +50,14 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
       {
         'type': 'ticket_assigned',
         'title': 'Tiket Baru Ditugaskan',
-        'message':
-            'Admin menugaskan tiket #TK-2024-006 kepada Anda',
+        'message': 'Admin menugaskan tiket #TK-2024-006 kepada Anda',
         'time': '30 menit yang lalu',
         'isRead': false,
       },
       {
         'type': 'status_update',
         'title': 'Update Otomatis',
-        'message':
-            'Status tiket #TK-2024-003 diperbarui menjadi In Progress',
+        'message': 'Status tiket #TK-2024-003 diperbarui menjadi In Progress',
         'time': '1 jam yang lalu',
         'isRead': true,
       },
@@ -75,8 +71,7 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
       {
         'type': 'ticket_closed',
         'title': 'Tiket Selesai',
-        'message':
-            'Tiket #TK-2024-002 telah ditutup oleh Admin',
+        'message': 'Tiket #TK-2024-002 telah ditutup oleh Admin',
         'time': '3 jam yang lalu',
         'isRead': true,
       },
@@ -86,36 +81,45 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
   int get _unreadCount =>
       _notifications.where((n) => n['isRead'] == false).length;
 
-  IconData _getIcon(String type) {
+  String _getSvg(String type) {
     switch (type) {
       case 'ticket_assigned':
-        return Icons.assignment_ind;
+        return 'assets/icons/Man&Woman.svg';
       case 'comment':
-        return Icons.chat_bubble_outline;
+        return 'assets/icons/Message.svg';
       case 'status_update':
-        return Icons.update;
+        return 'assets/icons/Loading.svg';
       case 'ticket_closed':
-        return Icons.lock_outline;
+        return 'assets/icons/Doublecheck.svg';
       default:
-        return Icons.notifications_outlined;
+        return 'assets/icons/Notification.svg';
     }
   }
 
-  Color _getIconColor(BuildContext context, String type) {
+  void _markAllAsRead() {
+    setState(() {
+      for (var n in _notifications) {
+        n['isRead'] = true;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Semua notifikasi ditandai sudah dibaca'),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
+      ),
+    );
+  }
 
-    final c = context.palette;
-    switch (type) {
-      case 'ticket_assigned':
-        return const Color(0xFF3B82F6);
-      case 'comment':
-        return const Color(0xFFF59E0B);
-      case 'status_update':
-        return const Color(0xFF6366F1);
-      case 'ticket_closed':
-        return const Color(0xFF6B7280);
-      default:
-        return c.textSecondary;
-    }
+  void _markAsRead(int index) {
+    setState(() => _notifications[index]['isRead'] = true);
+  }
+
+  void _deleteNotification(int index) {
+    setState(() => _notifications.removeAt(index));
   }
 
   @override
@@ -126,130 +130,249 @@ class _HelpdeskNotificationsPageState extends State<HelpdeskNotificationsPage> {
       appBar: AppBar(
         backgroundColor: c.surface,
         elevation: 0,
-        title: Text(
-          'Notifikasi',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: c.textPrimary),
-        ),
+        title: Text('Notifikasi', style: AppTextStyles.h4(c)),
         centerTitle: true,
         actions: [
           if (_unreadCount > 0)
             TextButton(
-              onPressed: () {
-                setState(() {
-                  for (var n in _notifications) {
-                    n['isRead'] = true;
-                  }
-                });
-              },
-              child: const Text('Tandai Dibaca',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF3B82F6),
-                      fontWeight: FontWeight.w600)),
+              onPressed: _markAllAsRead,
+              child: Text(
+                'Tandai semua dibaca',
+                style: AppTextStyles.body(c).copyWith(
+                  color: c.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
         ],
       ),
       body: _notifications.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.notifications_off_outlined,
-                      size: 64,
-                      color:
-                          c.textSecondary.withValues(alpha: 0.5)),
-                  const SizedBox(height: AppConstants.spacingLg),
-                  Text('Tidak ada notifikasi',
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: c.textSecondary)),
-                ],
+          ? _buildEmptyState(context)
+          : _buildNotificationList(context),
+    );
+  }
+
+  Widget _buildNotificationList(BuildContext context) {
+    final c = context.palette;
+    return RefreshIndicator(
+      onRefresh: _loadInitialData,
+      color: c.primary,
+      child: ListView.separated(
+        itemCount: _notifications.length,
+        separatorBuilder: (context, index) =>
+            Divider(height: 1, color: c.divider),
+        itemBuilder: (context, index) {
+          final notif = _notifications[index];
+          return Dismissible(
+            key: Key('helpdesk_notif_$index'),
+            background: Container(
+              color: c.primary.withValues(alpha: 0.1),
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.only(left: AppSpacing.xl),
+              child: SvgPicture.asset(
+                'assets/icons/Doublecheck.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
               ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                  vertical: AppConstants.spacingSm),
-              itemCount: _notifications.length,
-              separatorBuilder: (context, index) => Divider(
-                  height: 1,
-                  indent: 72,
-                  color: c.divider),
-              itemBuilder: (context, index) {
-                final notif = _notifications[index];
-                final isRead = notif['isRead'] as bool;
-                return Container(
-                  color: isRead
-                      ? c.surface
-                      : const Color(0xFFEFF6FF),
-                  child: ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: _getIconColor(context, notif['type'] as String)
-                            .withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _getIcon(notif['type'] as String),
-                        color: _getIconColor(context, notif['type'] as String),
-                        size: 20,
-                      ),
-                    ),
-                    title: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notif['title'] as String,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: isRead
-                                  ? FontWeight.w500
-                                  : FontWeight.w600,
-                              color: c.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (!isRead)
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF3B82F6),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                      ],
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        notif['message'] as String,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: c.textSecondary),
-                      ),
-                    ),
-                    trailing: Text(
-                      notif['time'] as String,
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: c.textSecondary),
-                    ),
-                    onTap: () {
-                      setState(() => notif['isRead'] = true);
-                      // Navigate to task detail
-                      Navigator.pushNamed(
-                          context, '/helpdesk/task-detail',
-                          arguments: {'ticketId': '#TK-2024-007'});
-                    },
-                  ),
+            ),
+            secondaryBackground: Container(
+              color: c.error.withValues(alpha: 0.1),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: AppSpacing.xl),
+              child: SvgPicture.asset(
+                'assets/icons/Delete.svg',
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
+              ),
+            ),
+            confirmDismiss: (direction) async {
+              if (direction == DismissDirection.startToEnd) {
+                _markAsRead(index);
+                return false;
+              }
+              return await _showDeleteConfirmation(context);
+            },
+            onDismissed: (direction) {
+              if (direction == DismissDirection.endToStart) {
+                _deleteNotification(index);
+              }
+            },
+            child: _NotificationItem(
+              svgAsset: _getSvg(notif['type'] as String),
+              title: notif['title'] as String,
+              message: notif['message'] as String,
+              time: notif['time'] as String,
+              isRead: notif['isRead'] as bool,
+              onTap: () {
+                _markAsRead(index);
+                Navigator.pushNamed(
+                  context,
+                  '/helpdesk/task-detail',
+                  arguments: {'ticketId': '#TK-2024-007'},
                 );
               },
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final c = context.palette;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/Notification.svg',
+              width: 64,
+              height: 64,
+              colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Tidak Ada Notifikasi', style: AppTextStyles.h4(c)),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Notifikasi akan muncul di sini',
+              style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _showDeleteConfirmation(BuildContext context) async {
+    final c = context.palette;
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+            ),
+            title: Text('Hapus Notifikasi?', style: AppTextStyles.h4(c)),
+            content:
+                Text('Notifikasi ini akan dihapus.', style: AppTextStyles.body(c)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: c.error),
+                child: const Text('Hapus'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+}
+
+class _NotificationItem extends StatelessWidget {
+  final String svgAsset;
+  final String title;
+  final String message;
+  final String time;
+  final bool isRead;
+  final VoidCallback onTap;
+
+  const _NotificationItem({
+    required this.svgAsset,
+    required this.title,
+    required this.message,
+    required this.time,
+    required this.isRead,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: isRead ? c.surface : c.primaryLight,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Unread dot
+            Padding(
+              padding: const EdgeInsets.only(top: 6, right: AppSpacing.md),
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isRead ? Colors.transparent : c.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            // Icon container
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: c.primaryLight,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  svgAsset,
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.body(c).copyWith(
+                      fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: AppTextStyles.bodySm(c)
+                        .copyWith(color: c.textSecondary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    time,
+                    style: AppTextStyles.overline(c).copyWith(
+                      fontSize: 12,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SvgPicture.asset(
+              'assets/icons/miniRight.svg',
+              width: 16,
+              height: 16,
+              colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

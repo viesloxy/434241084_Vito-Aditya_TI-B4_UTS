@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
 import '../../../../../core/theme/app_palette.dart';
-// (EmptyState & LoadingSkeleton tidak digunakan di halaman ini)
-// import '../../../../admin/widgets/empty_state.dart';
-// import '../../../../admin/widgets/loading_skeleton.dart';
 
-enum SortOption { tanggalTerbaru, tanggalTerlama, prioritasTinggi, prioritasRendah }
+enum SortOption {
+  tanggalTerbaru,
+  tanggalTerlama,
+  prioritasTinggi,
+  prioritasRendah
+}
 
-/// Halaman daftar tugas untuk Helpdesk.
-/// HANYA menampilkan tiket yang di-assign ke Helpdesk yang login.
-/// Berbeda dari AdminTicketListPage yang menampilkan semua tiket.
+/// Helpdesk task list — FlutterShop style, SVG icons, c.primary colors.
 class HelpdeskTaskListPage extends StatefulWidget {
   const HelpdeskTaskListPage({super.key});
 
@@ -24,11 +27,9 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 300);
 
-  // Filter untuk 3 status yang Helpdesk lihat (tidak ada submitted/closed/rejected)
   String _selectedFilter = 'semua';
   bool _isLoading = false;
   bool _isSearchVisible = false;
-
   SortOption _sortOption = SortOption.tanggalTerbaru;
 
   final List<Map<String, dynamic>> _filters = [
@@ -134,24 +135,20 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
 
   List<Map<String, dynamic>> get _filteredTasks {
     var filtered = _tasks;
-
-    // Search filter
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
-      filtered = filtered.where((t) =>
-        t['title'].toString().toLowerCase().contains(query) ||
-        t['ticketId'].toString().toLowerCase().contains(query) ||
-        t['description'].toString().toLowerCase().contains(query) ||
-        t['createdBy'].toString().toLowerCase().contains(query)
-      ).toList();
+      filtered = filtered
+          .where((t) =>
+              t['title'].toString().toLowerCase().contains(query) ||
+              t['ticketId'].toString().toLowerCase().contains(query) ||
+              t['description'].toString().toLowerCase().contains(query) ||
+              t['createdBy'].toString().toLowerCase().contains(query))
+          .toList();
     }
-
-    // Status filter
     if (_selectedFilter != 'semua') {
-      filtered = filtered.where((t) => t['status'] == _selectedFilter).toList();
+      filtered =
+          filtered.where((t) => t['status'] == _selectedFilter).toList();
     }
-
-    // Sort
     filtered = List.from(filtered);
     switch (_sortOption) {
       case SortOption.tanggalTerbaru:
@@ -161,50 +158,41 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
         break;
       case SortOption.prioritasTinggi:
         filtered.sort((a, b) {
-          final priorityOrder = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (priorityOrder[a['priority']] ?? 1)
-              .compareTo(priorityOrder[b['priority']] ?? 1);
+          const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
+          return (order[a['priority']] ?? 1).compareTo(order[b['priority']] ?? 1);
         });
         break;
       case SortOption.prioritasRendah:
         filtered.sort((a, b) {
-          final priorityOrder = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (priorityOrder[b['priority']] ?? 1)
-              .compareTo(priorityOrder[a['priority']] ?? 1);
+          const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
+          return (order[b['priority']] ?? 1).compareTo(order[a['priority']] ?? 1);
         });
         break;
     }
-
     return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 600;
-        return Scaffold(
-          backgroundColor: c.background,
-          appBar: _buildAppBar(context, isWide),
-          body: Column(
-            children: [
-              _buildFilterChips(context, isWide),
-              _buildSortBar(context, isWide),
-              Expanded(
-                child: _filteredTasks.isEmpty && !_isLoading
-                    ? _buildEmptyState(context)
-                    : _buildTaskList(isWide),
-              ),
-            ],
+    return Scaffold(
+      backgroundColor: c.background,
+      appBar: _buildAppBar(context),
+      body: Column(
+        children: [
+          _buildFilterChips(context),
+          _buildSortBar(context),
+          Expanded(
+            child: _filteredTasks.isEmpty && !_isLoading
+                ? _buildEmptyState(context)
+                : _buildTaskList(),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isWide) {
-
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     final c = context.palette;
     return AppBar(
       backgroundColor: c.surface,
@@ -216,32 +204,23 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
               decoration: InputDecoration(
                 hintText: 'Cari tugas...',
                 border: InputBorder.none,
-                hintStyle: TextStyle(
-                    color: c.textSecondary,
-                    fontSize: isWide ? 18 : 16),
+                hintStyle: TextStyle(color: c.textSecondary),
               ),
-              style: TextStyle(
-                  fontSize: isWide ? 18 : 16,
-                  color: c.textPrimary),
-              onChanged: (_) {
-                _debouncer.run(() {
-                  setState(() {});
-                });
-              },
+              style: AppTextStyles.body(c),
+              onChanged: (_) => _debouncer.run(() => setState(() {})),
             )
-          : Text(
-              'Daftar Tugas Saya',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: c.textPrimary,
-              ),
-            ),
+          : Text('Daftar Tugas Saya', style: AppTextStyles.h4(c)),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(_isSearchVisible ? Icons.close : Icons.search,
-              color: c.textPrimary),
+          icon: SvgPicture.asset(
+            _isSearchVisible
+                ? 'assets/icons/Close.svg'
+                : 'assets/icons/Search.svg',
+            width: 22,
+            height: 22,
+            colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () {
             setState(() {
               _isSearchVisible = !_isSearchVisible;
@@ -253,14 +232,13 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  Widget _buildFilterChips(BuildContext context, bool isWide) {
-
+  Widget _buildFilterChips(BuildContext context) {
     final c = context.palette;
     return Container(
       color: c.surface,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
-        vertical: AppConstants.spacingMd,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -268,35 +246,26 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
           children: _filters.map((filter) {
             final isSelected = _selectedFilter == filter['value'];
             return Padding(
-              padding: const EdgeInsets.only(right: AppConstants.spacingSm),
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: GestureDetector(
                 onTap: () =>
                     setState(() => _selectedFilter = filter['value'] as String),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(
-                      horizontal: isWide ? 20 : 16,
-                      vertical: isWide ? 10 : 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF3B82F6)
-                        : c.background,
-                    borderRadius: BorderRadius.circular(20),
+                    color: isSelected ? c.primary : c.background,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF3B82F6)
-                          : c.border,
-                    ),
+                        color: isSelected ? c.primary : c.border),
                   ),
                   child: Text(
                     filter['name'] as String,
-                    style: TextStyle(
-                      fontSize: isWide ? 14 : 13,
+                    style: AppTextStyles.bodySm(c).copyWith(
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected
-                          ? Colors.white
-                          : c.textPrimary,
+                      color: isSelected ? Colors.white : c.textPrimary,
                     ),
                   ),
                 ),
@@ -308,34 +277,43 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  Widget _buildSortBar(BuildContext context, bool isWide) {
-
+  Widget _buildSortBar(BuildContext context) {
     final c = context.palette;
     return Container(
       color: c.surface,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? AppConstants.spacingXl : AppConstants.spacingLg,
-        vertical: AppConstants.spacingSm,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
       ),
       child: Row(
         children: [
           Text(
             '${_filteredTasks.length} tugas',
-            style: TextStyle(
-              fontSize: isWide ? 14 : 12,
-              color: c.textSecondary,
-            ),
+            style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
           ),
           const Spacer(),
-          TextButton.icon(
+          TextButton(
             onPressed: _showSortDropdown,
-            icon: Icon(Icons.sort,
-                size: isWide ? 20 : 18, color: const Color(0xFF3B82F6)),
-            label: Text(
-              _getSortLabel(),
-              style: TextStyle(
-                  fontSize: isWide ? 14 : 12,
-                  color: const Color(0xFF3B82F6)),
+            style: TextButton.styleFrom(
+              foregroundColor: c.primary,
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/Sort.svg',
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _getSortLabel(),
+                  style: AppTextStyles.bodySm(c).copyWith(color: c.primary),
+                ),
+              ],
             ),
           ),
         ],
@@ -356,16 +334,15 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     }
   }
 
-  Widget _buildTaskList(bool isWide) {
+  Widget _buildTaskList() {
     return RefreshIndicator(
       onRefresh: _loadInitialData,
       child: ListView.separated(
         controller: _scrollController,
-        padding: EdgeInsets.all(
-            isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: _filteredTasks.length,
         separatorBuilder: (context, index) =>
-            SizedBox(height: isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+            const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           final task = _filteredTasks[index];
           return HelpdeskTaskCard(
@@ -395,30 +372,28 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-
     final c = context.palette;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.spacing2xl),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assignment_outlined,
-                size: 64,
-                color: c.textSecondary.withValues(alpha: 0.5)),
-            const SizedBox(height: AppConstants.spacingLg),
-            Text('Tidak Ada Tugas',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary)),
-            const SizedBox(height: AppConstants.spacingSm),
+            SvgPicture.asset(
+              'assets/icons/Order.svg',
+              width: 64,
+              height: 64,
+              colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Tidak Ada Tugas', style: AppTextStyles.h4(c)),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Tugas yang sesuai filter akan muncul di sini',
-              style: TextStyle(fontSize: 14, color: c.textSecondary),
+              style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppConstants.spacing2xl),
+            const SizedBox(height: AppSpacing.xxl),
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -427,13 +402,15 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
+                backgroundColor: c.primary,
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusMedium)),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xxl, vertical: AppSpacing.md),
+                shape: const RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.all(Radius.circular(AppRadius.md)),
+                ),
+                elevation: 0,
               ),
               child: const Text('Reset Filter'),
             ),
@@ -444,20 +421,21 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
   }
 
   void _showSortDropdown() {
+    final c = context.palette;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppConstants.spacingLg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Urutkan',
-                style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppConstants.spacingLg),
+            Text('Urutkan', style: AppTextStyles.h4(c)),
+            const SizedBox(height: AppSpacing.lg),
             RadioListTile<SortOption>(
               title: const Text('Tanggal (Terbaru)'),
               value: SortOption.tanggalTerbaru,
@@ -494,7 +472,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                 Navigator.pop(ctx);
               },
             ),
-            const SizedBox(height: AppConstants.spacingLg),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -502,21 +480,28 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
   }
 
   void _showStartTaskDialog(Map<String, dynamic> task) {
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.play_arrow, color: Color(0xFF3B82F6)),
-            SizedBox(width: 8),
-            Text('Mulai Kerjakan'),
+            SvgPicture.asset(
+              'assets/icons/Loading.svg',
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Mulai Kerjakan', style: AppTextStyles.h4(c)),
           ],
         ),
         content: Text(
           'Mulai kerjakan tiket ${task['ticketId']}?\n\nStatus akan berubah menjadi "In Progress".',
-          style: const TextStyle(fontSize: 14),
+          style: AppTextStyles.body(c),
         ),
         actions: [
           TextButton(
@@ -535,7 +520,8 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
               _loadInitialData();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
+              backgroundColor: c.primary,
+              elevation: 0,
             ),
             child: const Text('Mulai'),
           ),
@@ -544,21 +530,27 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  void _showResolveTaskDialog(BuildContext context, Map<String, dynamic> task) {
-
+  void _showResolveTaskDialog(
+      BuildContext context, Map<String, dynamic> task) {
     final c = context.palette;
     final noteController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: c.success),
-            SizedBox(width: 8),
-            Text('Selesaikan Tiket'),
+            SvgPicture.asset(
+              'assets/icons/Doublecheck.svg',
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(c.success, BlendMode.srcIn),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Selesaikan Tiket', style: AppTextStyles.h4(c)),
           ],
         ),
         content: SingleChildScrollView(
@@ -566,20 +558,21 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tiket: ${task['ticketId']}',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              const Text('Catatan penyelesaian:',
-                  style: TextStyle(fontSize: 13)),
-              const SizedBox(height: 8),
+              Text(
+                'Tiket: ${task['ticketId']}',
+                style: AppTextStyles.body(c)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Catatan penyelesaian:', style: AppTextStyles.bodySm(c)),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: noteController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Jelaskan hasil kerja Anda...',
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusMedium),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
@@ -613,6 +606,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: c.success,
+              elevation: 0,
             ),
             child: const Text('Selesaikan'),
           ),

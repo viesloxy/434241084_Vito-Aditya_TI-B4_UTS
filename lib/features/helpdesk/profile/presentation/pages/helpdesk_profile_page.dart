@@ -1,271 +1,218 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_spacing.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/theme/app_palette.dart';
 
-/// Halaman profil untuk role Helpdesk.
-/// Berbeda dengan Admin Profile: role badge "Helpdesk" (bukan Administrator),
-/// ada statistik personal, dan Work Preferences menu.
+/// Helpdesk Profile ala FlutterShop — ListView, DividerListTile, SVG icons.
 class HelpdeskProfilePage extends StatelessWidget {
   const HelpdeskProfilePage({super.key});
+
+  static const _name = 'John Helpdesk';
+  static const _email = 'john.h@university.ac.id';
+  static const _nip = '1987654321';
+  static const _dept = 'IT Support';
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    const helpdeskName = 'John Helpdesk';
-    const helpdeskEmail = 'john.h@university.ac.id';
-    const helpdeskRole = 'Helpdesk';
-    const helpdeskNip = '1987654321';
-    const helpdeskDept = 'IT Support';
-
-    final menuItems = [
-      {
-        'icon': Icons.analytics_outlined,
-        'title': 'Statistik Lengkap',
-        'onTap': () => _showComingSoon(context),
-      },
-      {
-        'icon': Icons.work_outline,
-        'title': 'Preferensi Kerja',
-        'onTap': () => _showComingSoon(context),
-      },
-      {
-        'icon': Icons.lock_outlined,
-        'title': 'Ubah Password',
-        'onTap': () => _showComingSoon(context),
-      },
-      {
-        'icon': Icons.notifications_outlined,
-        'title': 'Pengaturan Notifikasi',
-        'onTap': () => _showComingSoon(context),
-      },
-      {
-        'icon': Icons.info_outlined,
-        'title': 'Tentang Aplikasi',
-        'onTap': () => _showComingSoon(context),
-      },
-    ];
-
     return Scaffold(
       backgroundColor: c.background,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 600;
-          return SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHeader(context, helpdeskName, helpdeskEmail,
-                      helpdeskRole, isWide),
-                  SizedBox(
-                      height: isWide
-                          ? AppSpacing.xxl
-                          : AppSpacing.lg),
-                  _buildMiniStats(context, isWide),
-                  SizedBox(
-                      height: isWide
-                          ? AppSpacing.xxl
-                          : AppSpacing.lg),
-                  _buildAccountInfo(context, helpdeskName, helpdeskEmail,
-                      helpdeskRole, helpdeskNip, helpdeskDept, isWide),
-                  SizedBox(
-                      height: isWide
-                          ? AppSpacing.xxl
-                          : AppSpacing.lg),
-                  _buildMenuSection(context, menuItems, isWide),
-                  SizedBox(
-                      height: isWide
-                          ? AppSpacing.xxl
-                          : AppSpacing.lg),
-                  _buildLogoutSection(context, isWide),
-                  const SizedBox(height: AppSpacing.xxl),
-                ],
-              ),
-            ),
-          );
-        },
+      appBar: AppBar(
+        backgroundColor: c.surface,
+        elevation: 0,
+        title: Text('Profil', style: AppTextStyles.h4(c)),
+        centerTitle: true,
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, String name, String email,
-      String role, bool isWide) {
-
-    final c = context.palette;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(
-          isWide ? AppSpacing.xxl : AppSpacing.lg),
-      color: c.surface,
-      child: Column(
+      body: ListView(
         children: [
-          CircleAvatar(
-            radius: isWide ? 50 : 40,
-            backgroundColor: c.surfaceAlt,
-            backgroundImage: const AssetImage('assets/images/profil.jpeg'),
-          ),
-          SizedBox(
-              height: isWide ? AppSpacing.lg : AppSpacing.md),
-          Text(name,
-              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 22 : 20,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary)),
-          SizedBox(height: AppSpacing.xs),
-          Text(email,
-              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 16 : 14,
-                  color: c.textSecondary)),
-          SizedBox(
-              height:
-                  isWide ? AppSpacing.lg : AppSpacing.md),
+          // ── Profile card ──────────────────────────────────────────────
           Container(
-            padding: EdgeInsets.symmetric(
-                horizontal: isWide ? 16 : 12,
-                vertical: isWide ? 8 : 6),
-            decoration: BoxDecoration(
-                color: const Color(0xFFDBEAFE),
-                borderRadius: BorderRadius.circular(20)),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.support_agent,
-                    size: isWide ? 18 : 16, color: const Color(0xFF1E40AF)),
-                const SizedBox(width: 4),
-                Text(role,
-                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 14 : 12,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF1E40AF))),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniStats(BuildContext context, bool isWide) {
-
-    final c = context.palette;
-    final stats = [
-      {'label': 'Tugas', 'value': '45', 'icon': Icons.assignment_outlined},
-      {'label': 'Selesai', 'value': '38', 'icon': Icons.check_circle_outline},
-      {
-        'label': 'Avg Time',
-        'value': '2.1 jam',
-        'icon': Icons.schedule_outlined
-      },
-    ];
-
-    return Container(
-      margin: EdgeInsets.symmetric(
-          horizontal: isWide ? AppSpacing.xxl : 0),
-      padding: EdgeInsets.symmetric(
-          horizontal: isWide ? AppSpacing.xl : AppSpacing.lg,
-          vertical: AppSpacing.lg),
-      color: c.surface,
-      child: Row(
-        children: stats.map((s) {
-          return Expanded(
+            color: c.surface,
             child: Column(
               children: [
-                Icon(s['icon'] as IconData,
-                    color: const Color(0xFF3B82F6),
-                    size: isWide ? 24 : 20),
-                const SizedBox(height: 4),
-                Text(s['value'] as String,
-                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 18 : 16,
-                        fontWeight: FontWeight.w700,
-                        color: c.textPrimary)),
-                Text(s['label'] as String,
-                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 12 : 11,
-                        color: c.textSecondary)),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
+                  ),
+                  leading: const CircleAvatar(
+                    radius: 28,
+                    backgroundImage: AssetImage('assets/images/profil.jpeg'),
+                  ),
+                  title: Text(
+                    _name,
+                    style: AppTextStyles.bodyLg(c)
+                        .copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    _email,
+                    style:
+                        AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
+                  ),
+                  trailing: SvgPicture.asset(
+                    'assets/icons/miniRight.svg',
+                    width: 16,
+                    height: 16,
+                    colorFilter:
+                        ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+                  ),
+                  onTap: () {},
+                ),
+                Divider(height: 1, color: c.divider),
+                // Role badge + NIP
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                        decoration: BoxDecoration(
+                          color: c.primaryLight,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          'Helpdesk',
+                          style: AppTextStyles.caption(c).copyWith(
+                            color: c.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Text(
+                        'NIP: $_nip',
+                        style: AppTextStyles.caption(c)
+                            .copyWith(color: c.textSecondary),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _dept,
+                        style: AppTextStyles.caption(c)
+                            .copyWith(color: c.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+          ),
 
-  Widget _buildAccountInfo(BuildContext context, String name, String email, String role, String nip,
-      String dept, bool isWide) {
+          const SizedBox(height: AppSpacing.sm),
 
-    final c = context.palette;
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(
-          horizontal: isWide ? AppSpacing.xxl : 0),
-      padding: EdgeInsets.all(
-          isWide ? AppSpacing.xl : AppSpacing.lg),
-      color: c.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Informasi Akun',
-              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 18 : 16,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary)),
-          SizedBox(
-              height: isWide ? AppSpacing.lg : AppSpacing.md),
-          _InfoRow(label: 'Nama Lengkap', value: name, isWide: isWide),
-          _InfoRow(label: 'Email', value: email, isWide: isWide),
-          _InfoRow(label: 'Role', value: role, isWide: isWide),
-          _InfoRow(label: 'NIP', value: nip, isWide: isWide),
-          _InfoRow(label: 'Departemen', value: dept, isWide: isWide),
-        ],
-      ),
-    );
-  }
+          // ── Mini stats ────────────────────────────────────────────────
+          Container(
+            color: c.surface,
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: Row(
+              children: [
+                _MiniStat(
+                    svgAsset: 'assets/icons/Order.svg',
+                    value: '45',
+                    label: 'Tugas'),
+                _Divider(),
+                _MiniStat(
+                    svgAsset: 'assets/icons/Doublecheck.svg',
+                    value: '38',
+                    label: 'Selesai'),
+                _Divider(),
+                _MiniStat(
+                    svgAsset: 'assets/icons/Clock.svg',
+                    value: '2.1j',
+                    label: 'Avg Time'),
+              ],
+            ),
+          ),
 
-  Widget _buildMenuSection(
-      BuildContext context, List<Map<String, dynamic>> menuItems, bool isWide) {
-    final c = context.palette;
-    return Container(
-      color: c.surface,
-      child: Column(
-        children: List.generate(menuItems.length, (index) {
-          final item = menuItems[index];
-          return Column(
-            children: [
-              ListTile(
-                leading: Icon(item['icon'] as IconData,
-                    color: c.textSecondary,
-                    size: isWide ? 26 : 24),
-                title: Text(item['title'] as String,
-                    style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 17 : 16,
-                        color: c.textPrimary)),
-                trailing: Icon(Icons.chevron_right,
-                    color: c.textSecondary),
-                onTap: item['onTap'] as VoidCallback,
+          const SizedBox(height: AppSpacing.sm),
+
+          // ── Menu section ──────────────────────────────────────────────
+          Container(
+            color: c.surface,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+                  child: Text(
+                    'Akun',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: c.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+                _DividerMenuTile(
+                  svgAsset: 'assets/icons/Order.svg',
+                  title: 'Statistik Lengkap',
+                  onTap: () => _showComingSoon(context),
+                ),
+                _DividerMenuTile(
+                  svgAsset: 'assets/icons/Setting.svg',
+                  title: 'Preferensi Kerja',
+                  onTap: () => _showComingSoon(context),
+                ),
+                _DividerMenuTile(
+                  svgAsset: 'assets/icons/Lock.svg',
+                  title: 'Ubah Password',
+                  onTap: () => _showComingSoon(context),
+                ),
+                _DividerMenuTile(
+                  svgAsset: 'assets/icons/Notification.svg',
+                  title: 'Pengaturan Notifikasi',
+                  onTap: () => _showComingSoon(context),
+                ),
+                _DividerMenuTile(
+                  svgAsset: 'assets/icons/info.svg',
+                  title: 'Tentang Aplikasi',
+                  onTap: () => _showComingSoon(context),
+                  showDivider: false,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+
+          // ── Logout ────────────────────────────────────────────────────
+          Container(
+            color: c.surface,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: c.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/icons/Logout.svg',
+                    width: 20,
+                    height: 20,
+                    colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
+                  ),
+                ),
               ),
-              if (index < menuItems.length - 1)
-                Divider(
-                    height: 1,
-                    indent: isWide ? 72 : 56,
-                    color: c.divider),
-            ],
-          );
-        }),
-      ),
-    );
-  }
+              title: Text(
+                'Keluar',
+                style: AppTextStyles.body(c).copyWith(color: c.error),
+              ),
+              onTap: () => _showLogoutDialog(context),
+            ),
+          ),
 
-  Widget _buildLogoutSection(BuildContext context, bool isWide) {
-
-    final c = context.palette;
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(
-          horizontal: isWide ? AppSpacing.xxl : 0),
-      padding: EdgeInsets.all(
-          isWide ? AppSpacing.xl : AppSpacing.lg),
-      color: c.surface,
-      child: ListTile(
-        leading: Icon(Icons.logout,
-            color: c.error, size: isWide ? 26 : 24),
-        title: Text('Keluar',
-            style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 17 : 16, color: c.error)),
-        onTap: () => _showLogoutDialog(context, isWide),
+          const SizedBox(height: AppSpacing.xxl),
+        ],
       ),
     );
   }
@@ -273,43 +220,47 @@ class HelpdeskProfilePage extends StatelessWidget {
   void _showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Fitur segera hadir'),
-          behavior: SnackBarBehavior.floating),
+        content: Text('Fitur segera hadir'),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
-  void _showLogoutDialog(BuildContext context, bool isWide) {
-
+  void _showLogoutDialog(BuildContext context) {
     final c = context.palette;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(isWide ? 20 : AppRadius.lg)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-                width: isWide ? 80 : 64,
-                height: isWide ? 80 : 64,
-                decoration: BoxDecoration(
-                    color: c.error.withValues(alpha: 0.1),
-                    shape: BoxShape.circle),
-                child: Icon(Icons.logout,
-                    size: isWide ? 40 : 32, color: c.error)),
-            SizedBox(
-                height: isWide
-                    ? AppSpacing.xl
-                    : AppSpacing.lg),
-            Text('Keluar?',
-                style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary)),
-            SizedBox(height: AppSpacing.sm),
-            Text('Apakah Anda yakin ingin keluar dari akun Helpdesk?',
-                style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: 14, color: c.textSecondary),
-                textAlign: TextAlign.center),
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: c.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/Logout.svg',
+                  width: 32,
+                  height: 32,
+                  colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text('Keluar?', style: AppTextStyles.h4(c)),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Apakah Anda yakin ingin keluar dari akun Helpdesk?',
+              style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
@@ -321,10 +272,13 @@ class HelpdeskProfilePage extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                AppRadius.md))),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.all(Radius.circular(AppRadius.md)),
+                      ),
+                    ),
                     child: const Text('Batal'),
                   ),
                 ),
@@ -338,15 +292,21 @@ class HelpdeskProfilePage extends StatelessWidget {
                         await AuthService().signOut();
                       } catch (_) {}
                       navigator.pushNamedAndRemoveUntil(
-                        '/login', (route) => false,
+                        '/login',
+                        (route) => false,
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: c.error,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                AppRadius.md))),
+                      backgroundColor: c.error,
+                      foregroundColor: Colors.white,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.all(Radius.circular(AppRadius.md)),
+                      ),
+                      elevation: 0,
+                    ),
                     child: const Text('Keluar'),
                   ),
                 ),
@@ -359,30 +319,103 @@ class HelpdeskProfilePage extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
+class _MiniStat extends StatelessWidget {
+  final String svgAsset;
   final String value;
-  final bool isWide;
+  final String label;
 
-  const _InfoRow(
-      {required this.label, required this.value, required this.isWide});
+  const _MiniStat({
+    required this.svgAsset,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Expanded(
+      child: Column(
         children: [
-          Text(label,
-              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 15 : 14, color: c.textSecondary)),
-          Text(value,
-              style: TextStyle(fontFamily: 'Plus Jakarta', fontSize: isWide ? 15 : 14,
-                  fontWeight: FontWeight.w500,
-                  color: c.textPrimary)),
+          SvgPicture.asset(
+            svgAsset,
+            width: 20,
+            height: 20,
+            colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value,
+            style: AppTextStyles.bodyLg(c)
+                .copyWith(fontWeight: FontWeight.w700, color: c.textPrimary),
+          ),
+          Text(
+            label,
+            style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    return Container(width: 1, height: 40, color: c.divider);
+  }
+}
+
+class _DividerMenuTile extends StatelessWidget {
+  final String svgAsset;
+  final String title;
+  final VoidCallback onTap;
+  final bool showDivider;
+
+  const _DividerMenuTile({
+    required this.svgAsset,
+    required this.title,
+    required this.onTap,
+    this.showDivider = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.xs,
+          ),
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: c.primaryLight,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                svgAsset,
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
+              ),
+            ),
+          ),
+          title: Text(title, style: AppTextStyles.body(c)),
+          trailing: SvgPicture.asset(
+            'assets/icons/miniRight.svg',
+            width: 16,
+            height: 16,
+            colorFilter: ColorFilter.mode(c.textTertiary, BlendMode.srcIn),
+          ),
+          onTap: onTap,
+        ),
+        if (showDivider) Divider(height: 1, indent: 68, color: c.divider),
+      ],
     );
   }
 }
