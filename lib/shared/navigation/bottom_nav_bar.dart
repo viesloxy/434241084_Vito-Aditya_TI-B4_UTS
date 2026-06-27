@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../core/constants/app_radius.dart';
+import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_palette.dart';
 
+/// Bottom nav bar User — floating pill, radius 24, shadow, 5 items with center Buat button.
+/// Icons: Category (Beranda) / Order (Tiket) / Plus1 center / Notification / Profile.
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -14,58 +19,59 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return Container(
-      decoration: BoxDecoration(
-        color: c.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 3,
-            offset: Offset(0, -1),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home,
-                label: 'Beranda',
-                isActive: currentIndex == 0,
-                onTap: () => onTap(0),
-              ),
-              _NavItem(
-                icon: Icons.description_outlined,
-                activeIcon: Icons.description,
-                label: 'Tiket Saya',
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              _CreateTicketNavItem(
-                isActive: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-              _NavItem(
-                icon: Icons.notifications_outlined,
-                activeIcon: Icons.notifications,
-                label: 'Notifikasi',
-                isActive: currentIndex == 3,
-                onTap: () => onTap(3),
-                badgeCount: 3,
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                label: 'Profil',
-                isActive: currentIndex == 4,
-                onTap: () => onTap(4),
-              ),
-            ],
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  svgAsset: 'assets/icons/Category.svg',
+                  label: 'Beranda',
+                  isActive: currentIndex == 0,
+                  onTap: () => onTap(0),
+                ),
+                _NavItem(
+                  svgAsset: 'assets/icons/Order.svg',
+                  label: 'Tiket Saya',
+                  isActive: currentIndex == 1,
+                  onTap: () => onTap(1),
+                ),
+                _CreateNavItem(
+                  isActive: currentIndex == 2,
+                  onTap: () => onTap(2),
+                ),
+                _NavItem(
+                  svgAsset: 'assets/icons/Notification.svg',
+                  label: 'Notifikasi',
+                  isActive: currentIndex == 3,
+                  onTap: () => onTap(3),
+                  badgeCount: 3,
+                ),
+                _NavItem(
+                  svgAsset: 'assets/icons/Profile.svg',
+                  label: 'Profil',
+                  isActive: currentIndex == 4,
+                  onTap: () => onTap(4),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -74,16 +80,14 @@ class BottomNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final IconData activeIcon;
+  final String svgAsset;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
   final int badgeCount;
 
   const _NavItem({
-    required this.icon,
-    required this.activeIcon,
+    required this.svgAsset,
     required this.label,
     required this.isActive,
     required this.onTap,
@@ -93,36 +97,43 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: SizedBox(
-        width: 64,
+        width: 60,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(
-                  isActive ? activeIcon : icon,
-                  size: 24,
-                  color: isActive ? c.primary : c.textSecondary,
+                SvgPicture.asset(
+                  svgAsset,
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                    isActive ? c.primary : c.textSecondary,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 if (badgeCount > 0)
                   Positioned(
                     right: -6,
                     top: -4,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: c.error,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      constraints:
+                          const BoxConstraints(minWidth: 16, minHeight: 16),
                       child: Text(
                         badgeCount > 9 ? '9+' : badgeCount.toString(),
                         style: const TextStyle(
+                          fontFamily: 'Plus Jakarta',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -137,7 +148,8 @@ class _NavItem extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontFamily: 'Plus Jakarta',
+                fontSize: 10,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? c.primary : c.textSecondary,
               ),
@@ -149,45 +161,48 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _CreateTicketNavItem extends StatelessWidget {
+class _CreateNavItem extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
-  const _CreateTicketNavItem({
-    required this.isActive,
-    required this.onTap,
-  });
+  const _CreateNavItem({required this.isActive, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: SizedBox(
-        width: 56,
+        width: 60,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 44,
-              height: 32,
+              width: 40,
+              height: 28,
               decoration: BoxDecoration(
-                color: isActive ? c.primary : c.primaryLight,
-                borderRadius: BorderRadius.circular(16),
+                color: c.primary,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                Icons.add,
-                size: 24,
-                color: isActive ? Colors.white : c.primary,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/Plus1.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter:
+                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                ),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Buat',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? c.primary : c.textSecondary,
+                fontFamily: 'Plus Jakarta',
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: c.primary,
               ),
             ),
           ],

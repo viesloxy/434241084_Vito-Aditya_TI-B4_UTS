@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/constants/app_radius.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../core/theme/app_palette.dart';
@@ -20,12 +23,12 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   String? _selectedPriority;
   bool _isLoading = false;
 
-  final List<Map<String, dynamic>> _categories = [
-    {'name': 'Akademik', 'icon': Icons.menu_book_outlined, 'value': 'akademik'},
-    {'name': 'Teknologi', 'icon': Icons.laptop_mac, 'value': 'teknologi'},
-    {'name': 'Fasilitas', 'icon': Icons.business_outlined, 'value': 'fasilitas'},
-    {'name': 'Keuangan', 'icon': Icons.credit_card_outlined, 'value': 'keuangan'},
-    {'name': 'Lainnya', 'icon': Icons.more_horiz, 'value': 'lainnya'},
+  static const _categories = [
+    {'name': 'Akademik', 'svgAsset': 'assets/icons/Order.svg', 'value': 'akademik'},
+    {'name': 'Teknologi', 'svgAsset': 'assets/icons/Setting.svg', 'value': 'teknologi'},
+    {'name': 'Fasilitas', 'svgAsset': 'assets/icons/Stores.svg', 'value': 'fasilitas'},
+    {'name': 'Keuangan', 'svgAsset': 'assets/icons/Cash.svg', 'value': 'keuangan'},
+    {'name': 'Lainnya', 'svgAsset': 'assets/icons/Category.svg', 'value': 'lainnya'},
   ];
 
   final List<Map<String, dynamic>> _priorities = [
@@ -61,7 +64,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
           content: const Text('Pilih kategori tiket'),
           backgroundColor: c.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          ),
+          margin: const EdgeInsets.all(AppSpacing.lg),
         ),
       );
       return;
@@ -73,7 +79,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
           content: const Text('Pilih tingkat prioritas'),
           backgroundColor: c.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+          ),
+          margin: const EdgeInsets.all(AppSpacing.lg),
         ),
       );
       return;
@@ -87,33 +96,37 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Tiket berhasil dibuat!'),
+                SvgPicture.asset(
+                  'assets/icons/Doublecheck.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter:
+                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                const Text('Tiket berhasil dibuat!'),
               ],
             ),
             backgroundColor: c.success,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+            ),
+            margin: const EdgeInsets.all(AppSpacing.lg),
           ),
         );
 
-        // Navigate back to home after short delay
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            Navigator.pop(context);
-          }
+          if (mounted) Navigator.pop(context);
         });
       }
     }
   }
 
   void _handleClose(BuildContext context) {
-
     final c = context.palette;
-    // Check if form has data
     final hasData = _titleController.text.isNotEmpty ||
         _descriptionController.text.isNotEmpty ||
         _selectedCategory != null ||
@@ -123,11 +136,12 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
           ),
-          title: const Text('Batalkan Tiket?'),
-          content: const Text('Data yang sudah diisi akan hilang.'),
+          title: Text('Batalkan Tiket?', style: AppTextStyles.h4(c)),
+          content: Text('Data yang sudah diisi akan hilang.',
+              style: AppTextStyles.body(c)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -135,8 +149,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back to previous page
+                Navigator.pop(context);
+                Navigator.pop(context);
               },
               style: TextButton.styleFrom(foregroundColor: c.error),
               child: const Text('Batalkan'),
@@ -158,13 +172,15 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         backgroundColor: c.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: c.textPrimary),
+          icon: SvgPicture.asset(
+            'assets/icons/Close.svg',
+            width: 22,
+            height: 22,
+            colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => _handleClose(context),
         ),
-        title: Text(
-          'Buat Tiket Baru',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: c.textPrimary),
-        ),
+        title: Text('Buat Tiket Baru', style: AppTextStyles.h4(c)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -174,49 +190,65 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppConstants.spacingLg),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Kategori Section
+                      // ── Kategori ──────────────────────────────────────
                       Text(
                         'Kategori *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
+                        style: AppTextStyles.body(c)
+                            .copyWith(fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(height: AppConstants.spacingSm),
+                      const SizedBox(height: AppSpacing.sm),
                       Wrap(
-                        spacing: AppConstants.spacingSm,
-                        runSpacing: AppConstants.spacingSm,
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
                         children: _categories.map((cat) {
-                          final isSelected = _selectedCategory == cat['value'];
+                          final isSelected =
+                              _selectedCategory == cat['value'];
                           return GestureDetector(
-                            onTap: () => setState(() => _selectedCategory = cat['value']),
+                            onTap: () => setState(
+                                () => _selectedCategory = cat['value']),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm),
                               decoration: BoxDecoration(
                                 color: isSelected ? c.primaryLight : c.surface,
-                                borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
                                 border: Border.all(
-                                  color: isSelected ? c.primary : c.border,
+                                  color:
+                                      isSelected ? c.primary : c.border,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    cat['icon'],
-                                    size: 16,
-                                    color: isSelected ? c.primary : c.textSecondary,
+                                  SvgPicture.asset(
+                                    cat['svgAsset'] as String,
+                                    width: 16,
+                                    height: 16,
+                                    colorFilter: ColorFilter.mode(
+                                      isSelected
+                                          ? c.primary
+                                          : c.textSecondary,
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    cat['name'],
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? c.primary : c.textPrimary,
+                                    cat['name'] as String,
+                                    style: AppTextStyles.bodySm(c).copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? c.primary
+                                          : c.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -226,22 +258,23 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         }).toList(),
                       ),
 
-                      const SizedBox(height: AppConstants.spacing2xl),
+                      const SizedBox(height: AppSpacing.xxl),
 
-                      // Judul Field
+                      // ── Judul Field ───────────────────────────────────
                       CustomTextField(
                         controller: _titleController,
                         hintText: 'Ringkasan masalah Anda',
                         labelText: 'Judul *',
-                        prefixIcon: const AppFieldPrefix(svgAsset: 'assets/icons/Edit Square.svg'),
+                        prefixIcon: const AppFieldPrefix(
+                            svgAsset: 'assets/icons/Edit Square.svg'),
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         validator: _validateTitle,
                       ),
 
-                      const SizedBox(height: AppConstants.spacingLg),
+                      const SizedBox(height: AppSpacing.lg),
 
-                      // Deskripsi Field
+                      // ── Deskripsi Field ───────────────────────────────
                       CustomTextField(
                         controller: _descriptionController,
                         hintText: 'Jelaskan masalah Anda secara detail...',
@@ -250,41 +283,55 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         validator: _validateDescription,
                       ),
 
-                      const SizedBox(height: AppConstants.spacing2xl),
+                      const SizedBox(height: AppSpacing.xxl),
 
-                      // Prioritas Section
+                      // ── Prioritas ─────────────────────────────────────
                       Text(
                         'Prioritas *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
+                        style: AppTextStyles.body(c)
+                            .copyWith(fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(height: AppConstants.spacingSm),
+                      const SizedBox(height: AppSpacing.sm),
                       Row(
                         children: _priorities.map((pri) {
-                          final isSelected = _selectedPriority == pri['value'];
+                          final isSelected =
+                              _selectedPriority == pri['value'];
+                          final isLast = pri['value'] == 'tinggi';
                           return Expanded(
                             child: GestureDetector(
-                              onTap: () => setState(() => _selectedPriority = pri['value']),
+                              onTap: () => setState(
+                                  () => _selectedPriority =
+                                      pri['value'] as String),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 margin: EdgeInsets.only(
-                                  right: pri['value'] != 'tinggi' ? AppConstants.spacingSm : 0,
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                    right: isLast ? 0 : AppSpacing.sm),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: AppSpacing.md),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? pri['color'].withValues(alpha: 0.15) : c.surface,
-                                  borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+                                  color: isSelected
+                                      ? (pri['color'] as Color)
+                                          .withValues(alpha: 0.15)
+                                      : c.surface,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.sm),
                                   border: Border.all(
-                                    color: isSelected ? pri['color'] : c.border,
+                                    color: isSelected
+                                        ? pri['color'] as Color
+                                        : c.border,
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    pri['name'],
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? pri['color'] : c.textPrimary,
+                                    pri['name'] as String,
+                                    style: AppTextStyles.body(c).copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? pri['color'] as Color
+                                          : c.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -294,45 +341,59 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         }).toList(),
                       ),
 
-                      const SizedBox(height: AppConstants.spacing2xl),
+                      const SizedBox(height: AppSpacing.xxl),
 
-                      // Lampiran Section
+                      // ── Lampiran ──────────────────────────────────────
                       Text(
                         'Lampiran (Opsional)',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
+                        style: AppTextStyles.body(c)
+                            .copyWith(fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(height: AppConstants.spacingSm),
+                      const SizedBox(height: AppSpacing.sm),
                       GestureDetector(
                         onTap: () {
-                          // Image picker would go here
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Fitur lampiran akan segera hadir'),
+                              content:
+                                  const Text('Fitur lampiran akan segera hadir'),
                               behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(
+                                    Radius.circular(AppRadius.md)),
+                              ),
+                              margin: const EdgeInsets.all(AppSpacing.lg),
                             ),
                           );
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(AppConstants.spacing2xl),
+                          padding: const EdgeInsets.all(AppSpacing.xxl),
                           decoration: BoxDecoration(
                             color: c.surface,
-                            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-                            border: Border.all(color: c.border, style: BorderStyle.solid),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.md),
+                            border: Border.all(color: c.border, width: 1),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.add_photo_alternate_outlined, size: 40, color: c.textSecondary),
-                              const SizedBox(height: AppConstants.spacingSm),
+                              SvgPicture.asset(
+                                'assets/icons/Camera-add.svg',
+                                width: 40,
+                                height: 40,
+                                colorFilter: ColorFilter.mode(
+                                    c.textSecondary, BlendMode.srcIn),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
                               Text(
                                 'Tambah File',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.primary),
+                                style: AppTextStyles.body(c)
+                                    .copyWith(color: c.primary),
                               ),
-                              const SizedBox(height: AppConstants.spacingXs),
+                              const SizedBox(height: AppSpacing.xs),
                               Text(
                                 'Maksimal 5MB per file',
-                                style: TextStyle(fontSize: 12, color: c.textSecondary),
+                                style: AppTextStyles.caption(c)
+                                    .copyWith(color: c.textSecondary),
                               ),
                             ],
                           ),
@@ -343,18 +404,17 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 ),
               ),
 
-              // Submit Button
+              // ── Submit Button ──────────────────────────────────────────
               Container(
-                padding: const EdgeInsets.all(AppConstants.spacingLg),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
                   color: c.surface,
-                  boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, -2))],
+                  border: Border(top: BorderSide(color: c.divider, width: 1)),
                 ),
                 child: CustomButton(
                   text: 'Kirim Tiket',
                   onPressed: () => _handleSubmit(context),
                   isLoading: _isLoading,
-                  icon: Icons.send,
                 ),
               ),
             ],
