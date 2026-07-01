@@ -4,7 +4,7 @@ import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../widgets/admin_stat_card.dart';
-import '../../../widgets/admin_category_chip.dart';
+import '../../../../home/presentation/widgets/category_card.dart';
 import '../../../widgets/admin_ticket_card.dart';
 import '../../../widgets/loading_skeleton.dart';
 import '../../../widgets/empty_state.dart';
@@ -37,11 +37,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   ];
 
   final List<Map<String, dynamic>> _categories = [
-    {'category': 'Akademik', 'count': 45, 'icon': Icons.menu_book_outlined},
-    {'category': 'Teknologi', 'count': 38, 'icon': Icons.computer},
-    {'category': 'Fasilitas', 'count': 28, 'icon': Icons.business_outlined},
-    {'category': 'Keuangan', 'count': 15, 'icon': Icons.account_balance_wallet_outlined},
-    {'category': 'Lainnya', 'count': 30, 'icon': Icons.more_horiz},
+    {'category': 'Akademik', 'count': 45, 'svgAsset': 'assets/icons/Order.svg'},
+    {'category': 'Teknologi', 'count': 38, 'svgAsset': 'assets/icons/Setting.svg'},
+    {'category': 'Fasilitas', 'count': 28, 'svgAsset': 'assets/icons/Stores.svg'},
+    {'category': 'Keuangan', 'count': 15, 'svgAsset': 'assets/icons/Cash.svg'},
+    {'category': 'Lainnya', 'count': 30, 'svgAsset': 'assets/icons/Category.svg'},
   ];
 
   final List<Map<String, dynamic>> _recentTickets = [
@@ -134,30 +134,30 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
               ),
 
-              // ===== Categories: horizontal chips =====
+              // ===== Categories: horizontal cards =====
               SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 48,
-                  child: ListView.separated(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg),
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(width: AppSpacing.sm),
-                    itemBuilder: (context, index) {
-                      final cat = _categories[index];
-                      return AdminCategoryChip(
-                        category: cat['category'] as String,
-                        count: cat['count'] as int,
-                        icon: cat['icon'] as IconData,
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          '/admin/tickets',
-                          arguments: {'category': cat['category']},
-                        ),
-                      );
-                    },
+                    child: Row(
+                      children: _categories
+                          .map((cat) => Padding(
+                                padding: const EdgeInsets.only(
+                                    right: AppSpacing.sm),
+                                child: CategoryCard(
+                                  category: cat['category'] as String,
+                                  count: cat['count'] as int,
+                                  svgAsset: cat['svgAsset'] as String,
+                                  onTap: () => Navigator.pushNamed(
+                                    context,
+                                    '/admin/tickets',
+                                    arguments: {'category': cat['category']},
+                                  ),
+                                ),
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ),
               ),

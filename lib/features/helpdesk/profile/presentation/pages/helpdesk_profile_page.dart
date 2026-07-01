@@ -165,6 +165,12 @@ class HelpdeskProfilePage extends StatelessWidget {
                   onTap: () => _showComingSoon(context),
                 ),
                 _DividerMenuTile(
+                  svgAsset: 'assets/icons/Setting.svg',
+                  title: 'Tampilan',
+                  onTap: () =>
+                      Navigator.pushNamed(context, '/settings/theme'),
+                ),
+                _DividerMenuTile(
                   svgAsset: 'assets/icons/Notification.svg',
                   title: 'Pengaturan Notifikasi',
                   onTap: () => _showComingSoon(context),
@@ -187,21 +193,12 @@ class HelpdeskProfilePage extends StatelessWidget {
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
-              leading: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: c.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/icons/Logout.svg',
-                    width: 20,
-                    height: 20,
-                    colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
-                  ),
-                ),
+              minLeadingWidth: 24,
+              leading: SvgPicture.asset(
+                'assets/icons/Logout.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(c.error, BlendMode.srcIn),
               ),
               title: Text(
                 'Keluar',
@@ -389,21 +386,12 @@ class _DividerMenuTile extends StatelessWidget {
             horizontal: AppSpacing.lg,
             vertical: AppSpacing.xs,
           ),
-          leading: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: c.primaryLight,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                svgAsset,
-                width: 20,
-                height: 20,
-                colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
-              ),
-            ),
+          minLeadingWidth: 24,
+          leading: SvgPicture.asset(
+            svgAsset,
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
           ),
           title: Text(title, style: AppTextStyles.body(c)),
           trailing: SvgPicture.asset(
@@ -414,7 +402,7 @@ class _DividerMenuTile extends StatelessWidget {
           ),
           onTap: onTap,
         ),
-        if (showDivider) Divider(height: 1, indent: 68, color: c.divider),
+        if (showDivider) Divider(height: 1, color: c.divider),
       ],
     );
   }

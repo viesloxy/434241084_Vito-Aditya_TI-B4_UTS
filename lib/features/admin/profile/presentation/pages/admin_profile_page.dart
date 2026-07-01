@@ -156,6 +156,11 @@ class AdminProfilePage extends StatelessWidget {
             onTap: () => _showComingSoon(context),
           ),
           _DividerMenuTile(
+            svgSrc: 'assets/icons/Setting.svg',
+            text: 'Tampilan',
+            onTap: () => Navigator.pushNamed(context, '/settings/theme'),
+          ),
+          _DividerMenuTile(
             svgSrc: 'assets/icons/Notification.svg',
             text: 'Pengaturan Notifikasi',
             onTap: () => _showComingSoon(context),

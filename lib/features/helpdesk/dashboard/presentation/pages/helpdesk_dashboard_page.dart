@@ -6,6 +6,7 @@ import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../helpdesk/widgets/helpdesk_stat_card.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
 import '../../../../admin/widgets/loading_skeleton.dart';
+import '../../../../home/presentation/widgets/category_card.dart';
 import '../../../../admin/widgets/empty_state.dart';
 import '../../../../admin/widgets/error_state.dart';
 import '../../../../../core/theme/app_palette.dart';
@@ -28,6 +29,14 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
     {'title': 'Tugas Baru', 'count': 5, 'svgAsset': 'assets/icons/Notification.svg'},
     {'title': 'In Progress', 'count': 2, 'svgAsset': 'assets/icons/Loading.svg'},
     {'title': 'Selesai', 'count': 38, 'svgAsset': 'assets/icons/Doublecheck.svg'},
+  ];
+
+  static const _categories = [
+    {'category': 'Akademik', 'count': 12, 'svgAsset': 'assets/icons/Order.svg'},
+    {'category': 'Teknologi', 'count': 18, 'svgAsset': 'assets/icons/Setting.svg'},
+    {'category': 'Fasilitas', 'count': 8, 'svgAsset': 'assets/icons/Stores.svg'},
+    {'category': 'Keuangan', 'count': 5, 'svgAsset': 'assets/icons/Cash.svg'},
+    {'category': 'Lainnya', 'count': 2, 'svgAsset': 'assets/icons/Category.svg'},
   ];
 
   final List<Map<String, dynamic>> _activeTasks = [
@@ -169,6 +178,50 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                             '/helpdesk/tasks',
                             arguments: {'filter': _stats[index]['title']},
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
+
+              // Kategori Tiket
+              SliverToBoxAdapter(
+                child: Container(
+                  color: c.surface,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionHeader(
+                        title: 'Kategori Tiket',
+                        onTap: () => Navigator.pushNamed(
+                            context, '/helpdesk/tasks'),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _categories
+                              .map((cat) => Padding(
+                                    padding: const EdgeInsets.only(
+                                        right: AppSpacing.sm),
+                                    child: CategoryCard(
+                                      category: cat['category'] as String,
+                                      count: cat['count'] as int,
+                                      svgAsset: cat['svgAsset'] as String,
+                                      onTap: () => Navigator.pushNamed(
+                                        context,
+                                        '/helpdesk/tasks',
+                                        arguments: {
+                                          'category': cat['category']
+                                        },
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
                         ),
                       ),
                     ],
