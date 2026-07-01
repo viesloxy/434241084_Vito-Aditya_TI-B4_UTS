@@ -3,7 +3,7 @@
 ## Deskripsi Proyek
 Aplikasi mobile E-Ticketing Helpdesk untuk universitas yang memungkinkan mahasiswa dan staff untuk membuat, melacak, dan mengelola tiket bantuan.
 
-> **Catatan**: Dokumentasi ini fokus pada **Frontend Only**. Backend akan diabaikan untuk saat ini.
+> **Catatan**: Dokumentasi ini mencakup **Frontend** dan **Backend** (Node.js/Express + Supabase). Lihat folder `api/` di docs untuk dokumentasi API lengkap.
 
 ---
 
@@ -20,6 +20,7 @@ Aplikasi mobile E-Ticketing Helpdesk untuk universitas yang memungkinkan mahasis
 | 07 | Notifications | [07-notifications.md](features/07-notifications.md) |
 | 08 | Profile | [08-profile.md](features/08-profile.md) |
 | 09 | Komponen Global | [09-global-components.md](features/09-global-components.md) |
+| 10 | Forgot Password | [10-forgot-password.md](features/10-forgot-password.md) |
 
 ---
 
@@ -37,7 +38,8 @@ docs/
     ├── 06-ticket-detail.md     # Fitur Detail Tiket
     ├── 07-notifications.md     # Fitur Notifikasi
     ├── 08-profile.md           # Fitur Profil
-    └── 09-global-components.md # Komponen UI Global
+    ├── 09-global-components.md # Komponen UI Global
+    └── 10-forgot-password.md  # Fitur Lupa Password (FR-004)
 ```
 
 ---

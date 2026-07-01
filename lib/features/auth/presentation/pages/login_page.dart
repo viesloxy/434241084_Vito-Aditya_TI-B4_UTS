@@ -229,16 +229,8 @@ class _LoginPageState extends State<LoginPage> {
                     // ===== Lupa password (center ala FlutterShop) =====
                     Align(
                       child: TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            _floatingSnackBar(
-                              context: context,
-                              message: 'Hubungi admin untuk reset password.',
-                              background: c.info,
-                              icon: Icons.info_outline,
-                            ),
-                          );
-                        },
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/forgot-password'),
                         child: const Text('Lupa password?'),
                       ),
                     ),

@@ -79,6 +79,14 @@ class AuthService {
     return AppUser.fromJson(data);
   }
 
+  /// Kirim email reset password (FR-004)
+  Future<void> resetPassword(String email) async {
+    await _client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'eticketing://reset-password',
+    );
+  }
+
   /// Stream auth state changes (untuk listener global)
   Stream<sb.AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 }

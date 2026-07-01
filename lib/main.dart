@@ -6,6 +6,7 @@ import 'core/theme/theme_mode_controller.dart';
 import 'features/splash/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
+import 'features/auth/presentation/pages/forgot_password_page.dart';
 import 'features/home/pages/main_scaffold_page.dart';
 import 'features/tickets/pages/create_ticket_page.dart';
 import 'features/tickets/pages/ticket_detail_page.dart';
@@ -65,6 +66,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
 
         // User Routes
         '/home': (context) => const MainScaffoldPage(),
