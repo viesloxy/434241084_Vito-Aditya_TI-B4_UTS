@@ -3,8 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/models/ticket.dart';
+import '../../../../../core/services/app_state.dart';
+import '../../../../../core/services/ticket_service.dart';
 import '../../../widgets/admin_stat_card.dart';
-import '../../../../home/presentation/widgets/category_card.dart';
 import '../../../widgets/admin_ticket_card.dart';
 import '../../../widgets/loading_skeleton.dart';
 import '../../../widgets/empty_state.dart';
@@ -27,30 +29,18 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  final _ticketService = TicketService();
   DashboardState _state = DashboardState.loading;
+  String? _errorMessage;
 
-  final List<Map<String, dynamic>> _stats = [
-    {'title': 'Total Tiket', 'count': 156, 'svgAsset': 'assets/icons/Order.svg'},
-    {'title': 'Tiket Baru', 'count': 23, 'svgAsset': 'assets/icons/Notification.svg'},
-    {'title': 'Sedang Diproses', 'count': 45, 'svgAsset': 'assets/icons/Loading.svg'},
-    {'title': 'Selesai', 'count': 88, 'svgAsset': 'assets/icons/Doublecheck.svg'},
+  List<Map<String, dynamic>> _stats = [
+    {'title': 'Total Tiket', 'count': 0, 'svgAsset': 'assets/icons/Order.svg'},
+    {'title': 'Tiket Baru', 'count': 0, 'svgAsset': 'assets/icons/Notification.svg'},
+    {'title': 'Sedang Diproses', 'count': 0, 'svgAsset': 'assets/icons/Loading.svg'},
+    {'title': 'Selesai', 'count': 0, 'svgAsset': 'assets/icons/Doublecheck.svg'},
   ];
 
-  final List<Map<String, dynamic>> _categories = [
-    {'category': 'Akademik', 'count': 45, 'svgAsset': 'assets/icons/Order.svg'},
-    {'category': 'Teknologi', 'count': 38, 'svgAsset': 'assets/icons/Setting.svg'},
-    {'category': 'Fasilitas', 'count': 28, 'svgAsset': 'assets/icons/Stores.svg'},
-    {'category': 'Keuangan', 'count': 15, 'svgAsset': 'assets/icons/Cash.svg'},
-    {'category': 'Lainnya', 'count': 30, 'svgAsset': 'assets/icons/Category.svg'},
-  ];
-
-  final List<Map<String, dynamic>> _recentTickets = [
-    {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'category': 'Teknologi', 'status': 'submitted', 'priority': 'tinggi', 'date': '5 menit lalu', 'assignedTo': null, 'createdBy': 'Ahmad Rizki'},
-    {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'category': 'Akademik', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '15 menit lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Budi Santoso'},
-    {'ticketId': '#TK-2024-003', 'title': 'Kerusakan AC di ruang kelas L201', 'category': 'Fasilitas', 'status': 'in_progress', 'priority': 'rendah', 'date': '30 menit lalu', 'assignedTo': 'Sarah Helpdesk', 'createdBy': 'Dewi Lestari'},
-    {'ticketId': '#TK-2024-004', 'title': 'Tagihan UKT semester genap', 'category': 'Keuangan', 'status': 'resolved', 'priority': 'sedang', 'date': '1 jam lalu', 'assignedTo': 'Budi Helpdesk', 'createdBy': 'Eko Prasetyo'},
-    {'ticketId': '#TK-2024-005', 'title': 'Permintaan akses perpustakaan digital', 'category': 'Akademik', 'status': 'in_progress', 'priority': 'tinggi', 'date': '2 jam lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Fajar Nugroho'},
-  ];
+  List<Ticket> _recentTickets = [];
 
   @override
   void initState() {
@@ -60,19 +50,44 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Future<void> _loadData() async {
     setState(() => _state = DashboardState.loading);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _state = _recentTickets.isEmpty
-        ? DashboardState.empty
-        : DashboardState.loaded);
+    try {
+      final results = await Future.wait([
+        _ticketService.getStatsDirect(),
+        _ticketService.getTickets(limit: 10),
+      ]);
+      final rawStats = results[0] as Map<String, int>;
+      final tickets = results[1] as List<Ticket>;
+
+      int total = 0;
+      for (final v in rawStats.values) total += v;
+
+      if (!mounted) return;
+      setState(() {
+        _stats = [
+          {'title': 'Total Tiket', 'count': total, 'svgAsset': 'assets/icons/Order.svg'},
+          {'title': 'Tiket Baru', 'count': rawStats['submitted'] ?? 0, 'svgAsset': 'assets/icons/Notification.svg'},
+          {'title': 'Sedang Diproses', 'count': rawStats['in_progress'] ?? 0, 'svgAsset': 'assets/icons/Loading.svg'},
+          {'title': 'Selesai', 'count': rawStats['closed'] ?? 0, 'svgAsset': 'assets/icons/Doublecheck.svg'},
+        ];
+        _recentTickets = tickets;
+        _state = tickets.isEmpty ? DashboardState.empty : DashboardState.loaded;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _state = DashboardState.error;
+      });
+    }
   }
 
-  Future<void> _refreshData() async {
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _state = _recentTickets.isEmpty
-        ? DashboardState.empty
-        : DashboardState.loaded);
+  Future<void> _refreshData() => _loadData();
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
   }
 
   @override
@@ -124,44 +139,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
               ),
 
-              // ===== Categories: section header =====
-              SliverToBoxAdapter(
-                child: _SectionHeader(
-                  title: 'Kategori Tiket',
-                  actionLabel: 'Kelola',
-                  onAction: () =>
-                      Navigator.pushNamed(context, '/admin/tickets'),
-                ),
-              ),
-
-              // ===== Categories: horizontal cards =====
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _categories
-                          .map((cat) => Padding(
-                                padding: const EdgeInsets.only(
-                                    right: AppSpacing.sm),
-                                child: CategoryCard(
-                                  category: cat['category'] as String,
-                                  count: cat['count'] as int,
-                                  svgAsset: cat['svgAsset'] as String,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    '/admin/tickets',
-                                    arguments: {'category': cat['category']},
-                                  ),
-                                ),
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                ),
-              ),
-
               // ===== Recent Tickets: section header =====
               SliverToBoxAdapter(
                 child: _SectionHeader(
@@ -187,7 +164,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Widget _buildHeader(BuildContext context) {
     final c = context.palette;
-    const adminName = 'Sarah Admin';
+    final adminName = AppState.instance.currentUser?.fullName ?? 'Admin';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
@@ -305,19 +282,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 final i = index ~/ 2;
                 final ticket = _recentTickets[i];
                 return AdminTicketCard(
-                  ticketId: ticket['ticketId'] as String,
-                  title: ticket['title'] as String,
-                  category: ticket['category'] as String,
-                  status: ticket['status'] as String,
-                  priority: ticket['priority'] as String,
-                  date: ticket['date'] as String,
-                  assignedTo: ticket['assignedTo'] != null
-                      ? ticket['assignedTo'] as String
-                      : null,
+                  ticketId: ticket.ticketNumber,
+                  title: ticket.title,
+                  category: ticket.categoryName ?? '',
+                  status: ticket.status.value,
+                  priority: ticket.priority.value,
+                  date: _timeAgo(ticket.createdAt),
+                  assignedTo: ticket.assigneeName,
                   onTap: () => Navigator.pushNamed(
                     context,
                     '/admin/ticket-detail',
-                    arguments: ticket,
+                    arguments: {'id': ticket.id},
                   ),
                 );
               },

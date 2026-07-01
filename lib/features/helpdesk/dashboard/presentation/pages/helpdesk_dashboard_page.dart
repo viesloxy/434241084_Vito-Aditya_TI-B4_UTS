@@ -3,10 +3,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/models/ticket.dart';
+import '../../../../../core/services/app_state.dart';
+import '../../../../../core/services/ticket_service.dart';
 import '../../../../helpdesk/widgets/helpdesk_stat_card.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
 import '../../../../admin/widgets/loading_skeleton.dart';
-import '../../../../home/presentation/widgets/category_card.dart';
 import '../../../../admin/widgets/empty_state.dart';
 import '../../../../admin/widgets/error_state.dart';
 import '../../../../../core/theme/app_palette.dart';
@@ -22,75 +24,19 @@ class HelpdeskDashboardPage extends StatefulWidget {
 }
 
 class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
+  final _ticketService = TicketService();
   DashboardState _state = DashboardState.loading;
+  String? _errorMessage;
 
-  static const _stats = [
-    {'title': 'Tugas Total', 'count': 45, 'svgAsset': 'assets/icons/Order.svg'},
-    {'title': 'Tugas Baru', 'count': 5, 'svgAsset': 'assets/icons/Notification.svg'},
-    {'title': 'In Progress', 'count': 2, 'svgAsset': 'assets/icons/Loading.svg'},
-    {'title': 'Selesai', 'count': 38, 'svgAsset': 'assets/icons/Doublecheck.svg'},
+  List<Map<String, dynamic>> _stats = [
+    {'title': 'Tugas Total', 'count': 0, 'svgAsset': 'assets/icons/Order.svg'},
+    {'title': 'Tugas Baru', 'count': 0, 'svgAsset': 'assets/icons/Notification.svg'},
+    {'title': 'In Progress', 'count': 0, 'svgAsset': 'assets/icons/Loading.svg'},
+    {'title': 'Selesai', 'count': 0, 'svgAsset': 'assets/icons/Doublecheck.svg'},
   ];
 
-  static const _categories = [
-    {'category': 'Akademik', 'count': 12, 'svgAsset': 'assets/icons/Order.svg'},
-    {'category': 'Teknologi', 'count': 18, 'svgAsset': 'assets/icons/Setting.svg'},
-    {'category': 'Fasilitas', 'count': 8, 'svgAsset': 'assets/icons/Stores.svg'},
-    {'category': 'Keuangan', 'count': 5, 'svgAsset': 'assets/icons/Cash.svg'},
-    {'category': 'Lainnya', 'count': 2, 'svgAsset': 'assets/icons/Category.svg'},
-  ];
-
-  final List<Map<String, dynamic>> _activeTasks = [
-    {
-      'ticketId': '#TK-2024-001',
-      'title': 'Permintaan reset password email kampus',
-      'category': 'Teknologi',
-      'status': 'signed_assigned',
-      'priority': 'tinggi',
-      'date': '5 menit yang lalu',
-      'createdBy': 'Ahmad Rizki',
-    },
-    {
-      'ticketId': '#TK-2024-003',
-      'title': 'Kerusakan AC di ruang kelas L201',
-      'category': 'Fasilitas',
-      'status': 'in_progress',
-      'priority': 'sedang',
-      'date': '30 menit yang lalu',
-      'createdBy': 'Dewi Lestari',
-    },
-    {
-      'ticketId': '#TK-2024-005',
-      'title': 'Permintaan akses perpustakaan digital',
-      'category': 'Akademik',
-      'status': 'signed_assigned',
-      'priority': 'tinggi',
-      'date': '2 jam yang lalu',
-      'createdBy': 'Fajar Nugroho',
-    },
-  ];
-
-  final List<Map<String, dynamic>> _resolvedTasks = [
-    {
-      'ticketId': '#TK-2024-004',
-      'title': 'Pembayaran UKT semester baru',
-      'category': 'Keuangan',
-      'status': 'resolved',
-      'priority': 'sedang',
-      'date': '1 jam yang lalu',
-      'createdBy': 'Eko Prasetyo',
-      'resolutionNote': 'Sudah dikonfirmasi via WhatsApp.',
-    },
-    {
-      'ticketId': '#TK-2024-002',
-      'title': 'Jadwal ujian semester genap 2024',
-      'category': 'Akademik',
-      'status': 'resolved',
-      'priority': 'sedang',
-      'date': '3 jam yang lalu',
-      'createdBy': 'Budi Santoso',
-      'resolutionNote': 'Jadwal sudah diupdate di website.',
-    },
-  ];
+  List<Ticket> _activeTasks = [];
+  List<Ticket> _resolvedTasks = [];
 
   @override
   void initState() {
@@ -100,25 +46,60 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
 
   Future<void> _loadData() async {
     setState(() => _state = DashboardState.loading);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
+    try {
+      final userId = AppState.instance.currentUser?.id;
+      final results = await Future.wait([
+        _ticketService.getAssignedToMe(),
+        if (userId != null)
+          _ticketService.getStatsDirect(assignedTo: userId)
+        else
+          Future.value(<String, int>{}),
+      ]);
+      final allTasks = results[0] as List<Ticket>;
+      final rawStats = results[1] as Map<String, int>;
+
+      final active = allTasks
+          .where((t) =>
+              t.status == TicketStatus.signedAssigned ||
+              t.status == TicketStatus.inProgress)
+          .toList();
+      final resolved = allTasks
+          .where((t) => t.status == TicketStatus.resolved)
+          .toList();
+
+      int total = 0;
+      for (final v in rawStats.values) total += v;
+
+      if (!mounted) return;
       setState(() {
-        _state = (_activeTasks.isEmpty && _resolvedTasks.isEmpty)
+        _stats = [
+          {'title': 'Tugas Total', 'count': total, 'svgAsset': 'assets/icons/Order.svg'},
+          {'title': 'Tugas Baru', 'count': rawStats['signed_assigned'] ?? 0, 'svgAsset': 'assets/icons/Notification.svg'},
+          {'title': 'In Progress', 'count': rawStats['in_progress'] ?? 0, 'svgAsset': 'assets/icons/Loading.svg'},
+          {'title': 'Selesai', 'count': rawStats['resolved'] ?? 0, 'svgAsset': 'assets/icons/Doublecheck.svg'},
+        ];
+        _activeTasks = active;
+        _resolvedTasks = resolved;
+        _state = (active.isEmpty && resolved.isEmpty)
             ? DashboardState.empty
             : DashboardState.loaded;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _state = DashboardState.error;
       });
     }
   }
 
-  Future<void> _refreshData() async {
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() {
-        _state = (_activeTasks.isEmpty && _resolvedTasks.isEmpty)
-            ? DashboardState.empty
-            : DashboardState.loaded;
-      });
-    }
+  Future<void> _refreshData() => _loadData();
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
   }
 
   @override
@@ -187,50 +168,6 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
 
               SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
 
-              // Kategori Tiket
-              SliverToBoxAdapter(
-                child: Container(
-                  color: c.surface,
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SectionHeader(
-                        title: 'Kategori Tiket',
-                        onTap: () => Navigator.pushNamed(
-                            context, '/helpdesk/tasks'),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _categories
-                              .map((cat) => Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: AppSpacing.sm),
-                                    child: CategoryCard(
-                                      category: cat['category'] as String,
-                                      count: cat['count'] as int,
-                                      svgAsset: cat['svgAsset'] as String,
-                                      onTap: () => Navigator.pushNamed(
-                                        context,
-                                        '/helpdesk/tasks',
-                                        arguments: {
-                                          'category': cat['category']
-                                        },
-                                      ),
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-
               // Active tasks
               SliverToBoxAdapter(
                 child: Container(
@@ -278,18 +215,17 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                               : AppSpacing.md,
                         ),
                         child: HelpdeskTaskCard(
-                          ticketId: task['ticketId'] as String,
-                          title: task['title'] as String,
-                          category: task['category'] as String,
-                          status: task['status'] as String,
-                          priority: task['priority'] as String,
-                          date: task['date'] as String,
-                          createdBy: task['createdBy'] as String,
-                          resolutionNote: task['resolutionNote'] as String?,
+                          ticketId: task.ticketNumber,
+                          title: task.title,
+                          category: task.categoryName ?? '',
+                          status: task.status.value,
+                          priority: task.priority.value,
+                          date: _timeAgo(task.createdAt),
+                          createdBy: task.creatorName ?? '',
                           onTap: () => Navigator.pushNamed(
                             context,
                             '/helpdesk/task-detail',
-                            arguments: task,
+                            arguments: {'id': task.id},
                           ),
                         ),
                       );
@@ -324,7 +260,7 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
             Row(
               children: [
                 Text(
-                  'John Helpdesk',
+                  AppState.instance.currentUser?.fullName ?? 'Helpdesk',
                   style: AppTextStyles.h4(c),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -365,9 +301,9 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: c.primary,
-                child: const Text(
-                  'JH',
-                  style: TextStyle(
+                child: Text(
+                  _initials(AppState.instance.currentUser?.fullName),
+                  style: const TextStyle(
                     fontFamily: 'Plus Jakarta',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -446,23 +382,23 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
                       : AppSpacing.md,
                 ),
                 child: HelpdeskTaskCard(
-                  ticketId: task['ticketId'] as String,
-                  title: task['title'] as String,
-                  category: task['category'] as String,
-                  status: task['status'] as String,
-                  priority: task['priority'] as String,
-                  date: task['date'] as String,
-                  createdBy: task['createdBy'] as String,
+                  ticketId: task.ticketNumber,
+                  title: task.title,
+                  category: task.categoryName ?? '',
+                  status: task.status.value,
+                  priority: task.priority.value,
+                  date: _timeAgo(task.createdAt),
+                  createdBy: task.creatorName ?? '',
                   onTap: () => Navigator.pushNamed(
                     context,
                     '/helpdesk/task-detail',
-                    arguments: task,
+                    arguments: {'id': task.id},
                   ),
-                  onStart: task['status'] == 'signed_assigned'
-                      ? () => _showStartTaskDialog(task)
+                  onStart: task.status == TicketStatus.signedAssigned
+                      ? () => _handleStartTask(task)
                       : null,
-                  onResolve: task['status'] == 'in_progress'
-                      ? () => _showResolveTaskDialog(context, task)
+                  onResolve: task.status == TicketStatus.inProgress
+                      ? () => _handleResolveTask(task)
                       : null,
                 ),
               );
@@ -473,141 +409,85 @@ class _HelpdeskDashboardPageState extends State<HelpdeskDashboardPage> {
     }
   }
 
-  void _showStartTaskDialog(Map<String, dynamic> task) {
+  Future<void> _handleStartTask(Ticket task) async {
     final c = context.palette;
-    showDialog(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
-        title: Row(
-          children: [
-            SvgPicture.asset(
-              'assets/icons/Loading.svg',
-              width: 20,
-              height: 20,
-              colorFilter: ColorFilter.mode(c.primary, BlendMode.srcIn),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text('Mulai Kerjakan', style: AppTextStyles.h4(c)),
-          ],
-        ),
+        title: Text('Mulai Kerjakan', style: AppTextStyles.h4(c)),
         content: Text(
-          'Mulai kerjakan tiket ${task['ticketId']}?\n\nStatus akan berubah menjadi "In Progress".',
+          'Mulai kerjakan tiket ${task.ticketNumber}?\n\nStatus akan berubah menjadi "In Progress".',
           style: AppTextStyles.body(c),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Mulai kerjakan ${task['ticketId']}'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              _loadData();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: c.primary,
-              elevation: 0,
-            ),
-            child: const Text('Mulai'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Mulai')),
         ],
       ),
     );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _ticketService.startTicket(task.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tiket ${task.ticketNumber} dimulai'), behavior: SnackBarBehavior.floating),
+      );
+      _loadData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal: $e'), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 
-  void _showResolveTaskDialog(BuildContext context, Map<String, dynamic> task) {
+  Future<void> _handleResolveTask(Ticket task) async {
     final c = context.palette;
-    final noteController = TextEditingController();
-
-    showDialog(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
-        title: Row(
-          children: [
-            SvgPicture.asset(
-              'assets/icons/Doublecheck.svg',
-              width: 20,
-              height: 20,
-              colorFilter: ColorFilter.mode(c.success, BlendMode.srcIn),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text('Selesaikan Tiket', style: AppTextStyles.h4(c)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Tiket: ${task['ticketId']}',
-                style: AppTextStyles.body(c)
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text('Catatan penyelesaian:',
-                  style: AppTextStyles.bodySm(c)),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: noteController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Jelaskan hasil kerja Anda...',
-                  border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppRadius.md),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        title: Text('Selesaikan Tiket', style: AppTextStyles.h4(c)),
+        content: Text(
+          'Tandai tiket ${task.ticketNumber} sebagai selesai?',
+          style: AppTextStyles.body(c),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
           ElevatedButton(
-            onPressed: () {
-              if (noteController.text.trim().length < 10) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Catatan minimal 10 karakter'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                return;
-              }
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Tiket ${task['ticketId']} selesai'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              _loadData();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: c.success,
-              elevation: 0,
-            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: c.success, elevation: 0),
             child: const Text('Selesaikan'),
           ),
         ],
       ),
     );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _ticketService.resolveTicket(task.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tiket ${task.ticketNumber} selesai'), behavior: SnackBarBehavior.floating),
+      );
+      _loadData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal: $e'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  String _initials(String? name) {
+    if (name == null || name.isEmpty) return 'H';
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 }
 

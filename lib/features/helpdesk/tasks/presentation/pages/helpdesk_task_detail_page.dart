@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/constants/app_radius.dart';
+import '../../../../../core/constants/app_spacing.dart';
+import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/models/comment.dart';
+import '../../../../../core/models/ticket.dart';
+import '../../../../../core/services/app_state.dart';
+import '../../../../../core/services/comment_service.dart';
+import '../../../../../core/services/ticket_service.dart';
 import '../../../../../shared/widgets/status_badge.dart';
 import '../../../../../shared/widgets/category_badge.dart';
 import '../../../../../core/theme/app_palette.dart';
@@ -7,14 +14,9 @@ import '../../../../../core/theme/app_palette.dart';
 enum DetailPageState { loading, loaded, error }
 
 /// Halaman detail tiket untuk Helpdesk.
-/// Berbeda dari AdminTicketDetailPage: Helpdesk HANYA bisa
-/// 1) Mulai Kerjakan (Signed/Assigned → In Progress)
-/// 2) Selesaikan (In Progress → Resolved)
-/// Tidak bisa assign, close, atau ubah tiket yang bukan assigned.
+/// Helpdesk hanya bisa: mulai kerjakan & selesaikan.
 class HelpdeskTaskDetailPage extends StatefulWidget {
-  final Map<String, dynamic>? ticketData;
-
-  const HelpdeskTaskDetailPage({super.key, this.ticketData});
+  const HelpdeskTaskDetailPage({super.key});
 
   @override
   State<HelpdeskTaskDetailPage> createState() => _HelpdeskTaskDetailPageState();
@@ -22,240 +24,197 @@ class HelpdeskTaskDetailPage extends StatefulWidget {
 
 class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
   final _commentController = TextEditingController();
-  final _scrollController = ScrollController();
+  final _ticketService = TicketService();
+  final _commentService = CommentService();
   static const int _maxCharacters = 500;
 
   DetailPageState _state = DetailPageState.loading;
-
-  Map<String, dynamic> _taskData = {};
-
-  final List<Map<String, dynamic>> _statusTimeline = [
-    {'status': 'Submitted', 'date': '21 Jan 2024, 10:00', 'isCompleted': true, 'isActive': false},
-    {'status': 'Signed/Assigned', 'date': '21 Jan 2024, 10:15', 'isCompleted': true, 'isActive': false},
-    {'status': 'In Progress', 'date': '-', 'isCompleted': false, 'isActive': false},
-    {'status': 'Resolved', 'date': '-', 'isCompleted': false, 'isActive': false},
-    {'status': 'Closed', 'date': '-', 'isCompleted': false, 'isActive': false},
-  ];
-
-  final List<Map<String, dynamic>> _conversations = [
-    {
-      'sender': 'John Helpdesk',
-      'role': 'helpdesk',
-      'message': 'Sedang saya cek dulu, mohon tunggu.',
-      'time': '21 Jan 2024, 10:30',
-      'isMe': true,
-    },
-    {
-      'sender': 'Ahmad Rizki',
-      'role': 'user',
-      'message': 'Baik terima kasih, saya tunggu.',
-      'time': '21 Jan 2024, 11:00',
-      'isMe': false,
-    },
-  ];
+  Ticket? _ticket;
+  List<Comment> _comments = [];
+  bool _isSendingComment = false;
+  String? _ticketId;
 
   @override
   void initState() {
     super.initState();
-    _taskData = widget.ticketData ?? {};
-    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ticketId == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map) {
+        _ticketId = args['id']?.toString();
+      }
+      _loadData();
+    }
   }
 
   @override
   void dispose() {
     _commentController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _loadData() async {
-    setState(() => _state = DetailPageState.loading);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
-      setState(() {
-        _state = DetailPageState.loaded;
-        // Update timeline sesuai status
-        _updateTimelineForStatus();
-      });
+    if (_ticketId == null) {
+      setState(() => _state = DetailPageState.error);
+      return;
     }
-  }
+    setState(() => _state = DetailPageState.loading);
+    try {
+      final results = await Future.wait([
+        _ticketService.getTicketById(_ticketId!),
+        _commentService.getComments(_ticketId!, hideInternal: true),
+      ]);
+      final ticket = results[0] as Ticket?;
+      final comments = results[1] as List<Comment>;
 
-  void _updateTimelineForStatus() {
-    final status = _taskData['status'] as String? ?? 'signed_assigned';
-    final statusIndex = {
-      'submitted': 0,
-      'signed_assigned': 1,
-      'in_progress': 2,
-      'resolved': 3,
-      'closed': 4,
-    }[status] ?? 1;
-
-    for (int i = 0; i < _statusTimeline.length; i++) {
-      _statusTimeline[i]['isCompleted'] = i <= statusIndex;
-      _statusTimeline[i]['isActive'] = i == statusIndex;
+      if (!mounted) return;
+      if (ticket == null) {
+        setState(() => _state = DetailPageState.error);
+        return;
+      }
+      setState(() {
+        _ticket = ticket;
+        _comments = comments;
+        _state = DetailPageState.loaded;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _state = DetailPageState.error);
     }
   }
 
   int get _characterCount => _commentController.text.length;
 
-  String _getString(String key, String defaultValue) {
-    final value = _taskData[key];
-    if (value == null) return defaultValue;
-    return value.toString();
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return '${dt.day.toString().padLeft(2, '0')} '
+        '${months[dt.month - 1]} ${dt.year}, '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 600;
-        return Scaffold(
-          backgroundColor: c.background,
-          appBar: _buildAppBar(context, isWide),
-          body: _buildBody(context, isWide),
-          bottomNavigationBar: _buildCommentInput(context, isWide),
-        );
-      },
+    return Scaffold(
+      backgroundColor: c.background,
+      appBar: _buildAppBar(context),
+      body: _buildBody(context),
+      bottomNavigationBar:
+          _state == DetailPageState.loaded ? _buildCommentInput(context) : null,
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isWide) {
-
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     final c = context.palette;
     return AppBar(
       backgroundColor: c.surface,
       elevation: 0,
       leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: c.textPrimary),
-          onPressed: () => Navigator.pop(context)),
+        icon: Icon(Icons.arrow_back, color: c.textPrimary),
+        onPressed: () => Navigator.pop(context),
+      ),
       title: Text(
-        _getString('ticketId', '#TK-0000'),
-        style: TextStyle(
-            fontSize: isWide ? 18 : 16,
-            fontWeight: FontWeight.w600,
-            color: c.textPrimary),
+        _ticket?.ticketNumber ?? '#TK-0000',
+        style: AppTextStyles.h4(c),
       ),
       centerTitle: true,
-      actions: [
-        IconButton(
-            icon: Icon(Icons.report_outlined,
-                color: c.textPrimary),
-            onPressed: () => _showReportDialog(context),
-            tooltip: 'Lapor ke Admin'),
-      ],
     );
   }
 
-  Widget _buildBody(BuildContext context, bool isWide) {
-
+  Widget _buildBody(BuildContext context) {
     final c = context.palette;
     switch (_state) {
       case DetailPageState.loading:
-        return const Center(child: CircularProgressIndicator());
+        return Center(child: CircularProgressIndicator(color: c.primary));
       case DetailPageState.error:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline,
-                  size: 64, color: c.error),
-              const SizedBox(height: AppConstants.spacingLg),
-              const Text('Gagal memuat detail tugas'),
-              const SizedBox(height: AppConstants.spacingMd),
-              ElevatedButton(
-                  onPressed: _loadData, child: const Text('Coba Lagi')),
+              Icon(Icons.error_outline, size: 64, color: c.textTertiary),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Gagal memuat detail tiket', style: AppTextStyles.body(c)),
+              const SizedBox(height: AppSpacing.md),
+              ElevatedButton(onPressed: _loadData, child: const Text('Coba Lagi')),
             ],
           ),
         );
       case DetailPageState.loaded:
-        return SingleChildScrollView(
-          controller: _scrollController,
-          padding: EdgeInsets.all(
-              isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTaskHeader(context, isWide),
-              SizedBox(
-                  height:
-                      isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildStatusTimeline(context, isWide),
-              SizedBox(
-                  height:
-                      isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildTaskDetails(context, isWide),
-              SizedBox(
-                  height:
-                      isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildDescriptionSection(context, isWide),
-              SizedBox(
-                  height:
-                      isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildConversationSection(context, isWide),
-              SizedBox(
-                  height:
-                      isWide ? AppConstants.spacing2xl : AppConstants.spacingXl),
-              _buildActionButton(context, isWide),
-              const SizedBox(height: AppConstants.spacingLg),
-            ],
+        final t = _ticket!;
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          color: c.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTaskHeader(context, t),
+                const SizedBox(height: AppSpacing.xl),
+                _buildStatusTimeline(context, t),
+                const SizedBox(height: AppSpacing.xl),
+                _buildTaskDetails(context, t),
+                const SizedBox(height: AppSpacing.xl),
+                _buildDescriptionSection(context, t),
+                const SizedBox(height: AppSpacing.xl),
+                _buildConversationSection(context),
+                const SizedBox(height: AppSpacing.xl),
+                _buildActionButton(context, t),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+            ),
           ),
         );
     }
   }
 
-  Widget _buildTaskHeader(BuildContext context, bool isWide) {
-
+  Widget _buildTaskHeader(BuildContext context, Ticket t) {
     final c = context.palette;
-    final title = _getString('title', 'Judul tidak tersedia');
-    final category = _getString('category', 'Lainnya');
-    final status = _getString('status', 'signed_assigned');
-    final priority = _getString('priority', 'sedang');
-    final date = _getString('date', '-');
-
     return Container(
-      padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingXl : AppConstants.spacingLg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                      fontSize: isWide ? 20 : 18,
-                      fontWeight: FontWeight.w600,
-                      color: c.textPrimary),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(
-              height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+          Text(t.title, style: AppTextStyles.h3(c)),
+          const SizedBox(height: AppSpacing.sm),
           Wrap(
-            spacing: AppConstants.spacingSm,
-            runSpacing: AppConstants.spacingSm,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
-              CategoryBadge(category: category),
-              StatusBadge(status: status),
-              _buildPriorityBadge(context, priority),
+              if (t.categoryName != null) CategoryBadge(category: t.categoryName!),
+              StatusBadge(status: t.status.value),
+              _buildPriorityBadge(context, t.priority.value),
             ],
           ),
-          SizedBox(
-              height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              Icon(Icons.access_time,
-                  size: 14, color: c.textSecondary),
+              Icon(Icons.access_time, size: 14, color: c.textSecondary),
               const SizedBox(width: 4),
-              Text('Di-assign: $date',
-                  style: TextStyle(
-                      fontSize: 12, color: c.textSecondary)),
+              Text(
+                'Dibuat: ${_timeAgo(t.createdAt)}',
+                style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+              ),
             ],
           ),
         ],
@@ -264,86 +223,91 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
   }
 
   Widget _buildPriorityBadge(BuildContext context, String priority) {
-
     final c = context.palette;
-    Color bgColor;
-    Color textColor;
+    Color bg;
+    Color fg;
     String label;
     IconData icon;
 
     switch (priority.toLowerCase()) {
       case 'tinggi':
-        bgColor = c.error.withValues(alpha: 0.1);
-        textColor = c.error;
+        bg = c.priorityHighBg;
+        fg = c.priorityHighText;
         label = 'Tinggi';
         icon = Icons.keyboard_double_arrow_up;
         break;
-      case 'sedang':
-        bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.1);
-        textColor = const Color(0xFFF59E0B);
-        label = 'Sedang';
-        icon = Icons.remove;
-        break;
       case 'rendah':
-        bgColor = c.success.withValues(alpha: 0.1);
-        textColor = c.success;
+        bg = c.priorityLowBg;
+        fg = c.priorityLowText;
         label = 'Rendah';
         icon = Icons.keyboard_double_arrow_down;
         break;
       default:
-        bgColor = c.textSecondary.withValues(alpha: 0.1);
-        textColor = c.textSecondary;
-        label = priority;
-        icon = Icons.help_outline;
+        bg = c.priorityMedBg;
+        fg = c.priorityMedText;
+        label = 'Sedang';
+        icon = Icons.remove;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration:
-          BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(6)),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: textColor),
+          Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
           Text(label,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: textColor)),
+                  color: fg,
+                  fontFamily: 'Plus Jakarta')),
         ],
       ),
     );
   }
 
-  Widget _buildStatusTimeline(BuildContext context, bool isWide) {
-
+  Widget _buildStatusTimeline(BuildContext context, Ticket t) {
     final c = context.palette;
+    final statusOrder = [
+      TicketStatus.submitted,
+      TicketStatus.signedAssigned,
+      TicketStatus.inProgress,
+      TicketStatus.resolved,
+      TicketStatus.closed,
+    ];
+    final labels = ['Submitted', 'Ditugaskan', 'In Progress', 'Resolved', 'Closed'];
+    final currentIndex = statusOrder.indexOf(t.status);
+
     return Container(
-      padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Timeline Status',
-              style: TextStyle(
-                  fontSize: isWide ? 16 : 14,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary)),
-          SizedBox(
-              height:
-                  isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
-          ...List.generate(_statusTimeline.length, (index) {
-            final item = _statusTimeline[index];
-            final isLast = index == _statusTimeline.length - 1;
+          Text('Timeline Status', style: AppTextStyles.h4(c)),
+          const SizedBox(height: AppSpacing.md),
+          ...List.generate(statusOrder.length, (i) {
+            final isCompleted = i < currentIndex && t.status != TicketStatus.rejected;
+            final isActive = i == currentIndex;
+            final isLast = i == statusOrder.length - 1;
+            String date = '-';
+            if (isCompleted || isActive) {
+              if (i == 0) date = _formatDate(t.createdAt);
+              else if (i == 3 && t.resolvedAt != null) date = _formatDate(t.resolvedAt!);
+              else if (i == 4 && t.closedAt != null) date = _formatDate(t.closedAt!);
+              else date = _formatDate(t.updatedAt);
+            }
             return _TimelineItem(
-              title: item['status'] as String,
-              date: item['date'] as String,
-              isCompleted: item['isCompleted'] as bool,
-              isActive: item['isActive'] as bool,
+              title: labels[i],
+              date: date,
+              isCompleted: isCompleted,
+              isActive: isActive,
               isLast: isLast,
             );
           }),
@@ -352,61 +316,52 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildTaskDetails(BuildContext context, bool isWide) {
-
+  Widget _buildTaskDetails(BuildContext context, Ticket t) {
     final c = context.palette;
-    final createdBy = _getString('createdBy', 'Unknown');
-    final email = '${createdBy.toLowerCase().replaceAll(' ', '.')}@student.ac.id';
-    final priority = _getString('priority', 'sedang');
-    final date = _getString('date', '-');
-
     return Container(
-      padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Detail Tugas',
-              style: TextStyle(
-                  fontSize: isWide ? 16 : 14,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary)),
-          SizedBox(
-              height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-          _buildDetailRow(context, 'Pembuat', createdBy, Icons.person_outline, false, isWide),
-          _buildDetailRow(context, 'Email', email, Icons.email_outlined, false, isWide),
-          _buildDetailRow(context, 'Prioritas', priority, Icons.flag_outlined, false, isWide),
-          _buildDetailRow(context, 'Tanggal Di-assign', date, Icons.calendar_today_outlined, false, isWide),
+          Text('Detail Tiket', style: AppTextStyles.h4(c)),
+          const SizedBox(height: AppSpacing.md),
+          _buildDetailRow(context, 'Pembuat', t.creatorName ?? 'Unknown', Icons.person_outline),
+          _buildDetailRow(context, 'Prioritas', _priorityLabel(t.priority.value), Icons.flag_outlined),
+          _buildDetailRow(context, 'Tanggal Dibuat', _formatDate(t.createdAt), Icons.calendar_today_outlined),
+          if (t.location != null && t.location!.isNotEmpty)
+            _buildDetailRow(context, 'Lokasi', t.location!, Icons.location_on_outlined),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, String label, String value, IconData icon,
-      bool isEditable, bool isWide) {
+  String _priorityLabel(String value) {
+    switch (value) {
+      case 'tinggi': return 'Tinggi';
+      case 'rendah': return 'Rendah';
+      default: return 'Sedang';
+    }
+  }
 
+  Widget _buildDetailRow(BuildContext context, String label, String value, IconData icon) {
     final c = context.palette;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
           Icon(icon, size: 18, color: c.textSecondary),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 12, color: c.textSecondary)),
-                Text(value,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: c.textPrimary)),
+                Text(label, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
+                Text(value, style: AppTextStyles.body(c)),
               ],
             ),
           ),
@@ -415,90 +370,74 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  Widget _buildDescriptionSection(BuildContext context, bool isWide) {
-
+  Widget _buildDescriptionSection(BuildContext context, Ticket t) {
     final c = context.palette;
-    final description = _getString(
-        'description',
-        'Tidak bisa login ke email kampus saya sejak kemarin. Sudah mencoba reset password tetapi tidak menerima email reset. Mohon bantuannya untuk reset password email saya.');
-
     return Container(
-      padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Deskripsi',
-              style: TextStyle(
-                  fontSize: isWide ? 16 : 14,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary)),
-          SizedBox(
-              height: isWide ? AppConstants.spacingSm : 4),
+          Text('Deskripsi', style: AppTextStyles.h4(c)),
+          const SizedBox(height: AppSpacing.sm),
           Text(
-            description,
-            style: const TextStyle(fontSize: 14, height: 1.5),
+            t.description.isEmpty ? 'Tidak ada deskripsi' : t.description,
+            style: AppTextStyles.body(c).copyWith(height: 1.5),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildConversationSection(BuildContext context, bool isWide) {
-
+  Widget _buildConversationSection(BuildContext context) {
     final c = context.palette;
     return Container(
-      padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingLg : AppConstants.spacingMd),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Percakapan',
-              style: TextStyle(
-                  fontSize: isWide ? 16 : 14,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary)),
-          SizedBox(
-              height: isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
-          if (_conversations.isEmpty)
+          Text('Percakapan (${_comments.length})', style: AppTextStyles.h4(c)),
+          const SizedBox(height: AppSpacing.md),
+          if (_comments.isEmpty)
             Center(
-                child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('Belum ada percakapan',
-                        style: TextStyle(color: c.textSecondary))))
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Text(
+                  'Belum ada percakapan',
+                  style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
+                ),
+              ),
+            )
           else
-            ...List.generate(_conversations.length, (index) {
-              final chat = _conversations[index];
-              return _buildChatBubble(context, chat);
-            }),
+            ..._comments.map((comment) => _buildChatBubble(context, comment)),
         ],
       ),
     );
   }
 
-  Widget _buildChatBubble(BuildContext context, Map<String, dynamic> chat) {
-
+  Widget _buildChatBubble(BuildContext context, Comment comment) {
     final c = context.palette;
-    final isMe = chat['isMe'] as bool? ?? false;
-    final sender = chat['sender'] as String? ?? 'Unknown';
-    final message = chat['message'] as String? ?? '';
-    final time = chat['time'] as String? ?? '-';
+    final currentUserId = AppState.instance.currentUser?.id;
+    final isMe = comment.userId == currentUserId;
+    final sender = comment.userName ?? 'Unknown';
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppConstants.spacingMd),
-        constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75),
-        padding: const EdgeInsets.all(AppConstants.spacingMd),
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isMe ? const Color(0xFF3B82F6) : c.background,
+          color: isMe ? c.primary : c.surfaceAlt,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -510,237 +449,226 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!isMe) ...[
-              Row(
-                children: [
-                  Text(sender,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF3B82F6))),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFDBEAFE),
-                        borderRadius: BorderRadius.circular(4)),
-                    child: const Text('User',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF1E40AF))),
-                  ),
-                ],
+              Text(
+                sender,
+                style: AppTextStyles.overline(c).copyWith(
+                  color: c.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 4),
             ],
-            Text(message,
-                style: TextStyle(
-                    fontSize: 14,
-                    color: isMe ? Colors.white : c.textPrimary)),
+            Text(
+              comment.message,
+              style: AppTextStyles.body(c).copyWith(
+                color: isMe ? c.textOnPrimary : c.textPrimary,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(time,
-                style: TextStyle(
-                    fontSize: 10,
-                    color: isMe ? Colors.white70 : c.textSecondary)),
+            Text(
+              _timeAgo(comment.createdAt),
+              style: AppTextStyles.overline(c).copyWith(
+                fontSize: 10,
+                color: isMe ? c.textOnPrimary : c.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(BuildContext context, bool isWide) {
-
+  Widget _buildActionButton(BuildContext context, Ticket t) {
     final c = context.palette;
-    final status = _getString('status', 'signed_assigned');
-
-    if (status == 'signed_assigned') {
+    if (t.status == TicketStatus.signedAssigned) {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
           onPressed: () => _showStartTaskDialog(),
           icon: const Icon(Icons.play_arrow, size: 20),
           label: const Text('Mulai Kerjakan'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3B82F6),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusMedium)),
-          ),
-        ),
-      );
-    } else if (status == 'in_progress') {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _showUploadProofDialog(),
-              icon: const Icon(Icons.upload_file, size: 18),
-              label: const Text('Upload Bukti'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusMedium)),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppConstants.spacingSm),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => _showResolveTaskDialog(context),
-              icon: const Icon(Icons.check_circle, size: 18),
-              label: const Text('Selesaikan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: c.success,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.radiusMedium)),
-              ),
-            ),
-          ),
-        ],
-      );
-    } else {
-      // resolved / closed - read only
-      return Container(
-        padding: const EdgeInsets.all(AppConstants.spacingMd),
-        decoration: BoxDecoration(
-          color: c.background,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.lock_outline,
-                size: 16, color: c.textSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                status == 'resolved'
-                    ? 'Tiket sudah selesai. Menunggu konfirmasi User.'
-                    : 'Tiket sudah ditutup.',
-                style: TextStyle(
-                    fontSize: 13, color: c.textSecondary),
-              ),
-            ),
-          ],
         ),
       );
     }
+    if (t.status == TicketStatus.inProgress) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _showResolveTaskDialog(context),
+          icon: const Icon(Icons.check_circle, size: 18),
+          label: const Text('Selesaikan Tiket'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: c.success,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: c.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lock_outline, size: 16, color: c.textSecondary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              t.status == TicketStatus.resolved
+                  ? 'Tiket sudah selesai. Menunggu konfirmasi Admin.'
+                  : 'Tiket sudah ditutup (final).',
+              style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildCommentInput(BuildContext context, bool isWide) {
-
+  Widget _buildCommentInput(BuildContext context) {
     final c = context.palette;
     return Container(
-      padding: EdgeInsets.all(
-          isWide ? AppConstants.spacingMd : AppConstants.spacingSm),
       decoration: BoxDecoration(
-          color: c.surface,
-          border: Border(top: BorderSide(color: c.border))),
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                IconButton(
-                    icon: Icon(Icons.attach_file,
-                        color: c.textSecondary),
-                    onPressed: () => _showSnackBar('Pilih lampiran')),
-                Expanded(
-                  child: TextField(
-                    controller: _commentController,
-                    maxLines: 3,
-                    minLines: 1,
-                    maxLength: _maxCharacters,
-                    decoration: InputDecoration(
-                      hintText: 'Ketik pesan...',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              AppConstants.radiusLarge),
-                          borderSide: BorderSide.none),
-                      filled: true,
-                      fillColor: c.background,
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: isWide ? 16 : 12,
-                          vertical: isWide ? 12 : 10),
-                      counterText: '',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                const SizedBox(width: AppConstants.spacingXs),
-                IconButton(
-                  icon: Icon(Icons.send,
-                      color: _commentController.text.isEmpty
-                          ? c.textSecondary
-                          : const Color(0xFF3B82F6)),
-                  onPressed: _commentController.text.isEmpty
-                      ? null
-                      : () {
-                          _showSnackBar('Pesan terkirim');
-                          _commentController.clear();
-                          setState(() {});
-                        },
-                ),
-              ],
-            ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('$_characterCount/$_maxCharacters',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: _characterCount > _maxCharacters
-                              ? c.error
-                              : c.textSecondary)),
+                  Expanded(
+                    child: TextField(
+                      controller: _commentController,
+                      maxLines: 3,
+                      minLines: 1,
+                      maxLength: _maxCharacters,
+                      decoration: InputDecoration(
+                        hintText: 'Ketik pesan...',
+                        filled: true,
+                        fillColor: c.inputFill,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm + 2,
+                        ),
+                        counterText: '',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  _isSendingComment
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : IconButton(
+                          icon: Icon(
+                            Icons.send,
+                            color: _commentController.text.isEmpty
+                                ? c.textTertiary
+                                : c.primary,
+                          ),
+                          onPressed: _commentController.text.isEmpty
+                              ? null
+                              : _sendComment,
+                        ),
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    '$_characterCount/$_maxCharacters',
+                    style: AppTextStyles.overline(c).copyWith(
+                      fontSize: 11,
+                      color: _characterCount > _maxCharacters
+                          ? c.error
+                          : c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ),
       ),
     );
   }
 
+  Future<void> _sendComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty || _ticket == null) return;
+    setState(() => _isSendingComment = true);
+    try {
+      final comment = await _commentService.addComment(
+        ticketId: _ticket!.id,
+        message: text,
+      );
+      if (!mounted) return;
+      _commentController.clear();
+      setState(() {
+        _comments.add(comment);
+        _isSendingComment = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSendingComment = false);
+      _showSnackBar('Gagal mengirim: $e');
+    }
+  }
+
   void _showStartTaskDialog() {
+    final c = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+        ),
+        title: Row(
           children: [
-            Icon(Icons.play_arrow, color: Color(0xFF3B82F6)),
-            SizedBox(width: 8),
-            Text('Mulai Kerjakan'),
+            Icon(Icons.play_arrow, color: c.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Mulai Kerjakan', style: AppTextStyles.h4(c)),
           ],
         ),
-        content: const Text(
-          'Status akan berubah menjadi "In Progress".',
-          style: TextStyle(fontSize: 14),
+        content: Text(
+          'Mulai kerjakan tiket ${_ticket?.ticketNumber}?\n\nStatus akan berubah menjadi "In Progress".',
+          style: AppTextStyles.body(c),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _taskData['status'] = 'in_progress';
-                _updateTimelineForStatus();
-              });
-              _showSnackBar('Status: In Progress');
+              try {
+                await _ticketService.startTicket(_ticket!.id);
+                _showSnackBar('Status: In Progress');
+                _loadData();
+              } catch (e) {
+                _showSnackBar('Gagal: $e');
+              }
             },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6)),
             child: const Text('Mulai'),
           ),
         ],
@@ -748,70 +676,23 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
     );
   }
 
-  void _showUploadProofDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: const Row(
-          children: [
-            Icon(Icons.upload_file, color: Color(0xFF3B82F6)),
-            SizedBox(width: 8),
-            Text('Upload Bukti'),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Pilih sumber file:',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            SizedBox(height: 12),
-            ListTile(
-              leading: Icon(Icons.camera_alt, color: Color(0xFF3B82F6)),
-              title: Text('Kamera'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library, color: Color(0xFF3B82F6)),
-              title: Text('Galeri'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            ListTile(
-              leading: Icon(Icons.folder, color: Color(0xFF3B82F6)),
-              title: Text('File'),
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal')),
-        ],
-      ),
-    );
-  }
-
   void _showResolveTaskDialog(BuildContext context) {
-
     final c = context.palette;
     final noteController = TextEditingController();
     bool problemSolved = false;
-    bool proofUploaded = false;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+          ),
           title: Row(
             children: [
               Icon(Icons.check_circle, color: c.success),
-              SizedBox(width: 8),
-              Text('Selesaikan Tiket'),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Selesaikan Tiket', style: AppTextStyles.h4(c)),
             ],
           ),
           content: SingleChildScrollView(
@@ -821,32 +702,19 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
               children: [
                 CheckboxListTile(
                   value: problemSolved,
-                  onChanged: (v) =>
-                      setDialogState(() => problemSolved = v ?? false),
-                  title: const Text('Saya sudah mengerjakan masalah',
-                      style: TextStyle(fontSize: 13)),
+                  onChanged: (v) => setDialogState(() => problemSolved = v ?? false),
+                  title: Text('Saya sudah mengerjakan masalah', style: AppTextStyles.caption(c)),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                 ),
-                CheckboxListTile(
-                  value: proofUploaded,
-                  onChanged: (v) =>
-                      setDialogState(() => proofUploaded = v ?? false),
-                  title: const Text('Saya sudah upload bukti',
-                      style: TextStyle(fontSize: 13)),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: noteController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Catatan penyelesaian',
-                    hintText: 'Jelaskan hasil kerja...',
+                    labelText: 'Catatan penyelesaian (min. 10 karakter)',
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppConstants.radiusMedium),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                   onChanged: (_) => setDialogState(() {}),
@@ -856,86 +724,27 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Batal')),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
             ElevatedButton(
-              onPressed: (problemSolved &&
-                      proofUploaded &&
-                      noteController.text.trim().length >= 10)
-                  ? () {
+              onPressed: (problemSolved && noteController.text.trim().length >= 10)
+                  ? () async {
                       Navigator.pop(ctx);
-                      setState(() {
-                        _taskData['status'] = 'resolved';
-                        _updateTimelineForStatus();
-                      });
-                      _showSnackBar('Tiket selesai! Menunggu konfirmasi User');
+                      try {
+                        await _ticketService.resolveTicket(_ticket!.id);
+                        _showSnackBar('Tiket selesai! Menunggu konfirmasi Admin.');
+                        _loadData();
+                      } catch (e) {
+                        _showSnackBar('Gagal: $e');
+                      }
                     }
                   : null,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: c.success),
+              style: ElevatedButton.styleFrom(backgroundColor: c.success),
               child: const Text('Selesaikan'),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showReportDialog(BuildContext context) {
-
-    final c = context.palette;
-    final issueController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusLarge)),
-        title: Row(
-          children: [
-            Icon(Icons.report_outlined, color: c.warning),
-            SizedBox(width: 8),
-            Text('Lapor ke Admin'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Jelaskan masalah yang Anda hadapi:',
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: issueController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Misal: Butuh bantuan spesialis IT',
-                border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.radiusMedium),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              if (issueController.text.trim().length < 10) {
-                _showSnackBar('Deskripsi minimal 10 karakter');
-                return;
-              }
-              Navigator.pop(ctx);
-              _showSnackBar('Laporan terkirim ke Admin');
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: c.warning),
-            child: const Text('Kirim'),
-          ),
-        ],
       ),
     );
   }
@@ -945,9 +754,10 @@ class _HelpdeskTaskDetailPageState extends State<HelpdeskTaskDetailPage> {
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(AppConstants.radiusMedium)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
       ),
     );
   }
@@ -959,12 +769,14 @@ class _TimelineItem extends StatelessWidget {
   final bool isCompleted;
   final bool isActive;
   final bool isLast;
-  const _TimelineItem(
-      {required this.title,
-      required this.date,
-      required this.isCompleted,
-      required this.isActive,
-      required this.isLast});
+
+  const _TimelineItem({
+    required this.title,
+    required this.date,
+    required this.isCompleted,
+    required this.isActive,
+    required this.isLast,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -980,46 +792,48 @@ class _TimelineItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isCompleted
                     ? c.success
-                    : (isActive ? const Color(0xFF3B82F6) : c.background),
+                    : (isActive ? c.primary : c.surface),
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: isCompleted
-                        ? c.success
-                        : (isActive
-                            ? const Color(0xFF3B82F6)
-                            : c.border),
-                    width: 2),
+                  color: isCompleted
+                      ? c.success
+                      : (isActive ? c.primary : c.border),
+                  width: 2,
+                ),
               ),
               child: isCompleted
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  ? Icon(Icons.check, size: 14, color: c.textOnPrimary)
                   : (isActive
-                      ? const Icon(Icons.circle, size: 8, color: Colors.white)
+                      ? Icon(Icons.circle, size: 8, color: c.textOnPrimary)
                       : null),
             ),
             if (!isLast)
               Container(
-                  width: 2,
-                  height: 40,
-                  color: isCompleted ? c.success : c.border),
+                width: 2,
+                height: 40,
+                color: isCompleted ? c.success : c.border,
+              ),
           ],
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w400,
-                        color: c.textPrimary)),
+                Text(
+                  title,
+                  style: AppTextStyles.body(c).copyWith(
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: isCompleted || isActive ? c.textPrimary : c.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(date,
-                    style: TextStyle(
-                        fontSize: 12, color: c.textSecondary)),
+                Text(
+                  date,
+                  style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+                ),
               ],
             ),
           ),

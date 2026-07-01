@@ -4,6 +4,7 @@ import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/services/app_state.dart';
 import '../../../../../core/theme/app_palette.dart';
 
 /// Admin Profile ala FlutterShop — body: ListView, ProfileCard ListTile,
@@ -17,15 +18,14 @@ class AdminProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-
-    const adminName = 'Sarah Administrator';
-    const adminEmail = 'sarah.admin@university.ac.id';
-    const adminRole = 'Administrator';
-    const adminNip = '12345678';
+    final user = AppState.instance.currentUser;
+    final adminName = user?.fullName ?? 'Admin';
+    final adminEmail = user?.email ?? '—';
+    final adminRole = user?.role.label ?? 'Administrator';
+    final adminInfo = user?.department ?? user?.phone ?? '';
 
     return Scaffold(
       backgroundColor: c.background,
-      // AppBar minimal (diperlukan karena tidak ada global AppBar di scaffold)
       appBar: AppBar(
         backgroundColor: c.surface,
         elevation: 0,
@@ -42,10 +42,24 @@ class AdminProfilePage extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.sm,
             ),
-            leading: const CircleAvatar(
-              radius: 28,
-              backgroundImage: AssetImage('assets/images/profil.jpeg'),
-            ),
+            leading: user?.avatarUrl != null
+                ? CircleAvatar(
+                    radius: 28,
+                    backgroundImage: NetworkImage(user!.avatarUrl!),
+                  )
+                : CircleAvatar(
+                    radius: 28,
+                    backgroundColor: c.primary,
+                    child: Text(
+                      _initials(adminName),
+                      style: const TextStyle(
+                        fontFamily: 'Plus Jakarta',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
             title: Text(
               adminName,
               style: const TextStyle(
@@ -76,7 +90,7 @@ class AdminProfilePage extends StatelessWidget {
           ),
           const Divider(height: 1),
 
-          // ===== ROLE + NIP ROW =====
+          // ===== ROLE + INFO ROW =====
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -116,14 +130,15 @@ class AdminProfilePage extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  'NIP: $adminNip',
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta',
-                    fontSize: 13,
-                    color: c.textSecondary,
+                if (adminInfo.isNotEmpty)
+                  Text(
+                    adminInfo,
+                    style: TextStyle(
+                      fontFamily: 'Plus Jakarta',
+                      fontSize: 13,
+                      color: c.textSecondary,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -203,6 +218,13 @@ class AdminProfilePage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   void _showComingSoon(BuildContext context) {

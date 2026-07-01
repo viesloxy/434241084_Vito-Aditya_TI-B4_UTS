@@ -4,17 +4,12 @@ import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/app_state.dart';
 import '../../../../core/theme/app_palette.dart';
 
 /// Profile Page User ala FlutterShop — ListView, DividerListTile, SVG icons.
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
-
-  static const _userName = 'John Doe';
-  static const _userEmail = 'john.doe@university.ac.id';
-  static const _userRole = 'Mahasiswa';
-  static const _userNim = '12345678';
-  static const _userJurusan = 'Informatika';
 
   static const _menuItems = [
     {'svgAsset': 'assets/icons/Edit Square.svg', 'title': 'Edit Profil', 'route': null},
@@ -29,6 +24,12 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
+    final user = AppState.instance.currentUser;
+    final userName = user?.fullName ?? '—';
+    final userEmail = user?.email ?? '—';
+    final userRole = user?.role.label ?? 'Pengguna';
+    final userDept = user?.department ?? user?.phone ?? '—';
+
     return Scaffold(
       backgroundColor: c.background,
       appBar: AppBar(
@@ -61,19 +62,24 @@ class ProfilePage extends StatelessWidget {
                   onTap: () => _showComingSoon(context),
                   child: Stack(
                     children: [
-                      Container(
-                        width: 88,
-                        height: 88,
-                        decoration: BoxDecoration(
-                          color: c.surfaceAlt,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: c.border, width: 2),
-                          image: const DecorationImage(
-                            image: AssetImage('assets/images/profil.jpeg'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+                      user?.avatarUrl != null
+                          ? CircleAvatar(
+                              radius: 44,
+                              backgroundImage:
+                                  NetworkImage(user!.avatarUrl!),
+                            )
+                          : CircleAvatar(
+                              radius: 44,
+                              backgroundColor: c.primary,
+                              child: Text(
+                                _initials(userName),
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                       Positioned(
                         right: 0,
                         bottom: 0,
@@ -100,10 +106,10 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text(_userName, style: AppTextStyles.h3(c)),
+                Text(userName, style: AppTextStyles.h3(c)),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  _userEmail,
+                  userEmail,
                   style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -115,7 +121,7 @@ class ProfilePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    _userRole,
+                    userRole,
                     style: AppTextStyles.overline(c).copyWith(color: c.primary),
                   ),
                 ),
@@ -135,11 +141,13 @@ class ProfilePage extends StatelessWidget {
               children: [
                 Text('Informasi Akun', style: AppTextStyles.h4(c)),
                 const SizedBox(height: AppSpacing.md),
-                _InfoRow(label: 'Nama Lengkap', value: _userName),
-                _InfoRow(label: 'Email', value: _userEmail),
-                _InfoRow(label: 'Role', value: _userRole),
-                _InfoRow(label: 'NIM/NIP', value: _userNim),
-                _InfoRow(label: 'Jurusan/Unit', value: _userJurusan),
+                _InfoRow(label: 'Nama Lengkap', value: userName),
+                _InfoRow(label: 'Email', value: userEmail),
+                _InfoRow(label: 'Role', value: userRole),
+                if (user?.phone != null && user!.phone!.isNotEmpty)
+                  _InfoRow(label: 'Telepon', value: user.phone!),
+                if (user?.department != null && user!.department!.isNotEmpty)
+                  _InfoRow(label: 'Departemen', value: userDept),
               ],
             ),
           ),
@@ -237,6 +245,13 @@ class ProfilePage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   void _showComingSoon(BuildContext context) {

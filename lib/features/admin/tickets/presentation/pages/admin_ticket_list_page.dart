@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/models/ticket.dart';
+import '../../../../../core/services/ticket_service.dart';
 import '../../../widgets/admin_ticket_card.dart';
 import '../../../widgets/empty_state.dart';
 import '../../../../../core/theme/app_palette.dart';
@@ -23,6 +25,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 300);
+  final _ticketService = TicketService();
 
   String _selectedFilter = 'semua';
   bool _isLoading = false;
@@ -43,7 +46,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     {'name': 'Ditolak', 'value': 'rejected'},
   ];
 
-  List<Map<String, dynamic>> _tickets = [];
+  List<Ticket> _tickets = [];
   int _currentPage = 0;
   static const int _pageSize = 10;
 
@@ -64,29 +67,57 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
 
   Future<void> _loadInitialData() async {
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
+    try {
+      final status = _selectedFilter != 'semua'
+          ? TicketStatus.values.firstWhere(
+              (s) => s.value == _selectedFilter,
+              orElse: () => TicketStatus.submitted,
+            )
+          : null;
+      final tickets = await _ticketService.getTickets(
+        status: status,
+        limit: _pageSize,
+        offset: 0,
+      );
+      if (!mounted) return;
       setState(() {
-        _tickets = _getMockTickets(page: 0, pageSize: _pageSize);
+        _tickets = tickets;
         _currentPage = 0;
-        _hasMore = _tickets.length >= _pageSize;
+        _hasMore = tickets.length >= _pageSize;
         _isLoading = false;
       });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _loadMoreData() async {
     if (_isLoading || !_hasMore) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
-      final newTickets = _getMockTickets(page: _currentPage + 1, pageSize: _pageSize);
+    try {
+      final nextPage = _currentPage + 1;
+      final status = _selectedFilter != 'semua'
+          ? TicketStatus.values.firstWhere(
+              (s) => s.value == _selectedFilter,
+              orElse: () => TicketStatus.submitted,
+            )
+          : null;
+      final newTickets = await _ticketService.getTickets(
+        status: status,
+        limit: _pageSize,
+        offset: nextPage * _pageSize,
+      );
+      if (!mounted) return;
       setState(() {
         _tickets.addAll(newTickets);
-        _currentPage++;
+        _currentPage = nextPage;
         _hasMore = newTickets.length >= _pageSize;
         _isLoading = false;
       });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
   }
 
@@ -97,61 +128,46 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
     }
   }
 
-  List<Map<String, dynamic>> _getMockTickets({required int page, required int pageSize}) {
-    final allTickets = [
-      {'ticketId': '#TK-2024-001', 'title': 'Permintaan reset password email kampus', 'description': 'Tidak bisa login ke email kampus', 'category': 'Teknologi', 'status': 'submitted', 'priority': 'tinggi', 'date': '5 menit yang lalu', 'assignedTo': null, 'createdBy': 'Ahmad Rizki'},
-      {'ticketId': '#TK-2024-002', 'title': 'Jadwal ujian semester genap 2024', 'description': 'Mohon info jadwal ujian', 'category': 'Akademik', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '15 menit yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Budi Santoso'},
-      {'ticketId': '#TK-2024-003', 'title': 'Kerusakan AC di ruang kelas L201', 'description': 'AC tidak dingin', 'category': 'Fasilitas', 'status': 'in_progress', 'priority': 'rendah', 'date': '30 menit yang lalu', 'assignedTo': 'Sarah Helpdesk', 'createdBy': 'Dewi Lestari'},
-      {'ticketId': '#TK-2024-004', 'title': 'Pembayaran UKT semester baru', 'description': 'Konfirmasi pembayaran UKT', 'category': 'Keuangan', 'status': 'resolved', 'priority': 'sedang', 'date': '1 jam yang lalu', 'assignedTo': 'Budi Helpdesk', 'createdBy': 'Eko Prasetyo'},
-      {'ticketId': '#TK-2024-005', 'title': 'Peminjaman ruangan lab komputer', 'description': 'Butuh lab untuk praktikum', 'category': 'Akademik', 'status': 'in_progress', 'priority': 'tinggi', 'date': '2 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Fajar Nugroho'},
-      {'ticketId': '#TK-2024-006', 'title': 'Masalah koneksi internet di asrama', 'description': 'Internet lambat sekali', 'category': 'Teknologi', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '3 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Gita Permata'},
-      {'ticketId': '#TK-2024-007', 'title': 'Permintaan ATK untuk mengajar', 'description': 'Butuh spidol dan kapur', 'category': 'Fasilitas', 'status': 'in_progress', 'priority': 'rendah', 'date': '4 jam yang lalu', 'assignedTo': 'Sarah Helpdesk', 'createdBy': 'Hendra Wijaya'},
-      {'ticketId': '#TK-2024-008', 'title': 'Konfirmasi biaya semester tambahan', 'description': 'Biaya tambahan semester 5', 'category': 'Keuangan', 'status': 'signed_assigned', 'priority': 'sedang', 'date': '5 jam yang lalu', 'assignedTo': 'Budi Helpdesk', 'createdBy': 'Indah Sari'},
-      {'ticketId': '#TK-2024-009', 'title': 'Jadwal kuliah pengganti', 'description': 'Kuliah pengganti matkul Basis Data', 'category': 'Akademik', 'status': 'closed', 'priority': 'rendah', 'date': '6 jam yang lalu', 'assignedTo': 'John Helpdesk', 'createdBy': 'Joko Widodo'},
-      {'ticketId': '#TK-2024-010', 'title': 'Perbaikan proyektor ruang 301', 'description': 'Proyektor mati total', 'category': 'Teknologi', 'status': 'rejected', 'priority': 'sedang', 'date': '7 jam yang lalu', 'assignedTo': null, 'createdBy': 'Karla Suci'},
-    ];
-    final start = page * pageSize;
-    final end = start + pageSize;
-    if (start >= allTickets.length) return [];
-    return allTickets.sublist(start, end > allTickets.length ? allTickets.length : end);
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
   }
 
-  List<Map<String, dynamic>> get _filteredTickets {
+  List<Ticket> get _filteredTickets {
     var filtered = _tickets;
 
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
       filtered = filtered.where((t) =>
-        t['title'].toString().toLowerCase().contains(query) ||
-        t['ticketId'].toString().toLowerCase().contains(query) ||
-        t['description'].toString().toLowerCase().contains(query) ||
-        t['createdBy'].toString().toLowerCase().contains(query)
+        t.title.toLowerCase().contains(query) ||
+        t.ticketNumber.toLowerCase().contains(query) ||
+        t.description.toLowerCase().contains(query) ||
+        (t.creatorName?.toLowerCase().contains(query) ?? false)
       ).toList();
-    }
-
-    if (_selectedFilter != 'semua') {
-      filtered = filtered.where((t) => t['status'] == _selectedFilter).toList();
     }
 
     filtered = List.from(filtered);
     switch (_sortOption) {
       case SortOption.tanggalTerbaru:
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         break;
       case SortOption.tanggalTerlama:
-        filtered = filtered.reversed.toList();
+        filtered.sort((a, b) => a.createdAt.compareTo(b.createdAt));
         break;
       case SortOption.prioritasTinggi:
         filtered.sort((a, b) {
-          final priorityOrder = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (priorityOrder[a['priority']] ?? 1)
-              .compareTo(priorityOrder[b['priority']] ?? 1);
+          const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
+          return (order[a.priority.value] ?? 1)
+              .compareTo(order[b.priority.value] ?? 1);
         });
         break;
       case SortOption.prioritasRendah:
         filtered.sort((a, b) {
-          final priorityOrder = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (priorityOrder[b['priority']] ?? 1)
-              .compareTo(priorityOrder[a['priority']] ?? 1);
+          const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
+          return (order[b.priority.value] ?? 1)
+              .compareTo(order[a.priority.value] ?? 1);
         });
         break;
     }
@@ -479,7 +495,10 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
             return Padding(
               padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: GestureDetector(
-                onTap: () => setState(() => _selectedFilter = filter['value'] as String),
+                onTap: () {
+                  setState(() => _selectedFilter = filter['value'] as String);
+                  _loadInitialData();
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: EdgeInsets.symmetric(
@@ -569,19 +588,23 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
           }
           final ticket = _filteredTickets[index];
           return AdminTicketCard(
-            ticketId: ticket['ticketId'] as String,
-            title: ticket['title'] as String,
-            category: ticket['category'] as String,
-            status: ticket['status'] as String,
-            priority: ticket['priority'] as String,
-            date: ticket['date'] as String,
-            assignedTo: ticket['assignedTo'] != null ? ticket['assignedTo'] as String : null,
+            ticketId: ticket.ticketNumber,
+            title: ticket.title,
+            category: ticket.categoryName ?? '',
+            status: ticket.status.value,
+            priority: ticket.priority.value,
+            date: _timeAgo(ticket.createdAt),
+            assignedTo: ticket.assigneeName,
             isSelected: _selectedTickets.contains(index),
             onTap: () {
               if (_isSelectionMode) {
                 _toggleTicketSelection(index);
               } else {
-                Navigator.pushNamed(context, '/admin/ticket-detail', arguments: ticket);
+                Navigator.pushNamed(
+                  context,
+                  '/admin/ticket-detail',
+                  arguments: {'id': ticket.id},
+                );
               }
             },
             onLongPress: () {
@@ -685,6 +708,7 @@ class _AdminTicketListPageState extends State<AdminTicketListPage> {
                   onSelected: (selected) {
                     setState(() => _selectedFilter = filter['value'] as String);
                     Navigator.pop(ctx);
+                    _loadInitialData();
                   },
                   selectedColor: c.primary,
                   labelStyle: TextStyle(

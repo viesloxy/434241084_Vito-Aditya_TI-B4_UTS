@@ -3,79 +3,156 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/models/ticket.dart';
+import '../../../../core/services/app_state.dart';
+import '../../../../core/services/ticket_service.dart';
 import '../widgets/stat_card.dart';
-import '../widgets/category_card.dart';
 import '../widgets/ticket_card.dart';
 import '../../../../core/theme/app_palette.dart';
 
-/// Home Page User ala FlutterShop — CustomScrollView + Sliver sections.
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  static const _stats = [
-    {'title': 'Total Tiket', 'count': 12, 'svgAsset': 'assets/icons/Order.svg'},
-    {'title': 'Belum Ditangani', 'count': 3, 'svgAsset': 'assets/icons/Clock.svg'},
-    {'title': 'Sedang Diproses', 'count': 5, 'svgAsset': 'assets/icons/Loading.svg'},
-    {'title': 'Selesai', 'count': 4, 'svgAsset': 'assets/icons/Doublecheck.svg'},
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final _ticketService = TicketService();
+
+  bool _isLoading = true;
+  String? _error;
+  Map<String, int> _stats = {};
+  List<Ticket> _recentTickets = [];
+
+  static const _statConfigs = [
+    {'key': 'total', 'title': 'Total Tiket', 'svgAsset': 'assets/icons/Order.svg'},
+    {'key': 'submitted', 'title': 'Belum Ditangani', 'svgAsset': 'assets/icons/Clock.svg'},
+    {'key': 'in_progress', 'title': 'Sedang Diproses', 'svgAsset': 'assets/icons/Loading.svg'},
+    {'key': 'closed', 'title': 'Selesai', 'svgAsset': 'assets/icons/Doublecheck.svg'},
   ];
 
-  static const _categories = [
-    {'category': 'Akademik', 'count': 5, 'svgAsset': 'assets/icons/Order.svg', 'value': 'akademik'},
-    {'category': 'Teknologi', 'count': 3, 'svgAsset': 'assets/icons/Setting.svg', 'value': 'teknologi'},
-    {'category': 'Fasilitas', 'count': 2, 'svgAsset': 'assets/icons/Stores.svg', 'value': 'fasilitas'},
-    {'category': 'Keuangan', 'count': 1, 'svgAsset': 'assets/icons/Cash.svg', 'value': 'keuangan'},
-    {'category': 'Lainnya', 'count': 1, 'svgAsset': 'assets/icons/Category.svg', 'value': 'lainnya'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  static const _recentTickets = [
-    {
-      'ticketId': '#TK-2024-001',
-      'title': 'Permintaan reset password email kampus',
-      'category': 'Teknologi',
-      'status': 'diproses',
-      'date': '2 jam yang lalu',
-    },
-    {
-      'ticketId': '#TK-2024-002',
-      'title': 'Jadwal ujian semester genap',
-      'category': 'Akademik',
-      'status': 'ditangani',
-      'date': '5 jam yang lalu',
-    },
-    {
-      'ticketId': '#TK-2024-003',
-      'title': 'Kerusakan AC di ruang kelas',
-      'category': 'Fasilitas',
-      'status': 'selesai',
-      'date': '1 hari yang lalu',
-    },
-  ];
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final results = await Future.wait([
+        _ticketService.getStats(),
+        _ticketService.getMyTickets(),
+      ]);
+      final rawStats = results[0] as Map<String, int>;
+      final tickets = results[1] as List<Ticket>;
+
+      int total = 0;
+      for (final v in rawStats.values) total += v;
+
+      if (!mounted) return;
+      setState(() {
+        _stats = {...rawStats, 'total': total};
+        _recentTickets = tickets.take(5).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
+    final user = AppState.instance.currentUser;
+
     return Scaffold(
       backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async =>
-              await Future.delayed(const Duration(seconds: 1)),
+          onRefresh: _loadData,
           color: c.primary,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // ── Header ───────────────────────────────────────────────
+              // ── Header ──────────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
                   color: c.surface,
                   padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: _buildHeader(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Selamat datang,',
+                            style: AppTextStyles.bodySm(c)
+                                .copyWith(color: c.textSecondary),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(user?.fullName ?? '—', style: AppTextStyles.h4(c)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icons/Notification.svg',
+                                  width: 24,
+                                  height: 24,
+                                  colorFilter: ColorFilter.mode(
+                                      c.textPrimary, BlendMode.srcIn),
+                                ),
+                                onPressed: () => Navigator.pushNamed(
+                                    context, '/notifications'),
+                              ),
+                            ],
+                          ),
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: c.primary,
+                            child: Text(
+                              _initials(user?.fullName),
+                              style: const TextStyle(
+                                fontFamily: 'Plus Jakarta',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
               SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
 
-              // ── Stats grid ───────────────────────────────────────────
+              // ── Stats ───────────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
                   color: c.surface,
@@ -85,29 +162,34 @@ class HomePage extends StatelessWidget {
                     children: [
                       _SectionHeader(
                         title: 'Statistik Tiket',
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/tickets'),
+                        onTap: () => Navigator.pushNamed(context, '/tickets'),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: AppSpacing.md,
-                          mainAxisSpacing: AppSpacing.md,
-                          childAspectRatio: 1.3,
+                      if (_isLoading)
+                        _buildStatsPlaceholder(c)
+                      else
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: AppSpacing.md,
+                            mainAxisSpacing: AppSpacing.md,
+                            childAspectRatio: 1.3,
+                          ),
+                          itemCount: _statConfigs.length,
+                          itemBuilder: (context, i) {
+                            final cfg = _statConfigs[i];
+                            return StatCard(
+                              title: cfg['title'] as String,
+                              count: _stats[cfg['key']] ?? 0,
+                              svgAsset: cfg['svgAsset'] as String,
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/tickets'),
+                            );
+                          },
                         ),
-                        itemCount: _stats.length,
-                        itemBuilder: (context, index) => StatCard(
-                          title: _stats[index]['title'] as String,
-                          count: _stats[index]['count'] as int,
-                          svgAsset: _stats[index]['svgAsset'] as String,
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/tickets'),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -115,7 +197,7 @@ class HomePage extends StatelessWidget {
 
               SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
 
-              // ── Quick action ─────────────────────────────────────────
+              // ── Quick action ────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
                   color: c.surface,
@@ -123,19 +205,10 @@ class HomePage extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/create-ticket'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: c.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.md),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(AppRadius.md)),
-                        ),
-                        elevation: 0,
-                      ),
+                      onPressed: () async {
+                        await Navigator.pushNamed(context, '/create-ticket');
+                        _loadData();
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -147,14 +220,7 @@ class HomePage extends StatelessWidget {
                                 Colors.white, BlendMode.srcIn),
                           ),
                           const SizedBox(width: AppSpacing.sm),
-                          const Text(
-                            'Buat Tiket Baru',
-                            style: TextStyle(
-                              fontFamily: 'Plus Jakarta',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          const Text('Buat Tiket Baru'),
                         ],
                       ),
                     ),
@@ -164,47 +230,7 @@ class HomePage extends StatelessWidget {
 
               SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
 
-              // ── Kategori ─────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Container(
-                  color: c.surface,
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SectionHeader(title: 'Kategori Tiket'),
-                      const SizedBox(height: AppSpacing.md),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _categories
-                              .map((cat) => Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: AppSpacing.sm),
-                                    child: CategoryCard(
-                                      category: cat['category'] as String,
-                                      count: cat['count'] as int,
-                                      svgAsset: cat['svgAsset'] as String,
-                                      onTap: () => Navigator.pushNamed(
-                                        context,
-                                        '/tickets',
-                                        arguments: {
-                                          'filter': cat['value']
-                                        },
-                                      ),
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-
-              // ── Tiket Terbaru header ──────────────────────────────────
+              // ── Tiket Terbaru ───────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
                   color: c.surface,
@@ -217,37 +243,80 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              // ── Tiket Terbaru list ────────────────────────────────────
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => Container(
+              if (_error != null)
+                SliverToBoxAdapter(
+                  child: Container(
                     color: c.surface,
-                    padding: EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      index == 0 ? AppSpacing.md : 0,
-                      AppSpacing.lg,
-                      index == _recentTickets.length - 1
-                          ? AppSpacing.lg
-                          : AppSpacing.md,
-                    ),
-                    child: TicketCard(
-                      ticketId:
-                          _recentTickets[index]['ticketId'] as String,
-                      title: _recentTickets[index]['title'] as String,
-                      category:
-                          _recentTickets[index]['category'] as String,
-                      status: _recentTickets[index]['status'] as String,
-                      date: _recentTickets[index]['date'] as String,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        '/ticket-detail',
-                        arguments: _recentTickets[index],
-                      ),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: Text(
+                      'Gagal memuat tiket. Tarik untuk refresh.',
+                      style: AppTextStyles.body(c)
+                          .copyWith(color: c.textSecondary),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  childCount: _recentTickets.length,
+                )
+              else if (_isLoading)
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: c.surface,
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: Center(
+                      child: CircularProgressIndicator(color: c.primary),
+                    ),
+                  ),
+                )
+              else if (_recentTickets.isEmpty)
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: c.surface,
+                    padding: const EdgeInsets.all(AppSpacing.xxl),
+                    child: Column(
+                      children: [
+                        Icon(Icons.inbox_outlined,
+                            size: 48, color: c.textTertiary),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'Belum ada tiket',
+                          style: AppTextStyles.body(c)
+                              .copyWith(color: c.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final ticket = _recentTickets[index];
+                      return Container(
+                        color: c.surface,
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          index == 0 ? AppSpacing.md : 0,
+                          AppSpacing.lg,
+                          index == _recentTickets.length - 1
+                              ? AppSpacing.lg
+                              : AppSpacing.md,
+                        ),
+                        child: TicketCard(
+                          ticketId: ticket.ticketNumber,
+                          title: ticket.title,
+                          category: ticket.categoryName ?? '',
+                          status: ticket.status.value,
+                          date: _timeAgo(ticket.createdAt),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/ticket-detail',
+                            arguments: {'id': ticket.id},
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: _recentTickets.length,
+                  ),
                 ),
-              ),
 
               SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             ],
@@ -257,72 +326,27 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final c = context.palette;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Selamat datang,',
-              style: AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
-            ),
-            const SizedBox(height: 2),
-            Text('John Doe', style: AppTextStyles.h4(c)),
-          ],
+  String _initials(String? name) {
+    if (name == null || name.isEmpty) return '?';
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  Widget _buildStatsPlaceholder(AppPalette c) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: AppSpacing.md,
+      mainAxisSpacing: AppSpacing.md,
+      childAspectRatio: 1.3,
+      children: List.generate(4, (_) => Container(
+        decoration: BoxDecoration(
+          color: c.surfaceAlt,
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        Row(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                IconButton(
-                  icon: SvgPicture.asset(
-                    'assets/icons/Notification.svg',
-                    width: 24,
-                    height: 24,
-                    colorFilter:
-                        ColorFilter.mode(c.textPrimary, BlendMode.srcIn),
-                  ),
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/notifications'),
-                ),
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: c.error,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            GestureDetector(
-              onTap: () {},
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: c.primary,
-                child: const Text(
-                  'JD',
-                  style: TextStyle(
-                    fontFamily: 'Plus Jakarta',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+      )),
     );
   }
 }
@@ -330,7 +354,6 @@ class HomePage extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
-
   const _SectionHeader({required this.title, this.onTap});
 
   @override

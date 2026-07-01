@@ -5,6 +5,7 @@ import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_shadow.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/app_state.dart';
 import '../../../../core/theme/app_palette.dart';
 
 /// Splash screen ala FlutterShop Free Version.
@@ -63,6 +64,7 @@ class _SplashPageState extends State<SplashPage>
     }
     try {
       final user = await _authService.getUserProfile(session.user.id);
+      AppState.instance.setUser(user);
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, user.role.defaultRoute);
     } catch (_) {

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_shadow.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/app_state.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/theme/app_palette.dart';
 
@@ -81,6 +82,7 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      AppState.instance.setUser(user);
 
       if (!mounted) return;
 

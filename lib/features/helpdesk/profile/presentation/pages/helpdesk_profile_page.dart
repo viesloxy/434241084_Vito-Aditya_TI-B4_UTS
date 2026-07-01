@@ -4,20 +4,30 @@ import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/services/auth_service.dart';
+import '../../../../../core/services/app_state.dart';
 import '../../../../../core/theme/app_palette.dart';
 
 /// Helpdesk Profile ala FlutterShop — ListView, DividerListTile, SVG icons.
 class HelpdeskProfilePage extends StatelessWidget {
   const HelpdeskProfilePage({super.key});
 
-  static const _name = 'John Helpdesk';
-  static const _email = 'john.h@university.ac.id';
-  static const _nip = '1987654321';
-  static const _dept = 'IT Support';
+  String _initials(String? name) {
+    if (name == null || name.isEmpty) return '?';
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
+    final user = AppState.instance.currentUser;
+    final userName = user?.fullName ?? 'Helpdesk';
+    final userEmail = user?.email ?? '—';
+    final userRole = user?.role.label ?? 'Helpdesk';
+    final userDept = user?.department ?? '';
+    final userPhone = user?.phone ?? '';
+
     return Scaffold(
       backgroundColor: c.background,
       appBar: AppBar(
@@ -38,17 +48,31 @@ class HelpdeskProfilePage extends StatelessWidget {
                     horizontal: AppSpacing.lg,
                     vertical: AppSpacing.md,
                   ),
-                  leading: const CircleAvatar(
-                    radius: 28,
-                    backgroundImage: AssetImage('assets/images/profil.jpeg'),
-                  ),
+                  leading: user?.avatarUrl != null
+                      ? CircleAvatar(
+                          radius: 28,
+                          backgroundImage: NetworkImage(user!.avatarUrl!),
+                        )
+                      : CircleAvatar(
+                          radius: 28,
+                          backgroundColor: c.primary,
+                          child: Text(
+                            _initials(userName),
+                            style: const TextStyle(
+                              fontFamily: 'Plus Jakarta',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                   title: Text(
-                    _name,
+                    userName,
                     style: AppTextStyles.bodyLg(c)
                         .copyWith(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
-                    _email,
+                    userEmail,
                     style:
                         AppTextStyles.bodySm(c).copyWith(color: c.textSecondary),
                   ),
@@ -62,7 +86,7 @@ class HelpdeskProfilePage extends StatelessWidget {
                   onTap: () {},
                 ),
                 Divider(height: 1, color: c.divider),
-                // Role badge + NIP
+                // Role badge + dept/phone
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
@@ -78,25 +102,28 @@ class HelpdeskProfilePage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text(
-                          'Helpdesk',
+                          userRole,
                           style: AppTextStyles.caption(c).copyWith(
                             color: c.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      Text(
-                        'NIP: $_nip',
-                        style: AppTextStyles.caption(c)
-                            .copyWith(color: c.textSecondary),
-                      ),
+                      if (userPhone.isNotEmpty) ...[
+                        const SizedBox(width: AppSpacing.md),
+                        Text(
+                          userPhone,
+                          style: AppTextStyles.caption(c)
+                              .copyWith(color: c.textSecondary),
+                        ),
+                      ],
                       const Spacer(),
-                      Text(
-                        _dept,
-                        style: AppTextStyles.caption(c)
-                            .copyWith(color: c.textSecondary),
-                      ),
+                      if (userDept.isNotEmpty)
+                        Text(
+                          userDept,
+                          style: AppTextStyles.caption(c)
+                              .copyWith(color: c.textSecondary),
+                        ),
                     ],
                   ),
                 ),

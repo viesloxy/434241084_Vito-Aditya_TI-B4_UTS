@@ -3,20 +3,22 @@ import '../../../../../core/constants/app_max_width.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/models/app_user.dart';
+import '../../../../../core/models/comment.dart';
+import '../../../../../core/models/ticket.dart';
+import '../../../../../core/services/app_state.dart';
+import '../../../../../core/services/comment_service.dart';
+import '../../../../../core/services/ticket_service.dart';
+import '../../../../../core/services/user_service.dart';
 import '../../../../../shared/widgets/status_badge.dart';
 import '../../../../../shared/widgets/category_badge.dart';
 import '../../../../../core/theme/app_palette.dart';
 
 enum DetailPageState { loading, loaded, error }
 
-/// Admin Ticket Detail ala FlutterShop — flat 2D, no decorative color, all
-/// accents use `c.primary`. Sectioned, full-bleed body.
-///
-/// Lihat: `docs/STYLE_GUIDE_FLUTTERSHOP.md` section 8.4.
+/// Admin Ticket Detail — loads real ticket from Supabase, connects all actions.
 class AdminTicketDetailPage extends StatefulWidget {
-  final Map<String, dynamic>? ticketData;
-
-  const AdminTicketDetailPage({super.key, this.ticketData});
+  const AdminTicketDetailPage({super.key});
 
   @override
   State<AdminTicketDetailPage> createState() => _AdminTicketDetailPageState();
@@ -24,43 +26,34 @@ class AdminTicketDetailPage extends StatefulWidget {
 
 class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   final _commentController = TextEditingController();
+  final _ticketService = TicketService();
+  final _commentService = CommentService();
+  final _userService = UserService();
   static const int _maxCharacters = 500;
 
   DetailPageState _state = DetailPageState.loading;
-  String _selectedPriority = 'sedang';
+  Ticket? _ticket;
+  List<Comment> _comments = [];
+  List<AppUser> _helpdeskUsers = [];
+  bool _isSendingComment = false;
 
-  Map<String, dynamic> _ticketData = {};
-
-  final List<Map<String, dynamic>> _statusTimeline = [
-    {'status': 'Submitted', 'date': '21 Jan 2024, 10:00', 'isCompleted': true},
-    {'status': 'Signed/Assigned', 'date': '21 Jan 2024, 10:15', 'isCompleted': true},
-    {'status': 'In Progress', 'date': '-', 'isCompleted': false},
-    {'status': 'Resolved', 'date': '-', 'isCompleted': false},
-    {'status': 'Closed', 'date': '-', 'isCompleted': false},
-  ];
-
-  final List<Map<String, dynamic>> _conversations = [
-    {'sender': 'Sarah Admin', 'message': 'Mohon tunggu, kami sedang memproses permintaan reset password Anda.', 'time': '21 Jan 2024, 10:30', 'isMe': false},
-    {'sender': 'Anda', 'message': 'Baik terima kasih atas informasinya', 'time': '21 Jan 2024, 11:00', 'isMe': true},
-    {'sender': 'Sarah Admin', 'message': 'Password sudah direset. Silakan login dengan password baru yang telah dikirim ke email Anda.', 'time': '21 Jan 2024, 14:00', 'isMe': false},
-  ];
-
-  final List<Map<String, dynamic>> _attachments = [
-    {'name': 'Screenshot_error.png', 'size': '1.2 MB', 'type': 'image'},
-    {'name': 'Dokumen_Pendukung.pdf', 'size': '256 KB', 'type': 'document'},
-  ];
-
-  final List<Map<String, dynamic>> _helpdeskOptions = [
-    {'name': 'John Helpdesk', 'initial': 'JH', 'workload': 5, 'status': 'available'},
-    {'name': 'Sarah Helpdesk', 'initial': 'SH', 'workload': 3, 'status': 'available'},
-    {'name': 'Budi Helpdesk', 'initial': 'BH', 'workload': 0, 'status': 'on_leave'},
-  ];
+  String? _ticketId;
 
   @override
   void initState() {
     super.initState();
-    _ticketData = widget.ticketData ?? {};
-    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ticketId == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map) {
+        _ticketId = args['id']?.toString();
+      }
+      _loadData();
+    }
   }
 
   @override
@@ -70,19 +63,60 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   Future<void> _loadData() async {
+    if (_ticketId == null) {
+      setState(() => _state = DetailPageState.error);
+      return;
+    }
     setState(() => _state = DetailPageState.loading);
-    await Future.delayed(const Duration(milliseconds: 1));
-    if (mounted) {
-      setState(() => _state = DetailPageState.loaded);
+    try {
+      final results = await Future.wait([
+        _ticketService.getTicketById(_ticketId!),
+        _commentService.getComments(_ticketId!),
+        _userService.getAllUsers(role: 'helpdesk', isActive: true),
+      ]);
+      final ticket = results[0] as Ticket?;
+      final comments = results[1] as List<Comment>;
+      final users = results[2] as List<AppUser>;
+
+      if (!mounted) return;
+      if (ticket == null) {
+        setState(() => _state = DetailPageState.error);
+        return;
+      }
+      setState(() {
+        _ticket = ticket;
+        _comments = comments;
+        _helpdeskUsers = users;
+        _state = DetailPageState.loaded;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _state = DetailPageState.error);
     }
   }
 
   int get _characterCount => _commentController.text.length;
 
-  String _getString(String key, String defaultValue) {
-    final value = _ticketData[key];
-    if (value == null) return defaultValue;
-    return value.toString();
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
+  }
+
+  String _formatDate(DateTime? dt) {
+    if (dt == null) return '-';
+    return '${dt.day.toString().padLeft(2, '0')} '
+        '${_monthName(dt.month)} ${dt.year}, '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _monthName(int m) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return months[m - 1];
   }
 
   @override
@@ -92,12 +126,12 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       backgroundColor: c.background,
       appBar: _buildAppBar(context),
       body: _buildBody(context),
-      bottomNavigationBar: _buildCommentInput(context),
+      bottomNavigationBar:
+          _state == DetailPageState.loaded ? _buildCommentInput(context) : null,
     );
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-
     final c = context.palette;
     return AppBar(
       backgroundColor: c.surface,
@@ -107,34 +141,20 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
-        _getString('ticketId', '#TK-0000'),
+        _ticket?.ticketNumber ?? '#TK-0000',
         style: AppTextStyles.h4(c),
       ),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: Icon(Icons.share_outlined, color: c.textPrimary),
-          onPressed: () => _showSnackBar('Link berhasil disalin'),
-        ),
         PopupMenuButton<String>(
           icon: Icon(Icons.more_vert, color: c.textPrimary),
           onSelected: (value) {
-            switch (value) {
-              case 'edit':
-                _showSnackBar('Edit tiket');
-                break;
-              case 'delete':
-                _showDeleteConfirmation(context);
-                break;
-              case 'print':
-                _showSnackBar('Cetak tiket');
-                break;
+            if (value == 'reject') {
+              _showRejectDialog(context);
             }
           },
           itemBuilder: (context) => const [
-            PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text('Hapus')),
-            PopupMenuItem(value: 'print', child: Text('Cetak')),
+            PopupMenuItem(value: 'reject', child: Text('Tolak Tiket')),
           ],
         ),
       ],
@@ -142,7 +162,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   Widget _buildBody(BuildContext context) {
-
     final c = context.palette;
     switch (_state) {
       case DetailPageState.loading:
@@ -161,57 +180,54 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           ),
         );
       case DetailPageState.loaded:
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: CenteredContent(
-            maxWidth: AppMaxWidth.infinite,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTicketHeader(context),
-                const SizedBox(height: AppSpacing.xl),
-                _buildStatusTimeline(),
-                const SizedBox(height: AppSpacing.xl),
-                _buildTicketDetails(),
-                const SizedBox(height: AppSpacing.xl),
-                _buildDescriptionSection(context),
-                const SizedBox(height: AppSpacing.xl),
-                _buildAttachmentsSection(context),
-                const SizedBox(height: AppSpacing.xl),
-                _buildConversationSection(context),
-                const SizedBox(height: AppSpacing.xl),
-                _buildQuickActions(context),
-                const SizedBox(height: AppSpacing.lg),
-              ],
+        final t = _ticket!;
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          color: c.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: CenteredContent(
+              maxWidth: AppMaxWidth.infinite,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTicketHeader(context, t),
+                  const SizedBox(height: AppSpacing.xl),
+                  _buildStatusTimeline(t),
+                  const SizedBox(height: AppSpacing.xl),
+                  _buildTicketDetails(context, t),
+                  const SizedBox(height: AppSpacing.xl),
+                  _buildDescriptionSection(context, t),
+                  const SizedBox(height: AppSpacing.xl),
+                  _buildConversationSection(context),
+                  const SizedBox(height: AppSpacing.xl),
+                  _buildQuickActions(context, t),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+              ),
             ),
           ),
         );
     }
   }
 
-  Widget _buildTicketHeader(BuildContext context) {
-
+  Widget _buildTicketHeader(BuildContext context, Ticket t) {
     final c = context.palette;
-    final title = _getString('title', 'Judul tidak tersedia');
-    final category = _getString('category', 'Lainnya');
-    final status = _getString('status', 'baru');
-    final priority = _getString('priority', 'sedang');
-    final date = _getString('date', '-');
-
     return _Section(
       title: '',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.h3(c)),
+          Text(t.title, style: AppTextStyles.h3(c)),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              CategoryBadge(category: category),
-              StatusBadge(status: status),
-              _buildPriorityBadge(context, priority),
+              if (t.categoryName != null) CategoryBadge(category: t.categoryName!),
+              StatusBadge(status: t.status.value),
+              _buildPriorityBadge(context, t.priority.value),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -219,8 +235,10 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             children: [
               Icon(Icons.access_time, size: 14, color: c.textSecondary),
               const SizedBox(width: 4),
-              Text('Dibuat: $date',
-                style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
+              Text(
+                'Dibuat: ${_timeAgo(t.createdAt)}',
+                style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+              ),
             ],
           ),
         ],
@@ -229,7 +247,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   Widget _buildPriorityBadge(BuildContext context, String priority) {
-
     final c = context.palette;
     IconData icon;
     String label;
@@ -248,83 +265,130 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         bg = c.priorityLowBg;
         fg = c.priorityLowText;
         break;
-      case 'sedang':
       default:
         icon = Icons.remove;
         label = 'Sedang';
         bg = c.priorityMedBg;
         fg = c.priorityMedText;
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text(label,
-            style: AppTextStyles.overline(c).copyWith(
+          Text(
+            label,
+            style: AppTextStyles.overline(context.palette).copyWith(
               color: fg,
               fontSize: 11,
               fontWeight: FontWeight.w600,
-            )),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusTimeline() {
+  Widget _buildStatusTimeline(Ticket t) {
+    final statusOrder = [
+      TicketStatus.submitted,
+      TicketStatus.signedAssigned,
+      TicketStatus.inProgress,
+      TicketStatus.resolved,
+      TicketStatus.closed,
+    ];
+    final currentIndex = statusOrder.indexOf(t.status);
+
     return _Section(
       title: 'Timeline Status',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(_statusTimeline.length, (index) {
-          final item = _statusTimeline[index];
-          final isLast = index == _statusTimeline.length - 1;
+        children: List.generate(statusOrder.length, (i) {
+          final isCompleted = i <= currentIndex && t.status != TicketStatus.rejected;
+          final labels = ['Submitted', 'Ditugaskan', 'In Progress', 'Resolved', 'Closed'];
           return _TimelineItem(
-            title: item['status'] as String,
-            date: item['date'] as String,
-            isCompleted: item['isCompleted'] as bool,
-            isLast: isLast,
+            title: labels[i],
+            date: isCompleted ? _getStatusDate(t, statusOrder[i]) : '-',
+            isCompleted: isCompleted,
+            isLast: i == statusOrder.length - 1,
           );
         }),
       ),
     );
   }
 
-  Widget _buildTicketDetails() {
-    final creator = _getString('createdBy', _getString('creator', 'Unknown'));
-    final email = '${creator.toLowerCase().replaceAll(' ', '.')}@student.ac.id';
-    final priority = _getString('priority', 'sedang');
-    final assignedTo = _getString('assignedTo', '');
-    final date = _getString('date', '-');
+  String _getStatusDate(Ticket t, TicketStatus status) {
+    switch (status) {
+      case TicketStatus.submitted:
+        return _formatDate(t.createdAt);
+      case TicketStatus.resolved:
+        return t.resolvedAt != null ? _formatDate(t.resolvedAt) : '-';
+      case TicketStatus.closed:
+        return t.closedAt != null ? _formatDate(t.closedAt) : '-';
+      default:
+        return _formatDate(t.updatedAt);
+    }
+  }
+
+  Widget _buildTicketDetails(BuildContext context, Ticket t) {
+    final creator = t.creatorName ?? 'Unknown';
+    final assignedTo = t.assigneeName ?? '';
 
     return _Section(
       title: 'Detail Tiket',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _DetailRow(label: 'Pembuat', value: creator, icon: Icons.person_outline, isEditable: false),
-          _DetailRow(label: 'Email', value: email, icon: Icons.email_outlined, isEditable: false),
-          _DetailRow(label: 'Prioritas', value: priority, icon: Icons.flag_outlined, isEditable: true, onTap: () => _showPriorityDropdown(context)),
-          _DetailRow(label: 'Ditugaskan', value: assignedTo.isEmpty ? 'Belum ditugaskan' : assignedTo, icon: Icons.assignment_ind_outlined, isEditable: true, onTap: () => _showAssignModal(context)),
-          _DetailRow(label: 'Tanggal Dibuat', value: date, icon: Icons.calendar_today_outlined, isEditable: false),
-          _DetailRow(label: 'Terakhir Update', value: date, icon: Icons.update_outlined, isEditable: false),
+          _DetailRow(
+            label: 'Pembuat',
+            value: creator,
+            icon: Icons.person_outline,
+            isEditable: false,
+          ),
+          _DetailRow(
+            label: 'Prioritas',
+            value: _priorityLabel(t.priority.value),
+            icon: Icons.flag_outlined,
+            isEditable: false,
+          ),
+          _DetailRow(
+            label: 'Ditugaskan',
+            value: assignedTo.isEmpty ? 'Belum ditugaskan' : assignedTo,
+            icon: Icons.assignment_ind_outlined,
+            isEditable: t.status == TicketStatus.submitted || t.status == TicketStatus.signedAssigned,
+            onTap: () => _showAssignModal(context),
+          ),
+          _DetailRow(
+            label: 'Tanggal Dibuat',
+            value: _formatDate(t.createdAt),
+            icon: Icons.calendar_today_outlined,
+            isEditable: false,
+          ),
+          _DetailRow(
+            label: 'Terakhir Update',
+            value: _formatDate(t.updatedAt),
+            icon: Icons.update_outlined,
+            isEditable: false,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDescriptionSection(BuildContext context) {
+  String _priorityLabel(String value) {
+    switch (value) {
+      case 'tinggi': return 'Tinggi';
+      case 'rendah': return 'Rendah';
+      default: return 'Sedang';
+    }
+  }
 
+  Widget _buildDescriptionSection(BuildContext context, Ticket t) {
     final c = context.palette;
-    final description = _getString('description', '');
-
+    final description = t.description;
     return _Section(
       title: 'Deskripsi',
       child: Text(
@@ -338,107 +402,45 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  Widget _buildAttachmentsSection(BuildContext context) {
-
-    final c = context.palette;
-    return _Section(
-      title: 'Lampiran',
-      child: _attachments.isEmpty
-          ? Text('Tidak ada lampiran', style: AppTextStyles.body(c).copyWith(color: c.textSecondary))
-          : Column(
-              children: List.generate(_attachments.length, (index) {
-                final attachment = _attachments[index];
-                return _buildAttachmentItem(context, attachment);
-              }),
-            ),
-    );
-  }
-
-  Widget _buildAttachmentItem(BuildContext context, Map<String, dynamic> attachment) {
-
-    final c = context.palette;
-    final isImage = attachment['type'] == 'image';
-    final name = attachment['name'] as String? ?? 'file';
-    final size = attachment['size'] as String? ?? '-';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: c.surfaceAlt,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: c.primaryLight,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(
-              isImage ? Icons.image : Icons.insert_drive_file,
-              color: c.primary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: AppTextStyles.body(c).copyWith(fontWeight: FontWeight.w500)),
-                Text(size, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.download, color: c.primary),
-            onPressed: () => _showSnackBar('Mengunduh $name'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildConversationSection(BuildContext context) {
-
     final c = context.palette;
     return _Section(
-      title: 'Percakapan',
-      child: _conversations.isEmpty
+      title: 'Percakapan (${_comments.length})',
+      child: _comments.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Text('Belum ada percakapan', style: AppTextStyles.body(c).copyWith(color: c.textSecondary)),
+                child: Text(
+                  'Belum ada percakapan',
+                  style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
+                ),
               ),
             )
           : Column(
-              children: List.generate(_conversations.length, (index) {
-                final chat = _conversations[index];
-                return _buildChatBubble(context, chat);
-              }),
+              children: _comments.map((c) => _buildCommentBubble(context, c)).toList(),
             ),
     );
   }
 
-  Widget _buildChatBubble(BuildContext context, Map<String, dynamic> chat) {
-
+  Widget _buildCommentBubble(BuildContext context, Comment comment) {
     final c = context.palette;
-    final isMe = chat['isMe'] as bool? ?? false;
-    final sender = chat['sender'] as String? ?? 'Unknown';
-    final message = chat['message'] as String? ?? '';
-    final time = chat['time'] as String? ?? '-';
+    final currentUserId = AppState.instance.currentUser?.id;
+    final isMe = comment.userId == currentUserId;
+    final sender = comment.userName ?? 'Unknown';
+    final message = comment.message;
+    final time = _timeAgo(comment.createdAt);
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.md),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isMe ? c.primary : c.surfaceAlt,
+          color: comment.isInternal
+              ? c.surfaceAlt
+              : (isMe ? c.primary : c.surfaceAlt),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -446,7 +448,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             bottomRight: Radius.circular(isMe ? 4 : 16),
           ),
           border: Border.all(
-            color: isMe ? c.primary : c.border,
+            color: isMe && !comment.isInternal ? c.primary : c.border,
             width: 1,
           ),
         ),
@@ -454,36 +456,40 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!isMe) ...[
-              Text(sender,
+              Text(
+                sender + (comment.isInternal ? ' (Internal)' : ''),
                 style: AppTextStyles.overline(c).copyWith(
                   color: c.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                )),
+                ),
+              ),
               const SizedBox(height: 4),
             ],
-            Text(message,
+            Text(
+              message,
               style: AppTextStyles.body(c).copyWith(
-                color: isMe ? c.textOnPrimary : c.textPrimary,
-              )),
+                color: isMe && !comment.isInternal ? c.textOnPrimary : c.textPrimary,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(time,
+            Text(
+              time,
               style: AppTextStyles.overline(c).copyWith(
                 fontSize: 10,
-                color: isMe ? c.textOnPrimary : c.textSecondary,
-              )),
+                color: isMe && !comment.isInternal
+                    ? c.textOnPrimary
+                    : c.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
-
-    final c = context.palette;
-    final status = _getString('status', 'submitted');
-
-    if (status == 'submitted' || status == 'baru') {
+  Widget _buildQuickActions(BuildContext context, Ticket t) {
+    if (t.status == TicketStatus.submitted) {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -493,7 +499,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         ),
       );
     }
-    if (status == 'signed_assigned' || status == 'ditangani') {
+    if (t.status == TicketStatus.signedAssigned) {
       return SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
@@ -503,7 +509,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         ),
       );
     }
-    if (status == 'resolved' || status == 'selesai') {
+    if (t.status == TicketStatus.resolved) {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -513,7 +519,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         ),
       );
     }
-    // in_progress / closed — info strip
+    final c = context.palette;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -524,7 +530,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
       child: Row(
         children: [
           Icon(
-            status == 'in_progress' || status == 'diproses'
+            t.status == TicketStatus.inProgress
                 ? Icons.hourglass_top_outlined
                 : Icons.lock_outline,
             size: 16,
@@ -533,8 +539,8 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              status == 'in_progress' || status == 'diproses'
-                  ? 'Helpdesk sedang mengerjakan tiket. Tidak ada aksi yang tersedia.'
+              t.status == TicketStatus.inProgress
+                  ? 'Helpdesk sedang mengerjakan tiket.'
                   : 'Tiket sudah ditutup (final).',
               style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
             ),
@@ -545,7 +551,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   Widget _buildCommentInput(BuildContext context) {
-
     final c = context.palette;
     return Container(
       decoration: BoxDecoration(
@@ -560,10 +565,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               padding: const EdgeInsets.all(AppSpacing.sm),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.attach_file, color: c.textSecondary),
-                    onPressed: () => _showSnackBar('Pilih lampiran'),
-                  ),
                   Expanded(
                     child: TextField(
                       controller: _commentController,
@@ -588,21 +589,23 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
-                  IconButton(
-                    icon: Icon(
-                      Icons.send,
-                      color: _commentController.text.isEmpty
-                          ? c.textTertiary
-                          : c.primary,
-                    ),
-                    onPressed: _commentController.text.isEmpty
-                        ? null
-                        : () {
-                            _showSnackBar('Pesan terkirim');
-                            _commentController.clear();
-                            setState(() {});
-                          },
-                  ),
+                  _isSendingComment
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : IconButton(
+                          icon: Icon(
+                            Icons.send,
+                            color: _commentController.text.isEmpty
+                                ? c.textTertiary
+                                : c.primary,
+                          ),
+                          onPressed: _commentController.text.isEmpty
+                              ? null
+                              : _sendComment,
+                        ),
                 ],
               ),
             ),
@@ -630,51 +633,29 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showPriorityDropdown(BuildContext context) {
-
-    final c = context.palette;
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Ubah Prioritas', style: AppTextStyles.h3(c)),
-            const SizedBox(height: AppSpacing.lg),
-            for (final p in const ['tinggi', 'sedang', 'rendah'])
-              ListTile(
-                leading: Icon(
-                  p == 'tinggi'
-                      ? Icons.keyboard_double_arrow_up
-                      : (p == 'sedang' ? Icons.remove : Icons.keyboard_double_arrow_down),
-                  color: p == _selectedPriority ? c.primary : c.textSecondary,
-                ),
-                title: Text(p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah'),
-                  style: AppTextStyles.body(c)),
-                trailing: p == _selectedPriority
-                    ? Icon(Icons.check, color: c.primary)
-                    : null,
-                onTap: () {
-                  setState(() => _selectedPriority = p);
-                  Navigator.pop(ctx);
-                  _showSnackBar(
-                      'Prioritas diubah ke ${p == 'tinggi' ? 'Tinggi' : (p == 'sedang' ? 'Sedang' : 'Rendah')}');
-                },
-              ),
-            const SizedBox(height: AppSpacing.lg),
-          ],
-        ),
-      ),
-    );
+  Future<void> _sendComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty || _ticket == null) return;
+    setState(() => _isSendingComment = true);
+    try {
+      final comment = await _commentService.addComment(
+        ticketId: _ticket!.id,
+        message: text,
+      );
+      if (!mounted) return;
+      _commentController.clear();
+      setState(() {
+        _comments.add(comment);
+        _isSendingComment = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSendingComment = false);
+      _showSnackBar('Gagal mengirim: $e');
+    }
   }
 
   void _showAssignModal(BuildContext context) {
-
     final c = context.palette;
     showModalBottomSheet(
       context: context,
@@ -683,7 +664,12 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xxl)),
       ),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: EdgeInsets.only(
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+          top: AppSpacing.lg,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -696,56 +682,50 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari helpdesk...',
-                prefixIcon: Icon(Icons.search, color: c.textSecondary),
-                filled: true,
-                fillColor: c.inputFill,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            ...List.generate(_helpdeskOptions.length, (index) {
-              final helpdesk = _helpdeskOptions[index];
-              final isAvailable = helpdesk['status'] == 'available';
-              final name = helpdesk['name'] as String? ?? '';
-              final initial = helpdesk['initial'] as String? ?? '';
-              final workload = helpdesk['workload'] as int? ?? 0;
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: c.primary,
-                  child: Text(initial,
-                    style: AppTextStyles.caption(c).copyWith(
-                      color: c.textOnPrimary,
-                      fontWeight: FontWeight.w600,
-                    )),
-                ),
-                title: Text(name, style: AppTextStyles.body(c)),
-                subtitle: Text(
-                  isAvailable ? 'Tersedia • $workload tiket aktif' : 'Cuti',
-                  style: AppTextStyles.caption(c).copyWith(
-                    color: isAvailable ? c.primary : c.textSecondary,
+            if (_helpdeskUsers.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Text(
+                    'Tidak ada helpdesk tersedia',
+                    style: AppTextStyles.body(c).copyWith(color: c.textSecondary),
                   ),
                 ),
-                trailing: !isAvailable ? Icon(Icons.block, color: c.textTertiary) : null,
-                onTap: isAvailable
-                    ? () {
-                        Navigator.pop(ctx);
-                        setState(() {
-                          _ticketData['assignedTo'] = name;
-                          _ticketData['status'] = 'signed_assigned';
-                        });
-                        _showSnackBar('Ditugaskan ke $name');
-                      }
-                    : null,
-              );
-            }),
-            SizedBox(height: MediaQuery.of(ctx).viewInsets.bottom),
+              )
+            else
+              ...List.generate(_helpdeskUsers.length, (index) {
+                final user = _helpdeskUsers[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: c.primary,
+                    child: Text(
+                      _initials(user.fullName),
+                      style: AppTextStyles.caption(c).copyWith(
+                        color: c.textOnPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  title: Text(user.fullName, style: AppTextStyles.body(c)),
+                  subtitle: Text(
+                    user.department ?? user.email,
+                    style: AppTextStyles.caption(c).copyWith(color: c.primary),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await _ticketService.assignTicket(
+                        ticketId: _ticket!.id,
+                        helpdeskId: user.id,
+                      );
+                      _showSnackBar('Ditugaskan ke ${user.fullName}');
+                      _loadData();
+                    } catch (e) {
+                      _showSnackBar('Gagal: $e');
+                    }
+                  },
+                );
+              }),
           ],
         ),
       ),
@@ -753,9 +733,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   void _showCancelAssignmentDialog(BuildContext context) {
-
     final c = context.palette;
-    final reasonController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -769,46 +747,25 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
             Text('Batalkan Assignment', style: AppTextStyles.h4(c)),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tiket akan dikembalikan ke status Submitted. Helpdesk saat ini tidak akan lagi melihat tiket ini.',
-              style: AppTextStyles.caption(c),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text('Alasan pembatalan:', style: AppTextStyles.bodySm(c).copyWith(fontWeight: FontWeight.w500)),
-            const SizedBox(height: AppSpacing.sm),
-            TextField(
-              controller: reasonController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Misal: Helpdesk berhalangan...',
-                filled: true,
-                fillColor: c.inputFill,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ],
+        content: Text(
+          'Tiket akan dikembalikan ke status Submitted.',
+          style: AppTextStyles.caption(c),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
-            onPressed: () {
-              if (reasonController.text.trim().length < 5) {
-                _showSnackBar('Alasan minimal 5 karakter');
-                return;
-              }
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _ticketData['assignedTo'] = null;
-                _ticketData['status'] = 'submitted';
-              });
-              _showSnackBar('Assignment dibatalkan');
+              try {
+                await _ticketService.unassignTicket(_ticket!.id);
+                _showSnackBar('Assignment dibatalkan');
+                _loadData();
+              } catch (e) {
+                _showSnackBar('Gagal: $e');
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: c.primary),
             child: const Text('Batalkan Assignment'),
@@ -819,12 +776,10 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 
   void _showCloseTicketDialog(BuildContext context) {
-
     final c = context.palette;
     bool userConfirmed = false;
     bool helpdeskProof = false;
     bool qcSuitable = false;
-    final noteController = TextEditingController();
 
     showDialog(
       context: context,
@@ -840,62 +795,54 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
               Text('Close Tiket (QC)', style: AppTextStyles.h4(c)),
             ],
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Checklist Quality Control:',
-                  style: AppTextStyles.bodySm(c).copyWith(fontWeight: FontWeight.w500)),
-                const SizedBox(height: AppSpacing.sm),
-                CheckboxListTile(
-                  value: userConfirmed,
-                  onChanged: (v) => setDialogState(() => userConfirmed = v ?? false),
-                  title: Text('User sudah konfirmasi selesai', style: AppTextStyles.caption(c)),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-                CheckboxListTile(
-                  value: helpdeskProof,
-                  onChanged: (v) => setDialogState(() => helpdeskProof = v ?? false),
-                  title: Text('Helpdesk sudah upload bukti', style: AppTextStyles.caption(c)),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-                CheckboxListTile(
-                  value: qcSuitable,
-                  onChanged: (v) => setDialogState(() => qcSuitable = v ?? false),
-                  title: Text('Hasil kerja sesuai dengan laporan', style: AppTextStyles.caption(c)),
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                TextField(
-                  controller: noteController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Catatan penutupan (opsional)',
-                    filled: true,
-                    fillColor: c.inputFill,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Checklist Quality Control:',
+                style: AppTextStyles.bodySm(c).copyWith(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              CheckboxListTile(
+                value: userConfirmed,
+                onChanged: (v) => setDialogState(() => userConfirmed = v ?? false),
+                title: Text('User sudah konfirmasi selesai', style: AppTextStyles.caption(c)),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+              CheckboxListTile(
+                value: helpdeskProof,
+                onChanged: (v) => setDialogState(() => helpdeskProof = v ?? false),
+                title: Text('Helpdesk sudah upload bukti', style: AppTextStyles.caption(c)),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+              CheckboxListTile(
+                value: qcSuitable,
+                onChanged: (v) => setDialogState(() => qcSuitable = v ?? false),
+                title: Text('Hasil kerja sesuai laporan', style: AppTextStyles.caption(c)),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+            ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
             ElevatedButton(
               onPressed: (userConfirmed && helpdeskProof && qcSuitable)
-                  ? () {
+                  ? () async {
                       Navigator.pop(ctx);
-                      setState(() {
-                        _ticketData['status'] = 'closed';
-                      });
-                      _showSnackBar('Tiket ditutup (Closed)');
+                      try {
+                        await _ticketService.closeTicket(_ticket!.id);
+                        _showSnackBar('Tiket ditutup');
+                        _loadData();
+                      } catch (e) {
+                        _showSnackBar('Gagal: $e');
+                      }
                     }
                   : null,
               style: ElevatedButton.styleFrom(backgroundColor: c.primary),
@@ -907,8 +854,7 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
-
+  void _showRejectDialog(BuildContext context) {
     final c = context.palette;
     showDialog(
       context: context,
@@ -916,23 +862,37 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
         ),
-        title: Text('Hapus Tiket', style: AppTextStyles.h4(c)),
-        content: Text('Apakah Anda yakin ingin menghapus tiket ini?',
-          style: AppTextStyles.body(c)),
+        title: Text('Tolak Tiket', style: AppTextStyles.h4(c)),
+        content: Text(
+          'Apakah Anda yakin ingin menolak tiket ini?',
+          style: AppTextStyles.body(c),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pop(context);
-              _showSnackBar('Tiket dihapus');
+              try {
+                await _ticketService.rejectTicket(_ticket!.id);
+                _showSnackBar('Tiket ditolak');
+                _loadData();
+              } catch (e) {
+                _showSnackBar('Gagal: $e');
+              }
             },
             style: TextButton.styleFrom(foregroundColor: c.error),
-            child: const Text('Hapus'),
+            child: const Text('Tolak'),
           ),
         ],
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   void _showSnackBar(String message) {
@@ -949,8 +909,6 @@ class _AdminTicketDetailPageState extends State<AdminTicketDetailPage> {
   }
 }
 
-/// Section container ala FlutterShop — flat white card with border 1 px,
-/// no shadow, no gradient.
 class _Section extends StatelessWidget {
   final String title;
   final Widget child;
@@ -1012,12 +970,17 @@ class _DetailRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
-                  Text(value,
+                  Text(
+                    label,
+                    style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+                  ),
+                  Text(
+                    value,
                     style: AppTextStyles.body(c).copyWith(
                       fontWeight: isEditable ? FontWeight.w500 : FontWeight.w400,
                       color: isEditable ? c.primary : c.textPrimary,
-                    )),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1066,11 +1029,7 @@ class _TimelineItem extends StatelessWidget {
                   : null,
             ),
             if (!isLast)
-              Container(
-                width: 2,
-                height: 40,
-                color: isCompleted ? c.primary : c.border,
-              ),
+              Container(width: 2, height: 40, color: isCompleted ? c.primary : c.border),
           ],
         ),
         const SizedBox(width: AppSpacing.md),
@@ -1080,13 +1039,18 @@ class _TimelineItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(
+                  title,
                   style: AppTextStyles.body(c).copyWith(
                     fontWeight: FontWeight.w600,
                     color: isCompleted ? c.textPrimary : c.textSecondary,
-                  )),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(date, style: AppTextStyles.caption(c).copyWith(color: c.textSecondary)),
+                Text(
+                  date,
+                  style: AppTextStyles.caption(c).copyWith(color: c.textSecondary),
+                ),
               ],
             ),
           ),

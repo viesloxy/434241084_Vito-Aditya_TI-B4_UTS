@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_radius.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_styles.dart';
+import '../../../../../core/models/ticket.dart';
+import '../../../../../core/services/ticket_service.dart';
 import '../../../../helpdesk/widgets/helpdesk_task_card.dart';
 import '../../../../../core/theme/app_palette.dart';
 
@@ -23,6 +25,7 @@ class HelpdeskTaskListPage extends StatefulWidget {
 }
 
 class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
+  final _ticketService = TicketService();
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 300);
@@ -39,7 +42,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     {'name': 'Selesai', 'value': 'resolved'},
   ];
 
-  List<Map<String, dynamic>> _tasks = [];
+  List<Ticket> _tasks = [];
 
   @override
   void initState() {
@@ -57,116 +60,58 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
 
   Future<void> _loadInitialData() async {
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
+    try {
+      final tasks = await _ticketService.getAssignedToMe();
+      if (!mounted) return;
       setState(() {
-        _tasks = _getMockTasks();
+        _tasks = tasks;
         _isLoading = false;
       });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
   }
 
-  List<Map<String, dynamic>> _getMockTasks() {
-    return [
-      {
-        'ticketId': '#TK-2024-001',
-        'title': 'Permintaan reset password email kampus',
-        'description': 'Tidak bisa login ke email kampus',
-        'category': 'Teknologi',
-        'status': 'signed_assigned',
-        'priority': 'tinggi',
-        'date': '5 menit yang lalu',
-        'createdBy': 'Ahmad Rizki',
-      },
-      {
-        'ticketId': '#TK-2024-003',
-        'title': 'Kerusakan AC di ruang kelas L201',
-        'description': 'AC tidak dingin',
-        'category': 'Fasilitas',
-        'status': 'in_progress',
-        'priority': 'sedang',
-        'date': '30 menit yang lalu',
-        'createdBy': 'Dewi Lestari',
-      },
-      {
-        'ticketId': '#TK-2024-005',
-        'title': 'Permintaan akses perpustakaan digital',
-        'description': 'Butuh akses e-library',
-        'category': 'Akademik',
-        'status': 'signed_assigned',
-        'priority': 'tinggi',
-        'date': '2 jam yang lalu',
-        'createdBy': 'Fajar Nugroho',
-      },
-      {
-        'ticketId': '#TK-2024-006',
-        'title': 'Masalah koneksi internet di asrama',
-        'description': 'Internet lambat sekali',
-        'category': 'Teknologi',
-        'status': 'in_progress',
-        'priority': 'sedang',
-        'date': '3 jam yang lalu',
-        'createdBy': 'Gita Permata',
-      },
-      {
-        'ticketId': '#TK-2024-002',
-        'title': 'Jadwal ujian semester genap 2024',
-        'description': 'Mohon info jadwal ujian',
-        'category': 'Akademik',
-        'status': 'resolved',
-        'priority': 'sedang',
-        'date': '1 hari yang lalu',
-        'createdBy': 'Budi Santoso',
-        'resolutionNote': 'Sudah diupdate di website akademik.',
-      },
-      {
-        'ticketId': '#TK-2024-004',
-        'title': 'Pembayaran UKT semester baru',
-        'description': 'Konfirmasi pembayaran UKT',
-        'category': 'Keuangan',
-        'status': 'resolved',
-        'priority': 'sedang',
-        'date': '1 hari yang lalu',
-        'createdBy': 'Eko Prasetyo',
-        'resolutionNote': 'Sudah dikonfirmasi via WA.',
-      },
-    ];
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    return '${diff.inDays} hari lalu';
   }
 
-  List<Map<String, dynamic>> get _filteredTasks {
-    var filtered = _tasks;
+  List<Ticket> get _filteredTasks {
+    var filtered = List<Ticket>.from(_tasks);
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
       filtered = filtered
           .where((t) =>
-              t['title'].toString().toLowerCase().contains(query) ||
-              t['ticketId'].toString().toLowerCase().contains(query) ||
-              t['description'].toString().toLowerCase().contains(query) ||
-              t['createdBy'].toString().toLowerCase().contains(query))
+              t.title.toLowerCase().contains(query) ||
+              t.ticketNumber.toLowerCase().contains(query) ||
+              (t.creatorName ?? '').toLowerCase().contains(query))
           .toList();
     }
     if (_selectedFilter != 'semua') {
-      filtered =
-          filtered.where((t) => t['status'] == _selectedFilter).toList();
+      filtered = filtered
+          .where((t) => t.status.value == _selectedFilter)
+          .toList();
     }
-    filtered = List.from(filtered);
     switch (_sortOption) {
       case SortOption.tanggalTerbaru:
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         break;
       case SortOption.tanggalTerlama:
-        filtered = filtered.reversed.toList();
+        filtered.sort((a, b) => a.createdAt.compareTo(b.createdAt));
         break;
       case SortOption.prioritasTinggi:
-        filtered.sort((a, b) {
-          const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (order[a['priority']] ?? 1).compareTo(order[b['priority']] ?? 1);
-        });
+        const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
+        filtered.sort((a, b) =>
+            (order[a.priority.value] ?? 1).compareTo(order[b.priority.value] ?? 1));
         break;
       case SortOption.prioritasRendah:
-        filtered.sort((a, b) {
-          const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
-          return (order[b['priority']] ?? 1).compareTo(order[a['priority']] ?? 1);
-        });
+        const order = {'tinggi': 0, 'sedang': 1, 'rendah': 2};
+        filtered.sort((a, b) =>
+            (order[b.priority.value] ?? 1).compareTo(order[a.priority.value] ?? 1));
         break;
     }
     return filtered;
@@ -346,23 +291,22 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
         itemBuilder: (context, index) {
           final task = _filteredTasks[index];
           return HelpdeskTaskCard(
-            ticketId: task['ticketId'] as String,
-            title: task['title'] as String,
-            category: task['category'] as String,
-            status: task['status'] as String,
-            priority: task['priority'] as String,
-            date: task['date'] as String,
-            createdBy: task['createdBy'] as String,
-            resolutionNote: task['resolutionNote'] as String?,
+            ticketId: task.ticketNumber,
+            title: task.title,
+            category: task.categoryName ?? '',
+            status: task.status.value,
+            priority: task.priority.value,
+            date: _timeAgo(task.createdAt),
+            createdBy: task.creatorName ?? '',
             onTap: () => Navigator.pushNamed(
               context,
               '/helpdesk/task-detail',
-              arguments: task,
+              arguments: {'id': task.id},
             ),
-            onStart: task['status'] == 'signed_assigned'
+            onStart: task.status == TicketStatus.signedAssigned
                 ? () => _showStartTaskDialog(task)
                 : null,
-            onResolve: task['status'] == 'in_progress'
+            onResolve: task.status == TicketStatus.inProgress
                 ? () => _showResolveTaskDialog(context, task)
                 : null,
           );
@@ -479,7 +423,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  void _showStartTaskDialog(Map<String, dynamic> task) {
+  void _showStartTaskDialog(Ticket task) {
     final c = context.palette;
     showDialog(
       context: context,
@@ -500,7 +444,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
           ],
         ),
         content: Text(
-          'Mulai kerjakan tiket ${task['ticketId']}?\n\nStatus akan berubah menjadi "In Progress".',
+          'Mulai kerjakan tiket ${task.ticketNumber}?\n\nStatus akan berubah menjadi "In Progress".',
           style: AppTextStyles.body(c),
         ),
         actions: [
@@ -509,15 +453,27 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Mulai kerjakan ${task['ticketId']}'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              _loadInitialData();
+              try {
+                await _ticketService.startTicket(task.id);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Mulai kerjakan ${task.ticketNumber}'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                _loadInitialData();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal: $e'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: c.primary,
@@ -530,8 +486,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
     );
   }
 
-  void _showResolveTaskDialog(
-      BuildContext context, Map<String, dynamic> task) {
+  void _showResolveTaskDialog(BuildContext context, Ticket task) {
     final c = context.palette;
     final noteController = TextEditingController();
 
@@ -559,7 +514,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Tiket: ${task['ticketId']}',
+                'Tiket: ${task.ticketNumber}',
                 style: AppTextStyles.body(c)
                     .copyWith(fontWeight: FontWeight.w600),
               ),
@@ -585,7 +540,7 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (noteController.text.trim().length < 10) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -596,13 +551,25 @@ class _HelpdeskTaskListPageState extends State<HelpdeskTaskListPage> {
                 return;
               }
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Tiket ${task['ticketId']} selesai'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              _loadInitialData();
+              try {
+                await _ticketService.resolveTicket(task.id);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Tiket ${task.ticketNumber} selesai'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                _loadInitialData();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal: $e'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: c.success,

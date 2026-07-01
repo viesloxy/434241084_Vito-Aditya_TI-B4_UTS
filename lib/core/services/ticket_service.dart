@@ -228,10 +228,29 @@ class TicketService {
   // STATISTICS
   // ============================================
 
-  /// Get stats untuk current user (role-aware)
+  /// Get stats untuk current user (role-aware via RPC, fallback ke query biasa)
   Future<Map<String, int>> getStats() async {
-    final result = await _client.rpc('get_my_ticket_stats');
-    return Map<String, int>.from(result as Map);
+    try {
+      final result = await _client.rpc('get_my_ticket_stats');
+      return Map<String, int>.from(result as Map);
+    } catch (_) {
+      return getStatsDirect();
+    }
+  }
+
+  /// Get stats langsung dari tabel tickets (fallback jika RPC tidak ada)
+  Future<Map<String, int>> getStatsDirect({String? assignedTo}) async {
+    var query = _client.from('tickets').select('status');
+    if (assignedTo != null) {
+      query = query.eq('assigned_to', assignedTo);
+    }
+    final data = await query;
+    final map = <String, int>{};
+    for (final row in (data as List)) {
+      final s = row['status'] as String;
+      map[s] = (map[s] ?? 0) + 1;
+    }
+    return map;
   }
 
   /// Get all helpdesk users (untuk assignment)
